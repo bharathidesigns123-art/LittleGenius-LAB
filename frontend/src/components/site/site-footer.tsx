@@ -27,6 +27,15 @@ export function SiteFooter() {
           </div>
         </div>
         <div>
+          <p className="text-sm font-bold uppercase tracking-[0.24em] text-white/70">Legal</p>
+          <div className="mt-4 flex flex-col gap-3 text-sm text-white/85">
+            <Link href="/privacy-policy">Privacy Policy</Link>
+            <Link href="/terms-of-service">Terms of Service</Link>
+            <Link href="/shipping-policy">Shipping Policy</Link>
+            <Link href="/refund-policy">Refund Policy</Link>
+          </div>
+        </div>
+        <div>
           <p className="text-sm font-bold uppercase tracking-[0.24em] text-white/70">Connect</p>
           <div className="mt-4 flex flex-col gap-3 text-sm text-white/85">
             <a href="https://wa.me/919876543210">WhatsApp</a>
