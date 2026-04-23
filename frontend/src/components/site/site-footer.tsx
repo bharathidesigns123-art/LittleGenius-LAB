@@ -16,14 +16,16 @@ export function SiteFooter() {
             <Link href="/shop/animals">Animals</Link>
             <Link href="/shop/robots">Robots</Link>
             <Link href="/shop/chibi">Chibi</Link>
+            <Link href="/gallery">Gallery</Link>
           </div>
         </div>
         <div>
           <p className="text-sm font-bold uppercase tracking-[0.24em] text-white/70">Support</p>
           <div className="mt-4 flex flex-col gap-3 text-sm text-white/85">
             <Link href="/custom-order">Custom Orders</Link>
+            <Link href="/how-it-works">How It Works</Link>
+            <Link href="/about">About Us</Link>
             <Link href="/track-order">Track Order</Link>
-            <Link href="/account">Account</Link>
           </div>
         </div>
         <div>

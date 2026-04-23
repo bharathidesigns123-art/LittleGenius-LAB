@@ -9,7 +9,8 @@ import { useCart } from "@/components/providers/cart-provider";
 const navItems = [
   { href: "/shop", label: "Shop" },
   { href: "/custom-order", label: "Custom Orders" },
-  { href: "/track-order", label: "Track Order" },
+  { href: "/gallery", label: "Gallery" },
+  { href: "/how-it-works", label: "How It Works" },
 ];
 
 const emptySubscribe = () => () => undefined;
