@@ -1,0 +1,160 @@
+@import "tailwindcss";
+
+:root {
+  --color-ink: #14233d;
+  --color-ink-soft: #52627d;
+  --color-surface: #fdfbf7;
+  --color-surface-2: #fff4cf;
+  --color-card: #ffffff;
+  --color-blue: #1a3c6e;
+  --color-orange: #e05c1a;
+  --color-yellow: #f5c400;
+  --color-border: #d8dfeb;
+  --shadow-rgb: 26 60 110;
+  --font-sans: var(--font-body);
+}
+
+@theme inline {
+  --color-background: var(--color-surface);
+  --color-foreground: var(--color-ink);
+  --font-sans: var(--font-body);
+}
+
+* {
+  box-sizing: border-box;
+}
+
+html {
+  scroll-behavior: smooth;
+}
+
+body {
+  margin: 0;
+  min-height: 100vh;
+  background:
+    radial-gradient(circle at top left, rgba(245, 196, 0, 0.22), transparent 28rem),
+    radial-gradient(circle at top right, rgba(224, 92, 26, 0.16), transparent 26rem),
+    linear-gradient(180deg, #fdfbf7 0%, #f5f8fd 100%);
+  color: var(--color-ink);
+  font-family: var(--font-body), sans-serif;
+}
+
+a {
+  color: inherit;
+  text-decoration: none;
+}
+
+button,
+input,
+select,
+textarea {
+  font: inherit;
+}
+
+img {
+  display: block;
+  max-width: 100%;
+}
+
+.page-shell {
+  width: min(1200px, calc(100% - 1.5rem));
+  margin-inline: auto;
+}
+
+.display-font {
+  font-family: var(--font-display), serif;
+}
+
+.card-shadow {
+  box-shadow: 0 24px 60px rgba(var(--shadow-rgb), 0.12);
+}
+
+.surface-card {
+  border: 1px solid var(--color-border);
+  background: rgba(255, 255, 255, 0.92);
+  backdrop-filter: blur(12px);
+}
+
+.site-button {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 999px;
+  padding: 0.85rem 1.35rem;
+  font-size: 0.92rem;
+  font-weight: 700;
+  transition: transform 160ms ease, background-color 160ms ease, color 160ms ease;
+}
+
+.site-button:hover {
+  transform: translateY(-1px);
+}
+
+.site-button-primary {
+  background: var(--color-orange);
+  color: white;
+}
+
+.site-button-secondary {
+  border: 1px solid var(--color-border);
+  background: white;
+  color: var(--color-blue);
+}
+
+.status-pill {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.4rem;
+  border-radius: 999px;
+  padding: 0.4rem 0.75rem;
+  font-size: 0.75rem;
+  font-weight: 700;
+}
+
+.status-pill-blue {
+  background: rgba(26, 60, 110, 0.12);
+  color: var(--color-blue);
+}
+
+.status-pill-orange {
+  background: rgba(224, 92, 26, 0.12);
+  color: var(--color-orange);
+}
+
+.status-pill-yellow {
+  background: rgba(245, 196, 0, 0.18);
+  color: #8a6500;
+}
+
+.ticker {
+  overflow: hidden;
+  white-space: nowrap;
+}
+
+.ticker-track {
+  display: inline-flex;
+  min-width: 100%;
+  gap: 2rem;
+  animation: ticker 18s linear infinite;
+}
+
+@keyframes ticker {
+  from {
+    transform: translateX(0);
+  }
+  to {
+    transform: translateX(-50%);
+  }
+}
+
+.dashboard-grid {
+  display: grid;
+  gap: 1.5rem;
+  grid-template-columns: 260px minmax(0, 1fr);
+}
+
+@media (max-width: 960px) {
+  .dashboard-grid {
+    grid-template-columns: 1fr;
+  }
+}
