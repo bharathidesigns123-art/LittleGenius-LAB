@@ -654,7 +654,10 @@ public static class StorefrontEndpoints
         Product product,
         bool includeLegacyFallback)
     {
-        var uploadedImages = product.Images
+        // Ensure Images collection is not null
+        var images = product.Images ?? [];
+        
+        var uploadedImages = images
             .OrderBy(image => image.SortOrder)
             .Select(image => new ProductImageResponse(
                 image.Id,
@@ -664,15 +667,23 @@ public static class StorefrontEndpoints
                 image.Height))
             .ToList();
 
-        if (uploadedImages.Count > 0 || !includeLegacyFallback || string.IsNullOrWhiteSpace(product.HeroImageUrl))
+        // If we have uploaded images, always return them
+        if (uploadedImages.Count > 0)
         {
             return uploadedImages;
         }
 
-        return
-        [
-            new ProductImageResponse(0, product.HeroImageUrl, 0, 0, 0)
-        ];
+        // If no uploaded images but legacy fallback is enabled and hero image exists, return it
+        if (includeLegacyFallback && !string.IsNullOrWhiteSpace(product.HeroImageUrl))
+        {
+            return
+            [
+                new ProductImageResponse(0, product.HeroImageUrl, 0, 0, 0)
+            ];
+        }
+
+        // No images available
+        return [];
     }
 
     private sealed record ProductImageResponse(int Id, string ImageUrl, int SortOrder, int Width, int Height);

@@ -143,7 +143,7 @@ public static class AdminEndpoints
                 return Results.NotFound(new { message = "Product not found." });
             }
 
-            var imageUrls = product.Images
+            var imageUrls = (product.Images ?? [])
                 .Select(image => image.ImageUrl)
                 .ToList();
             db.Products.Remove(product);
@@ -199,6 +199,9 @@ public static class AdminEndpoints
             {
                 return Results.BadRequest(new { message = "At least one image file is required." });
             }
+
+            // Ensure Images collection is initialized
+            product.Images ??= [];
 
             var nextSortOrder = product.Images.Count == 0
                 ? 0
@@ -261,6 +264,9 @@ public static class AdminEndpoints
                 return Results.NotFound(new { message = "Product not found." });
             }
 
+            // Ensure Images collection is initialized
+            product.Images ??= [];
+
             if (request.ImageIds.Count == 0 || request.ImageIds.Count != product.Images.Count)
             {
                 return Results.BadRequest(new { message = "Provide the full ordered image list." });
@@ -305,6 +311,9 @@ public static class AdminEndpoints
             {
                 return Results.NotFound(new { message = "Product not found." });
             }
+
+            // Ensure Images collection is initialized
+            product.Images ??= [];
 
             var image = product.Images.FirstOrDefault(item => item.Id == imageId);
             if (image is null)
@@ -513,7 +522,7 @@ public static class AdminEndpoints
             .FirstOrDefault() ?? product.HeroImageUrl;
 
     private static IReadOnlyList<ProductImageResponse> MapProductImages(Product product) =>
-        product.Images
+        (product.Images ?? [])
             .OrderBy(image => image.SortOrder)
             .Select(image => new ProductImageResponse(
                 image.Id,
