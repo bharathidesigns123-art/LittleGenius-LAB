@@ -4,18 +4,27 @@ using SixLabors.ImageSharp.Formats.Jpeg;
 using SixLabors.ImageSharp.Formats.Png;
 using SixLabors.ImageSharp.Formats.Webp;
 using SixLabors.ImageSharp.Processing;
+using Azure.Storage.Blobs;
+using Azure.Storage.Blobs.Models;
+using Azure.Storage.Sas;
+using Azure.Storage;
+using System.IO;
 
 namespace LittleGeniusLab.Api.Services;
 
-public sealed class FileStorageService(IWebHostEnvironment environment)
+public sealed class FileStorageService(IWebHostEnvironment environment, IConfiguration configuration)
 {
-    private static readonly string[] AllowedExtensions = [".jpg", ".jpeg", ".png", ".webp"];
+    private static readonly string[] AllowedExtensions = new[] { ".jpg", ".jpeg", ".png", ".webp" };
     private const int MaxUploadBytes = 8 * 1024 * 1024;
     private const int MaxProductImageDimension = 1400;
     private const int MinProductImageDimension = 400;
     private const double MinAspectRatio = 0.5;
     private const double MaxAspectRatio = 2.0;
     private readonly FileExtensionContentTypeProvider _contentTypeProvider = new();
+    private readonly string? _azureConnectionString = configuration["AzureBlob:ConnectionString"];
+    private readonly string _azureContainerName = configuration["AzureBlob:ContainerName"] ?? "uploads";
+    private readonly bool _azureContainerPublic = bool.TryParse(configuration["AzureBlob:ContainerPublic"], out var cp) ? cp : false;
+    private readonly int _sasExpiryHours = int.TryParse(configuration["AzureBlob:SasExpiryHours"], out var h) ? h : 24;
 
     public async Task<string> SaveImageAsync(IFormFile file, string folder, CancellationToken cancellationToken)
     {
@@ -25,17 +34,36 @@ public sealed class FileStorageService(IWebHostEnvironment environment)
             throw new InvalidOperationException("Only JPG, PNG, and WEBP files are allowed.");
         }
 
+        // If Azure configured, upload to blob storage
+        if (!string.IsNullOrWhiteSpace(_azureConnectionString))
+        {
+            var containerClient = new BlobContainerClient(_azureConnectionString, _azureContainerName);
+            await containerClient.CreateIfNotExistsAsync(_azureContainerPublic ? PublicAccessType.Blob : PublicAccessType.None, cancellationToken: cancellationToken);
+
+            var fileName = $"{Guid.NewGuid():N}{extension}";
+            var blobClient = containerClient.GetBlobClient(fileName);
+            await using var uploadStream = file.OpenReadStream();
+            var headers = new BlobHttpHeaders { ContentType = GetContentType(file.FileName) };
+            await blobClient.UploadAsync(uploadStream, headers, cancellationToken: cancellationToken);
+            if (_azureContainerPublic)
+            {
+                return blobClient.Uri.ToString();
+            }
+            var sasUrl = TryBuildSasUri(blobClient, _azureConnectionString, _azureContainerName, fileName, _sasExpiryHours);
+            return sasUrl ?? blobClient.Uri.ToString();
+        }
+
+        // Fallback to local filesystem
         var webRoot = environment.WebRootPath ?? Path.Combine(environment.ContentRootPath, "wwwroot");
         var targetDirectory = Path.Combine(webRoot, "uploads", folder);
         Directory.CreateDirectory(targetDirectory);
 
-        var fileName = $"{Guid.NewGuid():N}{extension}";
-        var absolutePath = Path.Combine(targetDirectory, fileName);
+        var localFileName = $"{Guid.NewGuid():N}{extension}";
+        var absolutePath = Path.Combine(targetDirectory, localFileName);
 
         await using var stream = File.Create(absolutePath);
         await file.CopyToAsync(stream, cancellationToken);
-
-        return $"/uploads/{folder}/{fileName}";
+        return $"/uploads/{folder}/{localFileName}";
     }
 
     public async Task<StoredProductImage> SaveProductImageAsync(
@@ -46,10 +74,6 @@ public sealed class FileStorageService(IWebHostEnvironment environment)
         ValidateProductImage(file);
 
         var extension = Path.GetExtension(file.FileName).ToLowerInvariant();
-        var webRoot = environment.WebRootPath ?? Path.Combine(environment.ContentRootPath, "wwwroot");
-        var targetDirectory = Path.Combine(webRoot, "uploads", folder);
-        Directory.CreateDirectory(targetDirectory);
-
         await using var inputStream = file.OpenReadStream();
         Image image;
         try
@@ -90,15 +114,76 @@ public sealed class FileStorageService(IWebHostEnvironment environment)
             }
 
             var fileName = $"{Guid.NewGuid():N}{extension}";
-            var absolutePath = Path.Combine(targetDirectory, fileName);
 
+            // If Azure configured, upload processed image to blob storage
+            if (!string.IsNullOrWhiteSpace(_azureConnectionString))
+            {
+                var containerClient = new BlobContainerClient(_azureConnectionString, _azureContainerName);
+                await containerClient.CreateIfNotExistsAsync(_azureContainerPublic ? PublicAccessType.Blob : PublicAccessType.None, cancellationToken: cancellationToken);
+
+                await using var ms = new MemoryStream();
+                await SaveProcessedImageAsync(image, ms, extension, cancellationToken);
+                ms.Position = 0;
+
+                var blobClient = containerClient.GetBlobClient(fileName);
+                var headers = new BlobHttpHeaders { ContentType = GetContentType(file.FileName) };
+                await blobClient.UploadAsync(ms, headers, cancellationToken: cancellationToken);
+
+                if (_azureContainerPublic)
+                {
+                    return new StoredProductImage(Url: blobClient.Uri.ToString(), Width: image.Width, Height: image.Height);
+                }
+n                var sasUrl = TryBuildSasUri(blobClient, _azureConnectionString, _azureContainerName, fileName, _sasExpiryHours);
+                return new StoredProductImage(Url: sasUrl ?? blobClient.Uri.ToString(), Width: image.Width, Height: image.Height);
+            }
+
+            // Fallback to local filesystem
+            var webRoot = environment.WebRootPath ?? Path.Combine(environment.ContentRootPath, "wwwroot");
+            var targetDirectory = Path.Combine(webRoot, "uploads", folder);
+            Directory.CreateDirectory(targetDirectory);
+
+            var absolutePath = Path.Combine(targetDirectory, fileName);
             await using var outputStream = File.Create(absolutePath);
             await SaveProcessedImageAsync(image, outputStream, extension, cancellationToken);
 
-            return new StoredProductImage(
-                Url: $"/uploads/{folder}/{fileName}",
-                Width: image.Width,
-                Height: image.Height);
+            return new StoredProductImage(Url: $"/uploads/{folder}/{fileName}", Width: image.Width, Height: image.Height);
+        }
+    }
+
+    private static string? TryBuildSasUri(BlobClient blobClient, string? connectionString, string containerName, string blobName, int expiryHours)
+    {
+        try
+        {
+            if (string.IsNullOrWhiteSpace(connectionString)) return null;
+            // Parse AccountName and AccountKey from connection string
+            string? accountName = null, accountKey = null;
+            var parts = connectionString.Split(';', StringSplitOptions.RemoveEmptyEntries);
+            foreach (var p in parts)
+            {
+                var kv = p.Split('=', 2);
+                if (kv.Length != 2) continue;
+                if (kv[0].Equals("AccountName", StringComparison.OrdinalIgnoreCase)) accountName = kv[1];
+                if (kv[0].Equals("AccountKey", StringComparison.OrdinalIgnoreCase)) accountKey = kv[1];
+            }
+
+            if (string.IsNullOrWhiteSpace(accountName) || string.IsNullOrWhiteSpace(accountKey)) return null;
+
+            var sharedKey = new StorageSharedKeyCredential(accountName, accountKey);
+            var sasBuilder = new BlobSasBuilder
+            {
+                BlobContainerName = containerName,
+                BlobName = blobName,
+                Resource = "b",
+                ExpiresOn = DateTimeOffset.UtcNow.AddHours(expiryHours)
+            };
+            sasBuilder.SetPermissions(BlobSasPermissions.Read);
+
+            var sasToken = sasBuilder.ToSasQueryParameters(sharedKey).ToString();
+            return string.IsNullOrEmpty(sasToken) ? null : $"{blobClient.Uri}?{sasToken}";
+        }
+        catch
+        {
+            return null;
         }
     }
 

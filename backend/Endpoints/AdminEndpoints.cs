@@ -3,6 +3,7 @@ using LittleGeniusLab.Api.Helpers;
 using LittleGeniusLab.Api.Models;
 using LittleGeniusLab.Api.Services;
 using Microsoft.EntityFrameworkCore;
+npublic sealed record RegisterProductImagesRequest(System.Collections.Generic.List<string> ImageUrls);
 
 namespace LittleGeniusLab.Api.Endpoints;
 
@@ -240,6 +241,50 @@ public static class AdminEndpoints
 
                 return Results.BadRequest(new { message = exception.Message });
             }
+
+            return Results.Created($"/api/admin/products/{product.Id}/images", new
+            {
+                images = MapProductImages(product),
+                heroImageUrl = GetPrimaryImageUrl(product),
+                imageCount = product.Images.Count
+            });
+        });
+
+        group.MapPost("/products/{id:int}/images/register", async (
+            int id,
+            RegisterProductImagesRequest request,
+            AppDbContext db,
+            CancellationToken cancellationToken) =>
+        {
+            var product = await db.Products
+                .Include(item => item.Images)
+                .FirstOrDefaultAsync(item => item.Id == id, cancellationToken);
+
+            if (product is null)
+            {
+                return Results.NotFound(new { message = "Product not found." });
+            }
+
+            product.Images ??= new System.Collections.Generic.List<ProductImage>();
+
+            var nextSortOrder = product.Images.Count == 0
+                ? 0
+                : product.Images.Max(image => image.SortOrder) + 1;
+
+            foreach (var imageUrl in request.ImageUrls)
+            {
+                product.Images.Add(new ProductImage
+                {
+                    ProductId = product.Id,
+                    ImageUrl = imageUrl,
+                    SortOrder = nextSortOrder++,
+                    Width = 0,
+                    Height = 0
+                });
+            }
+
+            product.UpdatedAtUtc = DateTime.UtcNow;
+            await db.SaveChangesAsync(cancellationToken);
 
             return Results.Created($"/api/admin/products/{product.Id}/images", new
             {

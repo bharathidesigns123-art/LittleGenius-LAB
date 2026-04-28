@@ -1,5 +1,6 @@
 "use client";
 
+import Image from "next/image";
 import Link from "next/link";
 import { useState } from "react";
 import { StorefrontShell } from "@/components/site/storefront-shell";
@@ -176,12 +177,13 @@ export default function CustomOrderPage() {
                         {form.photoUrl ? (
                           <>
                             <div className="w-20 h-20 rounded-xl overflow-hidden mb-3 border-2 border-white shadow-md">
-                                <img src={resolveAssetUrl(form.photoUrl)} alt="Preview" className="w-full h-full object-cover" />
+                                <Image src={resolveAssetUrl(form.photoUrl)} alt="Preview" width={320} height={320} className="w-full h-full object-cover" />
                             </div>
                             <p className="text-sm font-bold text-[var(--color-orange)]">Photo Uploaded!</p>
                             <button 
                               type="button" 
                               onClick={() => setForm(c => ({...c, photoUrl: ""}))}
+                              aria-label="Remove uploaded photo"
                               className="mt-2 text-xs text-red-500 underline"
                             >
                               Remove and change
@@ -195,6 +197,7 @@ export default function CustomOrderPage() {
                             <input
                               type="file"
                               accept=".jpg,.jpeg,.png,.webp"
+                              aria-label="Upload photo"
                               onChange={(event) => {
                                 const file = event.target.files?.[0];
                                 if (file) void handleUpload(file);
@@ -258,7 +261,7 @@ export default function CustomOrderPage() {
                       <span className="text-xs font-bold text-[var(--color-blue)] uppercase tracking-wide ml-2">Base Message (Optional) 💬</span>
                       <input
                         value={form.baseMessage}
-                        onChange={(event) => setForm(c => ({ ...current, baseMessage: event.target.value }))}
+                        onChange={(event) => setForm(c => ({ ...c, baseMessage: event.target.value }))}
                         placeholder="e.g. Happy Birthday Arjun!"
                         maxLength={30}
                         className="rounded-full border border-[var(--color-border)] px-6 py-3 outline-none focus:border-[var(--color-blue)]"
@@ -318,6 +321,7 @@ export default function CustomOrderPage() {
                 <div className="md:col-span-2 pt-6">
                   <button
                     disabled={submitting}
+                    aria-label="Send custom order request"
                     className="site-button site-button-primary w-full py-4 text-lg shadow-lg shadow-orange-500/20 disabled:opacity-60"
                   >
                     {submitting ? "Sending Request..." : "Send My Request — Get a Quote in 2 Hours"}

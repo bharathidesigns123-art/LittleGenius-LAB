@@ -80,12 +80,31 @@ export const browserApi = {
 
   getAccountOrders: (token: string) => apiRequest<OrderSummary[]>("/api/account/orders", { token }),
 
-  uploadImage: (formData: FormData) =>
-    apiRequest<{ url: string }>("/api/store/uploads/image", {
-      method: "POST",
-      body: formData,
-      isFormData: true,
-    }),
+  uploadImage: async (formData: FormData) => {
+    const file = formData.get("file") as File | null;
+    if (!file) throw new Error("No file provided");
+    const fileName = `${Date.now()}-${file.name.replace(/\s+/g, "-")}`;
+    const sasResp = await apiRequest<{ uploadUrl: string; readUrl?: string; blobUrl?: string }>(
+      "/api/store/uploads/sas",
+      { method: "POST", body: { fileName, contentType: file.type } },
+    );
+
+    const uploadRes = await fetch(sasResp.uploadUrl, {
+      method: "PUT",
+      headers: {
+        "x-ms-blob-type": "BlockBlob",
+        "Content-Type": file.type || "application/octet-stream",
+      },
+      body: file,
+    });
+
+    if (!uploadRes.ok) {
+      throw new Error("Upload failed");
+    }
+
+    return { url: sasResp.readUrl ?? sasResp.uploadUrl ?? sasResp.blobUrl };
+  },
+
 
   createCustomOrder: (
     token: string | null,
@@ -239,21 +258,48 @@ export const browserApi = {
       body: payload,
     }),
 
-  uploadProductImages: (token: string, productId: number, files: File[]) => {
-    const formData = new FormData();
+  uploadProductImages: async (token: string, productId: number, files: File[]) => {
+    if (!files || files.length === 0) return null;
+    if (!productId) throw new Error('productId required');
+
+    const uploadedUrls: string[] = [];
+
     for (const file of files) {
-      formData.append("files", file);
+      const fileName = `${Date.now()}-${file.name.replace(/\s+/g, "-")}`;
+      const sasResp = await apiRequest<{ uploadUrl: string; readUrl?: string; blobUrl?: string }>(
+        "/api/store/uploads/sas",
+        { method: "POST", token, body: { fileName, contentType: file.type } },
+      );
+
+      const uploadUrl = sasResp.uploadUrl || sasResp.blobUrl;
+      const readUrl = sasResp.readUrl || sasResp.blobUrl || uploadUrl;
+
+      const uploadRes = await fetch(uploadUrl, {
+        method: "PUT",
+        headers: {
+          "x-ms-blob-type": "BlockBlob",
+          "Content-Type": file.type || "application/octet-stream",
+        },
+        body: file,
+      });
+
+      if (!uploadRes.ok) {
+        const text = await uploadRes.text();
+        throw new Error(`Failed to upload file: ${uploadRes.status} ${text}`);
+      }
+
+      uploadedUrls.push(readUrl);
     }
 
+    // register uploaded URLs with admin API
     return apiRequest<{
       images: AdminProduct["images"];
       heroImageUrl: string;
       imageCount: number;
-    }>(`/api/admin/products/${productId}/images`, {
+    }>(`/api/admin/products/${productId}/images/register`, {
       method: "POST",
       token,
-      body: formData,
-      isFormData: true,
+      body: { imageUrls: uploadedUrls },
     });
   },
 
