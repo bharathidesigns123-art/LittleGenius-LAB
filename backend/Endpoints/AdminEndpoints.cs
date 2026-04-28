@@ -3,6 +3,7 @@ using LittleGeniusLab.Api.Helpers;
 using LittleGeniusLab.Api.Models;
 using LittleGeniusLab.Api.Services;
 using Microsoft.EntityFrameworkCore;
+npublic sealed record RegisterProductImagesRequest(System.Collections.Generic.List<string> ImageUrls);
 
 namespace LittleGeniusLab.Api.Endpoints;
 
@@ -143,7 +144,7 @@ public static class AdminEndpoints
                 return Results.NotFound(new { message = "Product not found." });
             }
 
-            var imageUrls = product.Images
+            var imageUrls = (product.Images ?? [])
                 .Select(image => image.ImageUrl)
                 .ToList();
             db.Products.Remove(product);
@@ -200,6 +201,9 @@ public static class AdminEndpoints
                 return Results.BadRequest(new { message = "At least one image file is required." });
             }
 
+            // Ensure Images collection is initialized
+            product.Images ??= [];
+
             var nextSortOrder = product.Images.Count == 0
                 ? 0
                 : product.Images.Max(image => image.SortOrder) + 1;
@@ -246,6 +250,50 @@ public static class AdminEndpoints
             });
         });
 
+        group.MapPost("/products/{id:int}/images/register", async (
+            int id,
+            RegisterProductImagesRequest request,
+            AppDbContext db,
+            CancellationToken cancellationToken) =>
+        {
+            var product = await db.Products
+                .Include(item => item.Images)
+                .FirstOrDefaultAsync(item => item.Id == id, cancellationToken);
+
+            if (product is null)
+            {
+                return Results.NotFound(new { message = "Product not found." });
+            }
+
+            product.Images ??= new System.Collections.Generic.List<ProductImage>();
+
+            var nextSortOrder = product.Images.Count == 0
+                ? 0
+                : product.Images.Max(image => image.SortOrder) + 1;
+
+            foreach (var imageUrl in request.ImageUrls)
+            {
+                product.Images.Add(new ProductImage
+                {
+                    ProductId = product.Id,
+                    ImageUrl = imageUrl,
+                    SortOrder = nextSortOrder++,
+                    Width = 0,
+                    Height = 0
+                });
+            }
+
+            product.UpdatedAtUtc = DateTime.UtcNow;
+            await db.SaveChangesAsync(cancellationToken);
+
+            return Results.Created($"/api/admin/products/{product.Id}/images", new
+            {
+                images = MapProductImages(product),
+                heroImageUrl = GetPrimaryImageUrl(product),
+                imageCount = product.Images.Count
+            });
+        });
+
         group.MapPut("/products/{id:int}/images/order", async (
             int id,
             UpdateProductImageOrderRequest request,
@@ -260,6 +308,9 @@ public static class AdminEndpoints
             {
                 return Results.NotFound(new { message = "Product not found." });
             }
+
+            // Ensure Images collection is initialized
+            product.Images ??= [];
 
             if (request.ImageIds.Count == 0 || request.ImageIds.Count != product.Images.Count)
             {
@@ -305,6 +356,9 @@ public static class AdminEndpoints
             {
                 return Results.NotFound(new { message = "Product not found." });
             }
+
+            // Ensure Images collection is initialized
+            product.Images ??= [];
 
             var image = product.Images.FirstOrDefault(item => item.Id == imageId);
             if (image is null)
@@ -513,7 +567,7 @@ public static class AdminEndpoints
             .FirstOrDefault() ?? product.HeroImageUrl;
 
     private static IReadOnlyList<ProductImageResponse> MapProductImages(Product product) =>
-        product.Images
+        (product.Images ?? [])
             .OrderBy(image => image.SortOrder)
             .Select(image => new ProductImageResponse(
                 image.Id,

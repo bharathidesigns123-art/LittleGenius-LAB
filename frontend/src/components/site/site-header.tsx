@@ -9,7 +9,8 @@ import { useCart } from "@/components/providers/cart-provider";
 const navItems = [
   { href: "/shop", label: "Shop" },
   { href: "/custom-order", label: "Custom Orders" },
-  { href: "/track-order", label: "Track Order" },
+  { href: "/gallery", label: "Gallery" },
+  { href: "/how-it-works", label: "How It Works" },
 ];
 
 const emptySubscribe = () => () => undefined;
@@ -21,31 +22,31 @@ export function SiteHeader() {
   const { user, isAdmin, logout, loading } = useAuth();
 
   return (
-    <header className="sticky top-0 z-40 border-b border-[var(--color-border)] bg-[rgba(253,251,247,0.9)] backdrop-blur">
+    <header className="sticky top-0 z-40 border-b border-border bg-surface/90 backdrop-blur">
       <div className="page-shell flex flex-col gap-4 py-4 md:flex-row md:items-center md:justify-between">
         <div className="flex items-center justify-between gap-3">
           <Link href="/" className="flex flex-col">
-            <span className="display-font text-2xl font-semibold text-[var(--color-blue)]">
+            <span className="display-font text-2xl font-semibold text-primary">
               LittleGenius LAB
             </span>
-            <span className="text-xs font-semibold uppercase tracking-[0.24em] text-[var(--color-ink-soft)]">
+            <span className="text-xs font-semibold uppercase tracking-[0.24em] text-ink-soft">
               Design. Print. Play.
             </span>
           </Link>
           <Link
             href="/cart"
-            className="rounded-full border border-[var(--color-border)] bg-white px-4 py-2 text-sm font-bold text-[var(--color-blue)] md:hidden"
+            className="rounded-full border border-border bg-white px-4 py-2 text-sm font-bold text-primary md:hidden"
           >
             Cart ({isClient ? itemCount : 0})
           </Link>
         </div>
 
-        <nav className="flex flex-wrap items-center gap-3 text-sm font-semibold text-[var(--color-ink-soft)]">
+        <nav className="flex flex-wrap items-center gap-3 text-sm font-semibold text-ink-soft">
           {navItems.map((item) => (
             <Link
               key={item.href}
               href={item.href}
-              className={pathname === item.href ? "text-[var(--color-blue)]" : undefined}
+              className={pathname === item.href ? 'text-primary' : 'text-ink-soft'}
             >
               {item.label}
             </Link>
@@ -56,7 +57,7 @@ export function SiteHeader() {
         <div className="flex flex-wrap items-center gap-3">
           <Link
             href="/cart"
-            className="hidden rounded-full border border-[var(--color-border)] bg-white px-4 py-2 text-sm font-bold text-[var(--color-blue)] md:inline-flex"
+            className="hidden rounded-full border border-border bg-white px-4 py-2 text-sm font-bold text-primary md:inline-flex"
           >
             Cart ({isClient ? itemCount : 0})
           </Link>
@@ -66,7 +67,7 @@ export function SiteHeader() {
             <>
               <Link
                 href="/account"
-                className="rounded-full bg-[var(--color-blue)] px-4 py-2 text-sm font-bold text-white"
+                className="rounded-full bg-primary px-4 py-2 text-sm font-bold text-white"
               >
                 {user.fullName.split(" ")[0]}
               </Link>

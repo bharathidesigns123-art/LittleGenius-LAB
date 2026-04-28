@@ -59,11 +59,21 @@ builder.Services.AddCors(options =>
 {
     options.AddPolicy("frontend", policy =>
     {
+        var frontendUrl = builder.Configuration["FRONTEND_URL"];
+        var origins = new List<string>
+        {
+            "http://localhost:3000",
+            "http://127.0.0.1:3000",
+            "https://localhost:3000"
+        };
+
+        if (!string.IsNullOrWhiteSpace(frontendUrl))
+        {
+            origins.Add(frontendUrl);
+        }
+
         policy
-            .WithOrigins(
-                "http://localhost:3000",
-                "http://127.0.0.1:3000",
-                "https://localhost:3000")
+            .WithOrigins(origins.ToArray())
             .AllowAnyHeader()
             .AllowAnyMethod();
     });
@@ -119,7 +129,10 @@ var app = builder.Build();
 
 var webRoot = app.Environment.WebRootPath ?? Path.Combine(app.Environment.ContentRootPath, "wwwroot");
 var uploadsRoot = Path.Combine(webRoot, "uploads");
+var dataRoot = Path.Combine(app.Environment.ContentRootPath, "data");
+
 Directory.CreateDirectory(uploadsRoot);
+Directory.CreateDirectory(dataRoot);
 
 using (var scope = app.Services.CreateScope())
 {

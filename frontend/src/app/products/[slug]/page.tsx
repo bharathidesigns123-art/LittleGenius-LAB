@@ -45,21 +45,21 @@ export default async function ProductPage({ params }: ProductPageProps) {
           <div className="space-y-5">
             <span className="status-pill status-pill-yellow">{product.badge}</span>
             <div>
-              <h1 className="display-font text-5xl font-semibold leading-tight text-[var(--color-blue)]">
+              <h1 className="display-font text-5xl font-semibold leading-tight text-primary">
                 {product.name}
               </h1>
-              <p className="mt-3 text-sm font-semibold uppercase tracking-[0.18em] text-[var(--color-orange)]">
+              <p className="mt-3 text-sm font-semibold uppercase tracking-[0.18em] text-secondary">
                 {(product.reviewCount ?? 0) > 0
                   ? `${product.averageRating?.toFixed(1) ?? "0.0"}/5 rating from ${product.reviewCount} review${product.reviewCount === 1 ? "" : "s"}`
                   : "No ratings yet"}
               </p>
-              <p className="mt-4 text-base leading-8 text-[var(--color-ink-soft)]">
+              <p className="mt-4 text-base leading-8 text-ink-soft">
                 {product.shortDescription}
               </p>
             </div>
             <div className="surface-card card-shadow rounded-[2rem] p-6">
               <div className="flex items-center justify-between gap-3">
-                <span className="text-3xl font-bold text-[var(--color-blue)]">
+                <span className="text-3xl font-bold text-primary">
                   Rs. {product.priceInr}
                 </span>
                 <span className="status-pill status-pill-blue">{product.shipsIn}</span>
@@ -109,7 +109,7 @@ export default async function ProductPage({ params }: ProductPageProps) {
               </div>
             </div>
             <div className="surface-card rounded-[2rem] p-6">
-              <h2 className="text-2xl font-semibold text-[var(--color-blue)]">The Details</h2>
+              <h2 className="text-2xl font-semibold text-primary">The Details</h2>
               <p className="mt-4 text-sm leading-8 text-[var(--color-ink-soft)]">
                 {product.fullDescription}
               </p>
@@ -134,14 +134,14 @@ export default async function ProductPage({ params }: ProductPageProps) {
             <Link
               key={item.slug}
               href={`/products/${item.slug}`}
-              className="surface-card rounded-[2rem] p-4"
+              className="bg-card rounded-2xl p-4 shadow-card-lg"
             >
               <Image
                 src={resolveAssetUrl(item.heroImageUrl)}
                 alt={item.name}
                 width={900}
                 height={900}
-                className="h-52 w-full rounded-[1.6rem] object-cover"
+                className="h-52 w-full rounded-xl object-cover"
               />
               <h3 className="mt-4 text-lg font-semibold text-[var(--color-blue)]">{item.name}</h3>
               <p className="mt-2 text-sm font-semibold text-[var(--color-ink-soft)]">Rs. {item.priceInr}</p>

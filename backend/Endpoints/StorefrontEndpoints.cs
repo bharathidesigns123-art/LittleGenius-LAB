@@ -4,6 +4,8 @@ using LittleGeniusLab.Api.Helpers;
 using LittleGeniusLab.Api.Models;
 using LittleGeniusLab.Api.Services;
 using Microsoft.EntityFrameworkCore;
+using Azure.Storage.Sas;
+using Azure.Storage;
 
 namespace LittleGeniusLab.Api.Endpoints;
 
@@ -310,6 +312,74 @@ public static class StorefrontEndpoints
 
             var url = await storage.SaveImageAsync(file, folder, cancellationToken);
             return Results.Ok(new { url });
+        });
+
+        group.MapPost("/uploads/sas", async (HttpRequest request, IConfiguration configuration) =>
+        {
+            var body = await request.ReadFromJsonAsync<JsonElement?>();
+            if (body is null || !body.Value.TryGetProperty("fileName", out var fileNameEl))
+            {
+                return Results.BadRequest(new { message = "fileName is required in JSON body" });
+            }
+
+            var fileName = fileNameEl.GetString() ?? $"{Guid.NewGuid():N}";
+            var contentType = body.Value.TryGetProperty("contentType", out var ct) ? ct.GetString() : null;
+
+            var connectionString = configuration["AzureBlob:ConnectionString"];
+            if (string.IsNullOrWhiteSpace(connectionString))
+            {
+                return Results.BadRequest(new { message = "Azure Blob Storage is not configured." });
+            }
+
+            var containerName = configuration["AzureBlob:ContainerName"] ?? "uploads";
+            var sasExpiryHours = int.TryParse(configuration["AzureBlob:SasExpiryHours"], out var h) ? h : 24;
+
+            var containerClient = new BlobContainerClient(connectionString, containerName);
+            await containerClient.CreateIfNotExistsAsync(PublicAccessType.None);
+            var blobClient = containerClient.GetBlobClient(fileName);
+
+            // build shared key credential
+            string? accountName = null; string? accountKey = null;
+            foreach (var p in connectionString.Split(';', StringSplitOptions.RemoveEmptyEntries))
+            {
+                var kv = p.Split('=', 2);
+                if (kv.Length != 2) continue;
+                if (kv[0].Equals("AccountName", StringComparison.OrdinalIgnoreCase)) accountName = kv[1];
+                if (kv[0].Equals("AccountKey", StringComparison.OrdinalIgnoreCase)) accountKey = kv[1];
+            }
+
+            if (string.IsNullOrWhiteSpace(accountName) || string.IsNullOrWhiteSpace(accountKey))
+            {
+                return Results.BadRequest(new { message = "Storage account key missing - cannot create SAS." });
+            }
+
+            var sharedKey = new StorageSharedKeyCredential(accountName, accountKey);
+
+            // Write SAS (short-lived) for upload
+            var writeSasBuilder = new BlobSasBuilder
+            {
+                BlobContainerName = containerName,
+                BlobName = fileName,
+                Resource = "b",
+                ExpiresOn = DateTimeOffset.UtcNow.AddMinutes(60)
+            };
+            writeSasBuilder.SetPermissions(BlobSasPermissions.Write | BlobSasPermissions.Create);
+            var writeSas = writeSasBuilder.ToSasQueryParameters(sharedKey).ToString();
+            var uploadUrl = $"{blobClient.Uri}?{writeSas}";
+
+            // Read SAS (for preview) with configured expiry
+            var readSasBuilder = new BlobSasBuilder
+            {
+                BlobContainerName = containerName,
+                BlobName = fileName,
+                Resource = "b",
+                ExpiresOn = DateTimeOffset.UtcNow.AddHours(sasExpiryHours)
+            };
+            readSasBuilder.SetPermissions(BlobSasPermissions.Read);
+            var readSas = readSasBuilder.ToSasQueryParameters(sharedKey).ToString();
+            var readUrl = $"{blobClient.Uri}?{readSas}";
+
+            return Results.Ok(new { uploadUrl, readUrl, blobUrl = blobClient.Uri.ToString() });
         });
 
         group.MapPost("/custom-orders", async (
@@ -654,7 +724,10 @@ public static class StorefrontEndpoints
         Product product,
         bool includeLegacyFallback)
     {
-        var uploadedImages = product.Images
+        // Ensure Images collection is not null
+        var images = product.Images ?? [];
+        
+        var uploadedImages = images
             .OrderBy(image => image.SortOrder)
             .Select(image => new ProductImageResponse(
                 image.Id,
@@ -664,15 +737,23 @@ public static class StorefrontEndpoints
                 image.Height))
             .ToList();
 
-        if (uploadedImages.Count > 0 || !includeLegacyFallback || string.IsNullOrWhiteSpace(product.HeroImageUrl))
+        // If we have uploaded images, always return them
+        if (uploadedImages.Count > 0)
         {
             return uploadedImages;
         }
 
-        return
-        [
-            new ProductImageResponse(0, product.HeroImageUrl, 0, 0, 0)
-        ];
+        // If no uploaded images but legacy fallback is enabled and hero image exists, return it
+        if (includeLegacyFallback && !string.IsNullOrWhiteSpace(product.HeroImageUrl))
+        {
+            return
+            [
+                new ProductImageResponse(0, product.HeroImageUrl, 0, 0, 0)
+            ];
+        }
+
+        // No images available
+        return [];
     }
 
     private sealed record ProductImageResponse(int Id, string ImageUrl, int SortOrder, int Width, int Height);
