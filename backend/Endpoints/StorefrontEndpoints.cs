@@ -316,72 +316,30 @@ public static class StorefrontEndpoints
             return Results.Ok(new { url });
         });
 
-        group.MapPost("/uploads/sas", async (HttpRequest request, IConfiguration configuration) =>
+        group.MapPost("/uploads/sas", async (HttpRequest request, FileStorageService storage) =>
         {
-            var body = await request.ReadFromJsonAsync<JsonElement?>();
-            if (body is null || !body.Value.TryGetProperty("fileName", out var fileNameEl))
+            try
             {
-                return Results.BadRequest(new { message = "fileName is required in JSON body" });
+                var body = await request.ReadFromJsonAsync<JsonElement?>();
+                if (body is null || !body.Value.TryGetProperty("fileName", out var fileNameEl))
+                {
+                    return Results.BadRequest(new { message = "fileName is required in JSON body" });
+                }
+
+                var fileName = fileNameEl.GetString() ?? $"{Guid.NewGuid():N}";
+                var contentType = body.Value.TryGetProperty("contentType", out var ct) ? ct.GetString() : null;
+
+                var result = await storage.GetUploadSasAsync(fileName, contentType);
+                return Results.Ok(result);
             }
-
-            var fileName = fileNameEl.GetString() ?? $"{Guid.NewGuid():N}";
-            var contentType = body.Value.TryGetProperty("contentType", out var ct) ? ct.GetString() : null;
-
-            var connectionString = configuration["AzureBlob:ConnectionString"];
-            if (string.IsNullOrWhiteSpace(connectionString))
+            catch (InvalidOperationException ex)
             {
-                return Results.BadRequest(new { message = "Azure Blob Storage is not configured." });
+                return Results.BadRequest(new { message = ex.Message });
             }
-
-            var containerName = configuration["AzureBlob:ContainerName"] ?? "uploads";
-            var sasExpiryHours = int.TryParse(configuration["AzureBlob:SasExpiryHours"], out var h) ? h : 24;
-
-            var containerClient = new BlobContainerClient(connectionString, containerName);
-            await containerClient.CreateIfNotExistsAsync(PublicAccessType.None);
-            var blobClient = containerClient.GetBlobClient(fileName);
-
-            // build shared key credential
-            string? accountName = null; string? accountKey = null;
-            foreach (var p in connectionString.Split(';', StringSplitOptions.RemoveEmptyEntries))
+            catch (Exception ex)
             {
-                var kv = p.Split('=', 2);
-                if (kv.Length != 2) continue;
-                if (kv[0].Equals("AccountName", StringComparison.OrdinalIgnoreCase)) accountName = kv[1];
-                if (kv[0].Equals("AccountKey", StringComparison.OrdinalIgnoreCase)) accountKey = kv[1];
+                return Results.Problem(detail: ex.Message, title: "Failed to generate SAS token");
             }
-
-            if (string.IsNullOrWhiteSpace(accountName) || string.IsNullOrWhiteSpace(accountKey))
-            {
-                return Results.BadRequest(new { message = "Storage account key missing - cannot create SAS." });
-            }
-
-            var sharedKey = new StorageSharedKeyCredential(accountName, accountKey);
-
-            // Write SAS (short-lived) for upload
-            var writeSasBuilder = new BlobSasBuilder
-            {
-                BlobContainerName = containerName,
-                BlobName = fileName,
-                Resource = "b",
-                ExpiresOn = DateTimeOffset.UtcNow.AddMinutes(60)
-            };
-            writeSasBuilder.SetPermissions(BlobSasPermissions.Write | BlobSasPermissions.Create);
-            var writeSas = writeSasBuilder.ToSasQueryParameters(sharedKey).ToString();
-            var uploadUrl = $"{blobClient.Uri}?{writeSas}";
-
-            // Read SAS (for preview) with configured expiry
-            var readSasBuilder = new BlobSasBuilder
-            {
-                BlobContainerName = containerName,
-                BlobName = fileName,
-                Resource = "b",
-                ExpiresOn = DateTimeOffset.UtcNow.AddHours(sasExpiryHours)
-            };
-            readSasBuilder.SetPermissions(BlobSasPermissions.Read);
-            var readSas = readSasBuilder.ToSasQueryParameters(sharedKey).ToString();
-            var readUrl = $"{blobClient.Uri}?{readSas}";
-
-            return Results.Ok(new { uploadUrl, readUrl, blobUrl = blobClient.Uri.ToString() });
         });
 
         group.MapPost("/custom-orders", async (

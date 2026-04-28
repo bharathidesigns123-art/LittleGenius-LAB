@@ -152,35 +152,92 @@ public sealed class FileStorageService(IWebHostEnvironment environment, IConfigu
         }
     }
 
-    private static string? TryBuildSasUri(BlobClient blobClient, string? connectionString, string containerName, string blobName, int expiryHours)
+    public async Task<BlobSasResult> GetUploadSasAsync(string fileName, string? contentType)
+    {
+        if (string.IsNullOrWhiteSpace(_azureConnectionString))
+            throw new InvalidOperationException("Azure Blob Storage is not configured.");
+
+        var credential = GetSharedKeyCredential()
+            ?? throw new InvalidOperationException("Storage account key missing - cannot create SAS.");
+
+        var containerClient = new BlobContainerClient(_azureConnectionString, _azureContainerName);
+        await containerClient.CreateIfNotExistsAsync(_azureContainerPublic ? PublicAccessType.Blob : PublicAccessType.None);
+        var blobClient = containerClient.GetBlobClient(fileName);
+
+        var now = DateTimeOffset.UtcNow;
+
+        // Write SAS (for upload)
+        var writeSasBuilder = new BlobSasBuilder
+        {
+            BlobContainerName = _azureContainerName,
+            BlobName = fileName,
+            Resource = "b",
+            StartsOn = now.AddMinutes(-5), // Buffer for time skew
+            ExpiresOn = now.AddMinutes(60)
+        };
+        writeSasBuilder.SetPermissions(BlobSasPermissions.Write | BlobSasPermissions.Create);
+        if (!string.IsNullOrWhiteSpace(contentType))
+        {
+            writeSasBuilder.ContentType = contentType;
+        }
+
+        var uploadSas = writeSasBuilder.ToSasQueryParameters(credential).ToString();
+        var uploadUrl = $"{blobClient.Uri}?{uploadSas}";
+
+        // Read SAS (for preview)
+        var readSasBuilder = new BlobSasBuilder
+        {
+            BlobContainerName = _azureContainerName,
+            BlobName = fileName,
+            Resource = "b",
+            StartsOn = now.AddMinutes(-5),
+            ExpiresOn = now.AddHours(_sasExpiryHours)
+        };
+        readSasBuilder.SetPermissions(BlobSasPermissions.Read);
+
+        var readSas = readSasBuilder.ToSasQueryParameters(credential).ToString();
+        var readUrl = $"{blobClient.Uri}?{readSas}";
+
+        return new BlobSasResult(uploadUrl, readUrl, blobClient.Uri.ToString());
+    }
+
+    private StorageSharedKeyCredential? GetSharedKeyCredential()
+    {
+        if (string.IsNullOrWhiteSpace(_azureConnectionString)) return null;
+
+        string? accountName = null, accountKey = null;
+        var parts = _azureConnectionString.Split(';', StringSplitOptions.RemoveEmptyEntries);
+        foreach (var p in parts)
+        {
+            var kv = p.Split('=', 2);
+            if (kv.Length != 2) continue;
+            if (kv[0].Equals("AccountName", StringComparison.OrdinalIgnoreCase)) accountName = kv[1];
+            if (kv[0].Equals("AccountKey", StringComparison.OrdinalIgnoreCase)) accountKey = kv[1];
+        }
+
+        if (string.IsNullOrWhiteSpace(accountName) || string.IsNullOrWhiteSpace(accountKey)) return null;
+
+        return new StorageSharedKeyCredential(accountName, accountKey);
+    }
+
+    private string? TryBuildSasUri(BlobClient blobClient, string? connectionString, string containerName, string blobName, int expiryHours)
     {
         try
         {
-            if (string.IsNullOrWhiteSpace(connectionString)) return null;
-            // Parse AccountName and AccountKey from connection string
-            string? accountName = null, accountKey = null;
-            var parts = connectionString.Split(';', StringSplitOptions.RemoveEmptyEntries);
-            foreach (var p in parts)
-            {
-                var kv = p.Split('=', 2);
-                if (kv.Length != 2) continue;
-                if (kv[0].Equals("AccountName", StringComparison.OrdinalIgnoreCase)) accountName = kv[1];
-                if (kv[0].Equals("AccountKey", StringComparison.OrdinalIgnoreCase)) accountKey = kv[1];
-            }
+            var credential = GetSharedKeyCredential();
+            if (credential == null) return null;
 
-            if (string.IsNullOrWhiteSpace(accountName) || string.IsNullOrWhiteSpace(accountKey)) return null;
-
-            var sharedKey = new StorageSharedKeyCredential(accountName, accountKey);
             var sasBuilder = new BlobSasBuilder
             {
                 BlobContainerName = containerName,
                 BlobName = blobName,
                 Resource = "b",
+                StartsOn = DateTimeOffset.UtcNow.AddMinutes(-5),
                 ExpiresOn = DateTimeOffset.UtcNow.AddHours(expiryHours)
             };
             sasBuilder.SetPermissions(BlobSasPermissions.Read);
 
-            var sasToken = sasBuilder.ToSasQueryParameters(sharedKey).ToString();
+            var sasToken = sasBuilder.ToSasQueryParameters(credential).ToString();
             return string.IsNullOrEmpty(sasToken) ? null : $"{blobClient.Uri}?{sasToken}";
         }
         catch
@@ -256,3 +313,4 @@ public sealed class FileStorageService(IWebHostEnvironment environment, IConfigu
 }
 
 public sealed record StoredProductImage(string Url, int Width, int Height);
+public sealed record BlobSasResult(string UploadUrl, string ReadUrl, string BlobUrl);
