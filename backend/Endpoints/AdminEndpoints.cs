@@ -97,6 +97,12 @@ public static class AdminEndpoints
 
         group.MapPost("/products", async (CreateOrUpdateProductRequest request, AppDbContext db) =>
         {
+            var category = await db.Categories.FirstOrDefaultAsync(c => c.Id == request.CategoryId);
+            if (category is null)
+            {
+                return Results.BadRequest(new { message = $"Category with ID {request.CategoryId} not found." });
+            }
+
             var product = request.ToEntity();
             db.Products.Add(product);
             await db.SaveChangesAsync();
@@ -112,6 +118,12 @@ public static class AdminEndpoints
 
         group.MapPut("/products/{id:int}", async (int id, CreateOrUpdateProductRequest request, AppDbContext db) =>
         {
+            var category = await db.Categories.FirstOrDefaultAsync(c => c.Id == request.CategoryId);
+            if (category is null)
+            {
+                return Results.BadRequest(new { message = $"Category with ID {request.CategoryId} not found." });
+            }
+
             var product = await db.Products.FirstOrDefaultAsync(item => item.Id == id);
             if (product is null)
             {
