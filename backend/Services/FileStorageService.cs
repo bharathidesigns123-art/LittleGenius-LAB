@@ -21,7 +21,10 @@ public sealed class FileStorageService(IWebHostEnvironment environment, IConfigu
     private const double MinAspectRatio = 0.5;
     private const double MaxAspectRatio = 2.0;
     private readonly FileExtensionContentTypeProvider _contentTypeProvider = new();
-    private readonly string? _azureConnectionString = configuration["AzureBlob:ConnectionString"];
+    private readonly string? _azureConnectionString = 
+        Environment.GetEnvironmentVariable("AzureBlob__ConnectionString") ?? 
+        Environment.GetEnvironmentVariable("Azure__Blob__ConnectionString") ??
+        (configuration["AzureBlob:ConnectionString"]?.StartsWith("${") == true ? null : configuration["AzureBlob:ConnectionString"]);
     private readonly string _azureContainerName = configuration["AzureBlob:ContainerName"] ?? "uploads";
     private readonly bool _azureContainerPublic = bool.TryParse(configuration["AzureBlob:ContainerPublic"], out var cp) ? cp : false;
     private readonly int _sasExpiryHours = int.TryParse(configuration["AzureBlob:SasExpiryHours"], out var h) ? h : 24;
