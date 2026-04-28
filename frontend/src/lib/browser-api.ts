@@ -89,7 +89,12 @@ export const browserApi = {
       { method: "POST", body: { fileName, contentType: file.type } },
     );
 
-    const uploadRes = await fetch(sasResp.uploadUrl, {
+    const uploadUrl = sasResp.uploadUrl || sasResp.blobUrl;
+    if (!uploadUrl) {
+      throw new Error("Failed to get upload URL");
+    }
+
+    const uploadRes = await fetch(uploadUrl, {
       method: "PUT",
       headers: {
         "x-ms-blob-type": "BlockBlob",
@@ -272,6 +277,9 @@ export const browserApi = {
       );
 
       const uploadUrl = sasResp.uploadUrl || sasResp.blobUrl;
+      if (!uploadUrl) {
+        throw new Error("Failed to get upload URL");
+      }
       const readUrl = sasResp.readUrl || sasResp.blobUrl || uploadUrl;
 
       const uploadRes = await fetch(uploadUrl, {
