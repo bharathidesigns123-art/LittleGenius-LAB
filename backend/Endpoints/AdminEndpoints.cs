@@ -3,9 +3,10 @@ using LittleGeniusLab.Api.Helpers;
 using LittleGeniusLab.Api.Models;
 using LittleGeniusLab.Api.Services;
 using Microsoft.EntityFrameworkCore;
-npublic sealed record RegisterProductImagesRequest(System.Collections.Generic.List<string> ImageUrls);
 
 namespace LittleGeniusLab.Api.Endpoints;
+
+public sealed record RegisterProductImagesRequest(System.Collections.Generic.List<string> ImageUrls);
 
 public static class AdminEndpoints
 {

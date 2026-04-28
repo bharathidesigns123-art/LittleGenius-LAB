@@ -63,7 +63,8 @@ public sealed class FileStorageService(IWebHostEnvironment environment, IConfigu
 
         await using var stream = File.Create(absolutePath);
         await file.CopyToAsync(stream, cancellationToken);
-        return $"/uploads/{folder}/{localFileName}";
+
+        return $"/uploads/{folder}/{localFileName}";
     }
 
     public async Task<StoredProductImage> SaveProductImageAsync(
@@ -133,7 +134,8 @@ public sealed class FileStorageService(IWebHostEnvironment environment, IConfigu
                 {
                     return new StoredProductImage(Url: blobClient.Uri.ToString(), Width: image.Width, Height: image.Height);
                 }
-n                var sasUrl = TryBuildSasUri(blobClient, _azureConnectionString, _azureContainerName, fileName, _sasExpiryHours);
+
+                var sasUrl = TryBuildSasUri(blobClient, _azureConnectionString, _azureContainerName, fileName, _sasExpiryHours);
                 return new StoredProductImage(Url: sasUrl ?? blobClient.Uri.ToString(), Width: image.Width, Height: image.Height);
             }
 
