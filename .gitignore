@@ -18,6 +18,7 @@
 *.db-shm
 *.db-wal
 *.log
+backend/appsettings.Local.json
 
 # Node.js
 node_modules/
