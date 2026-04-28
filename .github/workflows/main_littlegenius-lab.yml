@@ -1,3 +1,6 @@
+# Docs for the Azure Web Apps Deploy action: https://github.com/Azure/webapps-deploy
+# More GitHub Actions for Azure: https://github.com/Azure/actions
+
 name: Build and deploy ASP.Net Core app to Azure Web App - LittleGenius-LAB
 
 on:
@@ -6,12 +9,11 @@ on:
       - main
   workflow_dispatch:
 
-env:
-  PROJECT_PATH: './backend
-
 jobs:
   build:
     runs-on: windows-latest
+    permissions:
+      contents: read #This is required for actions/checkout
 
     steps:
       - uses: actions/checkout@v4
@@ -23,38 +25,41 @@ jobs:
 
       - name: Build with dotnet
         run: dotnet build --configuration Release
-        working-directory: ${{ env.PROJECT_PATH }}
 
       - name: dotnet publish
-        run: dotnet publish -c Release -o publish
-        working-directory: ${{ env.PROJECT_PATH }}
+        run: dotnet publish -c Release -o "${{env.DOTNET_ROOT}}/myapp"
 
-      - name: Upload artifact
+      - name: Upload artifact for deployment job
         uses: actions/upload-artifact@v4
         with:
           name: .net-app
-          path: ${{ env.PROJECT_PATH }}/publish
+          path: ${{env.DOTNET_ROOT}}/myapp
 
   deploy:
     runs-on: windows-latest
     needs: build
+    permissions:
+      id-token: write #This is required for requesting the JWT
+      contents: read #This is required for actions/checkout
 
     steps:
-      - name: Download artifact
+      - name: Download artifact from build job
         uses: actions/download-artifact@v4
         with:
           name: .net-app
-
+      
       - name: Login to Azure
         uses: azure/login@v2
         with:
-          client-id: ${{ secrets.AZUREAPPSERVICE_CLIENTID_AEFEE1D147B24C02A75DAE2E5929BC2E }}
-          tenant-id: ${{ secrets.AZUREAPPSERVICE_TENANTID_E583A9B244F4427E99AB829CA2F96D83 }}
-          subscription-id: ${{ secrets.AZUREAPPSERVICE_SUBSCRIPTIONID_C56197229FB04725977984D3B28ECA8D }}
+          client-id: ${{ secrets.AZUREAPPSERVICE_CLIENTID_F1CF1C9F7543498ABE599A7B86C7AB4C }}
+          tenant-id: ${{ secrets.AZUREAPPSERVICE_TENANTID_CA0D3670FA8B49F6854F3A69091853CF }}
+          subscription-id: ${{ secrets.AZUREAPPSERVICE_SUBSCRIPTIONID_640D47CB77CC483FAE0B2B3BC695D4C3 }}
 
       - name: Deploy to Azure Web App
+        id: deploy-to-webapp
         uses: azure/webapps-deploy@v3
         with:
           app-name: 'LittleGenius-LAB'
           slot-name: 'Production'
           package: .
+          
