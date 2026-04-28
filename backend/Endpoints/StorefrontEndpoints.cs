@@ -7,6 +7,7 @@ using Microsoft.EntityFrameworkCore;
 using Azure.Storage.Sas;
 using Azure.Storage;
 using Azure.Storage.Blobs;
+using Azure.Storage.Blobs.Models;
 
 namespace LittleGeniusLab.Api.Endpoints;
 
