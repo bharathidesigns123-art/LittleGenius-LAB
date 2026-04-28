@@ -65,7 +65,7 @@ builder.Services.AddCors(options =>
             "http://localhost:3000",
             "http://127.0.0.1:3000",
             "https://localhost:3000",
-            "https://little-genius-lab.vercel.app"
+            "https://little-genius-lab.vercel.app" 
         };
 
         if (!string.IsNullOrWhiteSpace(frontendUrl))
