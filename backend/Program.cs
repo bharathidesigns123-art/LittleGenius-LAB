@@ -102,18 +102,9 @@ builder.Services.AddCors(options =>
 });
 
 var sqlServerConnection = builder.Configuration.GetConnectionString("SqlServer");
-var sqliteConnection = builder.Configuration.GetConnectionString("Sqlite");
 
-if (!string.IsNullOrWhiteSpace(sqlServerConnection))
-{
-    builder.Services.AddDbContext<AppDbContext>(options =>
-        options.UseSqlServer(sqlServerConnection));
-}
-else
-{
-    builder.Services.AddDbContext<AppDbContext>(options =>
-        options.UseSqlite(sqliteConnection));
-}
+builder.Services.AddDbContext<AppDbContext>(options =>
+    options.UseSqlServer(sqlServerConnection));
 
 var jwtOptions = builder.Configuration
     .GetSection(JwtOptions.SectionName)
