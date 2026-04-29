@@ -398,7 +398,9 @@ public static class AdminEndpoints
             int id,
             UpdateOrderStatusRequest request,
             AppDbContext db,
-            IConfiguration configuration) =>
+            IConfiguration configuration,
+            ShiprocketService shiprocketService,
+            WhatsAppNotificationService whatsappService) =>
         {
             var order = await db.Orders
                 .Include(item => item.Items)
@@ -414,11 +416,33 @@ public static class AdminEndpoints
                 return Results.BadRequest(new { message = "Order status is invalid." });
             }
 
+            var previousStatus = order.Status;
             order.Status = nextStatus;
             order.TrackingNumber = request.TrackingNumber?.Trim();
             order.PackageWeightKg = request.PackageWeightKg;
             order.PackageDimensionsCm = request.PackageDimensionsCm?.Trim();
             order.CourierPartner = request.CourierPartner?.Trim();
+
+            // Shiprocket Integration: Trigger when status changes to Packed
+            if (nextStatus == OrderStatuses.Packed && previousStatus != OrderStatuses.Packed)
+            {
+                var awb = await shiprocketService.CreateOrderAndGenerateAwbAsync(order);
+                if (!string.IsNullOrEmpty(awb))
+                {
+                    order.TrackingNumber = awb;
+                    order.CourierPartner = "Shiprocket";
+                }
+            }
+
+            // WhatsApp Notification: Trigger when status changes to Delivered
+            if (nextStatus == OrderStatuses.Delivered && previousStatus != OrderStatuses.Delivered)
+            {
+                await whatsappService.SendTemplateMessageAsync(
+                    order.Phone, 
+                    "order_delivered_template", 
+                    [order.CustomerName, order.OrderCode]);
+            }
+
             if (nextStatus == OrderStatuses.Shipped && order.ShippedAtUtc is null)
             {
                 order.ShippedAtUtc = DateTime.UtcNow;
@@ -514,7 +538,11 @@ public static class AdminEndpoints
             return Results.Ok(customOrders.Select(MapCustomOrderDto));
         });
 
-        group.MapPut("/custom-orders/{id:int}", async (int id, UpdateCustomOrderRequest request, AppDbContext db) =>
+        group.MapPut("/custom-orders/{id:int}", async (
+            int id, 
+            UpdateCustomOrderRequest request, 
+            AppDbContext db,
+            WhatsAppNotificationService whatsappService) =>
         {
             var customOrder = await db.CustomOrderRequests.FirstOrDefaultAsync(item => item.Id == id);
             if (customOrder is null)
@@ -522,6 +550,7 @@ public static class AdminEndpoints
                 return Results.NotFound(new { message = "Custom order not found." });
             }
 
+            var previousStatus = customOrder.Status;
             var nextStatus = request.Status.Trim();
             if (!CustomOrderStatuses.All.Contains(nextStatus))
             {
@@ -531,6 +560,16 @@ public static class AdminEndpoints
             customOrder.Status = nextStatus;
             customOrder.QuoteAmountInr = request.QuoteAmountInr;
             customOrder.AdminNotes = request.AdminNotes?.Trim();
+
+            // WhatsApp Notification: Trigger when Custom Order is Quoted
+            if (nextStatus == CustomOrderStatuses.Quoted && previousStatus != CustomOrderStatuses.Quoted)
+            {
+                await whatsappService.SendTemplateMessageAsync(
+                    customOrder.WhatsAppNumber,
+                    "custom_order_quote_template",
+                    [customOrder.Name, customOrder.ReferenceCode, customOrder.QuoteAmountInr?.ToString("N0") ?? "0"]);
+            }
+
             customOrder.TrackingNumber = request.TrackingNumber?.Trim();
             customOrder.PackageWeightKg = request.PackageWeightKg;
             customOrder.PackageDimensionsCm = request.PackageDimensionsCm?.Trim();

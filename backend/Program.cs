@@ -142,6 +142,8 @@ builder.Services.AddScoped<IPasswordHasher<AppUser>, PasswordHasher<AppUser>>();
 builder.Services.AddScoped<JwtTokenService>();
 builder.Services.AddScoped<FileStorageService>();
 builder.Services.AddHttpClient<RazorpayService>();
+builder.Services.AddHttpClient<ShiprocketService>();
+builder.Services.AddHttpClient<WhatsAppNotificationService>();
 builder.Services.AddHttpContextAccessor();
 
 var app = builder.Build();
