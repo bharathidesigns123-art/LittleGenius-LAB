@@ -522,12 +522,14 @@ public static class StorefrontEndpoints
             var order = await db.Orders.FirstOrDefaultAsync(item => item.OrderCode == request.OrderCode, cancellationToken);
             if (order is null)
             {
-                return Results.NotFound(new { message = "Order not found." });
+                return Results.NotFound(new { message = $"Order with code {request.OrderCode} not found in the production database." });
             }
 
             if (!razorpayService.IsConfigured)
             {
-                return Results.BadRequest(new { message = "Razorpay is not configured." });
+                return Results.BadRequest(new { 
+                    message = "Razorpay is not configured on the server. Check Azure App Service environment variables: Razorpay__KeyId and Razorpay__KeySecret." 
+                });
             }
 
             RazorpayOrderResult razorpayOrder;
@@ -535,9 +537,12 @@ public static class StorefrontEndpoints
             {
                 razorpayOrder = await razorpayService.CreateOrderAsync(order.OrderCode, order.TotalPriceInr, cancellationToken);
             }
-            catch (InvalidOperationException exception)
+            catch (Exception exception)
             {
-                return Results.BadRequest(new { message = exception.Message });
+                return Results.Problem(
+                    detail: exception.Message, 
+                    title: "Razorpay API Error",
+                    statusCode: 500);
             }
 
             var transaction = new PaymentTransaction
