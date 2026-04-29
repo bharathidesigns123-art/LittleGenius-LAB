@@ -448,6 +448,41 @@ public static class AdminEndpoints
                 })
                 .ToListAsync()));
 
+        group.MapPost("/users", async (
+            CreateUserRequest request,
+            AppDbContext db,
+            IPasswordHasher<AppUser> passwordHasher) =>
+        {
+            var normalizedEmail = request.Email.Trim().ToLowerInvariant();
+            if (await db.Users.AnyAsync(user => user.Email == normalizedEmail))
+            {
+                return Results.BadRequest(new { message = "An account with this email already exists." });
+            }
+
+            var user = new AppUser
+            {
+                FullName = request.FullName.Trim(),
+                Email = normalizedEmail,
+                Phone = request.Phone.Trim(),
+                Role = request.Role.Trim()
+            };
+            user.PasswordHash = passwordHasher.HashPassword(user, request.Password);
+
+            db.Users.Add(user);
+            await db.SaveChangesAsync();
+
+            return Results.Created($"/api/admin/users/{user.Id}", new
+            {
+                user.Id,
+                user.FullName,
+                user.Email,
+                user.Phone,
+                user.Role,
+                user.IsActive,
+                user.CreatedAtUtc
+            });
+        });
+
         return routes;
     }
 
@@ -565,5 +600,6 @@ public static class AdminEndpoints
     public sealed record InventoryAdjustmentRequest(int ProductId, int QuantityChange, string Reason, string? Notes);
     public sealed record UpdateOrderStatusRequest(string Status, string? TrackingNumber);
     public sealed record UpdateCustomOrderRequest(string Status, decimal? QuoteAmountInr, string? AdminNotes);
+    public sealed record CreateUserRequest(string FullName, string Email, string Phone, string Password, string Role);
     private sealed record ProductImageResponse(int Id, string ImageUrl, int SortOrder, int Width, int Height);
 }
