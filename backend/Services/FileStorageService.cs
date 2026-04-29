@@ -8,12 +8,14 @@ using Azure.Storage.Blobs;
 using Azure.Storage.Blobs.Models;
 using Azure.Storage.Sas;
 using Azure.Storage;
+using System.Collections.Concurrent;
 using System.IO;
 
 namespace LittleGeniusLab.Api.Services;
 
 public sealed class FileStorageService(IWebHostEnvironment environment, IConfiguration configuration)
 {
+    private static readonly ConcurrentDictionary<string, Lazy<Task>> CorsSetupTasks = new();
     private static readonly string[] AllowedExtensions = new[] { ".jpg", ".jpeg", ".png", ".webp" };
     private const int MaxUploadBytes = 8 * 1024 * 1024;
     private const int MaxProductImageDimension = 1400;
@@ -28,6 +30,7 @@ public sealed class FileStorageService(IWebHostEnvironment environment, IConfigu
     private readonly string _azureContainerName = configuration["AzureBlob:ContainerName"] ?? "uploads";
     private readonly bool _azureContainerPublic = bool.TryParse(configuration["AzureBlob:ContainerPublic"], out var cp) ? cp : false;
     private readonly int _sasExpiryHours = int.TryParse(configuration["AzureBlob:SasExpiryHours"], out var h) ? h : 24;
+    private readonly string[] _azureCorsOrigins = BuildCorsOrigins(configuration);
 
     public async Task<string> SaveImageAsync(IFormFile file, string folder, CancellationToken cancellationToken)
     {
@@ -165,6 +168,7 @@ public sealed class FileStorageService(IWebHostEnvironment environment, IConfigu
 
         var containerClient = new BlobContainerClient(_azureConnectionString, _azureContainerName);
         await containerClient.CreateIfNotExistsAsync(_azureContainerPublic ? PublicAccessType.Blob : PublicAccessType.None);
+        await EnsureBlobCorsAsync();
         var blobClient = containerClient.GetBlobClient(fileName);
 
         var now = DateTimeOffset.UtcNow;
@@ -202,6 +206,76 @@ public sealed class FileStorageService(IWebHostEnvironment environment, IConfigu
         var readUrl = $"{blobClient.Uri}?{readSas}";
 
         return new BlobSasResult(uploadUrl, readUrl, blobClient.Uri.ToString());
+    }
+
+    private async Task EnsureBlobCorsAsync()
+    {
+        if (string.IsNullOrWhiteSpace(_azureConnectionString) || _azureCorsOrigins.Length == 0)
+        {
+            return;
+        }
+
+        var setupTask = CorsSetupTasks.GetOrAdd(
+            _azureConnectionString,
+            _ => new Lazy<Task>(ConfigureBlobCorsAsync));
+
+        await setupTask.Value;
+    }
+
+    private async Task ConfigureBlobCorsAsync()
+    {
+        var serviceClient = new BlobServiceClient(_azureConnectionString);
+        var properties = await serviceClient.GetPropertiesAsync();
+
+        var allowedOrigins = string.Join(",", _azureCorsOrigins);
+        var existingRule = properties.Value.Cors.FirstOrDefault(rule =>
+            string.Equals(rule.AllowedOrigins, allowedOrigins, StringComparison.OrdinalIgnoreCase) &&
+            rule.AllowedMethods.Contains("PUT", StringComparison.OrdinalIgnoreCase));
+
+        if (existingRule is not null)
+        {
+            return;
+        }
+
+        properties.Value.Cors.Add(new BlobCorsRule
+        {
+            AllowedOrigins = allowedOrigins,
+            AllowedMethods = "OPTIONS,PUT,GET,HEAD",
+            AllowedHeaders = "content-type,x-ms-blob-type,x-ms-blob-content-type,x-ms-version,x-ms-date",
+            ExposedHeaders = "etag,x-ms-request-id,x-ms-version,x-ms-request-server-encrypted",
+            MaxAgeInSeconds = 3600
+        });
+
+        await serviceClient.SetPropertiesAsync(properties.Value);
+    }
+
+    private static string[] BuildCorsOrigins(IConfiguration configuration)
+    {
+        var origins = new List<string>
+        {
+            "https://little-genius-lab.vercel.app",
+            "http://localhost:3000",
+            "http://127.0.0.1:3000"
+        };
+
+        var frontendUrl = configuration["FRONTEND_URL"];
+        if (!string.IsNullOrWhiteSpace(frontendUrl))
+        {
+            origins.Add(frontendUrl);
+        }
+
+        var configuredOrigins = configuration["AzureBlob:CorsAllowedOrigins"];
+        if (!string.IsNullOrWhiteSpace(configuredOrigins))
+        {
+            origins.AddRange(configuredOrigins.Split(
+                ',',
+                StringSplitOptions.RemoveEmptyEntries | StringSplitOptions.TrimEntries));
+        }
+
+        return origins
+            .Where(origin => Uri.TryCreate(origin, UriKind.Absolute, out _))
+            .Distinct(StringComparer.OrdinalIgnoreCase)
+            .ToArray();
     }
 
     private StorageSharedKeyCredential? GetSharedKeyCredential()

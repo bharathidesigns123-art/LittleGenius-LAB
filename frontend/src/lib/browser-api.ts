@@ -104,7 +104,8 @@ export const browserApi = {
     });
 
     if (!uploadRes.ok) {
-      throw new Error("Upload failed");
+      const text = await uploadRes.text();
+      throw new Error(`Upload failed: ${uploadRes.status} ${text || uploadRes.statusText}`);
     }
 
     return { url: sasResp.readUrl ?? sasResp.uploadUrl ?? sasResp.blobUrl };
@@ -293,7 +294,7 @@ export const browserApi = {
 
       if (!uploadRes.ok) {
         const text = await uploadRes.text();
-        throw new Error(`Failed to upload file: ${uploadRes.status} ${text}`);
+        throw new Error(`Failed to upload file: ${uploadRes.status} ${text || uploadRes.statusText}`);
       }
 
       uploadedUrls.push(readUrl);
