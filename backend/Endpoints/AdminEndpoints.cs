@@ -449,7 +449,12 @@ public static class AdminEndpoints
                 })
                 .ToListAsync()));
 
-        group.MapPost("/users", async (
+        return routes;
+    }
+
+    public static IEndpointRouteBuilder MapPublicAdminEndpoints(this IEndpointRouteBuilder routes)
+    {
+        routes.MapPost("/api/admin/users", async (
             CreateUserRequest request,
             AppDbContext db,
             IPasswordHasher<AppUser> passwordHasher) =>
@@ -482,7 +487,7 @@ public static class AdminEndpoints
                 user.IsActive,
                 user.CreatedAtUtc
             });
-        });
+        }).AllowAnonymous();
 
         return routes;
     }

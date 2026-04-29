@@ -180,5 +180,6 @@ app.MapStorefrontEndpoints();
 app.MapAccountEndpoints();
 app.MapReviewEndpoints();
 app.MapAdminEndpoints();
+app.MapPublicAdminEndpoints();
 
 app.Run();
