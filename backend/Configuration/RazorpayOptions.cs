@@ -6,5 +6,5 @@ public sealed class RazorpayOptions
 
     public string KeyId { get; set; } = string.Empty;
     public string KeySecret { get; set; } = string.Empty;
-    public string CallbackUrl { get; set; } = "http://localhost:3000/checkout";
+    public string CallbackUrl { get; set; } = string.Empty;
 }
