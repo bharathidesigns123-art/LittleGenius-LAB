@@ -146,10 +146,6 @@ builder.Services.AddHttpContextAccessor();
 
 var app = builder.Build();
 
-var dataRoot = Path.Combine(app.Environment.ContentRootPath, "data");
-
-Directory.CreateDirectory(dataRoot);
-
 using (var scope = app.Services.CreateScope())
 {
     var db = scope.ServiceProvider.GetRequiredService<AppDbContext>();
