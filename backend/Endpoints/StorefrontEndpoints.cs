@@ -522,7 +522,15 @@ public static class StorefrontEndpoints
                 return Results.BadRequest(new { message = "Razorpay is not configured." });
             }
 
-            var razorpayOrder = await razorpayService.CreateOrderAsync(order.OrderCode, order.TotalPriceInr, cancellationToken);
+            RazorpayOrderResult razorpayOrder;
+            try
+            {
+                razorpayOrder = await razorpayService.CreateOrderAsync(order.OrderCode, order.TotalPriceInr, cancellationToken);
+            }
+            catch (InvalidOperationException exception)
+            {
+                return Results.BadRequest(new { message = exception.Message });
+            }
 
             var transaction = new PaymentTransaction
             {
@@ -583,10 +591,18 @@ public static class StorefrontEndpoints
                 return Results.BadRequest(new { message = "Payment transaction not found." });
             }
 
-            var signatureValid = razorpayService.VerifySignature(
-                request.ServerOrderId,
-                request.RazorpayPaymentId,
-                request.RazorpaySignature);
+            bool signatureValid;
+            try
+            {
+                signatureValid = razorpayService.VerifySignature(
+                    request.ServerOrderId,
+                    request.RazorpayPaymentId,
+                    request.RazorpaySignature);
+            }
+            catch (InvalidOperationException exception)
+            {
+                return Results.BadRequest(new { message = exception.Message });
+            }
 
             if (!signatureValid)
             {
