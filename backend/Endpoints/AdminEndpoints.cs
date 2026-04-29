@@ -350,71 +350,169 @@ public static class AdminEndpoints
             });
         });
 
-        group.MapGet("/orders", async (AppDbContext db) =>
-            Results.Ok(await db.Orders
-                .AsNoTracking()
-                .Include(order => order.Items)
-                .OrderByDescending(order => order.CreatedAtUtc)
-                .Select(order => new
-                {
-                    order.Id,
-                    order.OrderCode,
-                    order.CustomerName,
-                    order.Email,
-                    order.Phone,
-                    order.Status,
-                    order.PaymentStatus,
-                    order.PaymentMethod,
-                    order.TotalPriceInr,
-                    order.TrackingNumber,
-                    order.CreatedAtUtc,
-                    items = order.Items.Select(item => new
-                    {
-                        item.ProductName,
-                        item.Quantity,
-                        item.TotalPriceInr
-                    })
-                })
-                .ToListAsync()));
-
-        group.MapPut("/orders/{id:int}/status", async (int id, UpdateOrderStatusRequest request, AppDbContext db) =>
+        group.MapGet("/orders", async (
+            AppDbContext db,
+            IConfiguration configuration,
+            string? status,
+            DateTime? dateFrom,
+            DateTime? dateTo,
+            string? customer) =>
         {
-            var order = await db.Orders.FirstOrDefaultAsync(item => item.Id == id);
+            IQueryable<Order> query = db.Orders
+                .AsNoTracking()
+                .Include(order => order.Items);
+
+            if (!string.IsNullOrWhiteSpace(status))
+            {
+                query = query.Where(order => order.Status == status.Trim());
+            }
+
+            if (dateFrom is not null)
+            {
+                query = query.Where(order => order.CreatedAtUtc >= dateFrom.Value.Date);
+            }
+
+            if (dateTo is not null)
+            {
+                query = query.Where(order => order.CreatedAtUtc < dateTo.Value.Date.AddDays(1));
+            }
+
+            if (!string.IsNullOrWhiteSpace(customer))
+            {
+                var term = customer.Trim().ToLowerInvariant();
+                query = query.Where(order =>
+                    order.CustomerName.ToLower().Contains(term) ||
+                    order.Email.ToLower().Contains(term) ||
+                    order.Phone.ToLower().Contains(term) ||
+                    order.OrderCode.ToLower().Contains(term));
+            }
+
+            var orders = await query
+                .OrderByDescending(order => order.CreatedAtUtc)
+                .ToListAsync();
+
+            return Results.Ok(orders.Select(order => MapOrderDto(order, configuration)));
+        });
+
+        group.MapPut("/orders/{id:int}/status", async (
+            int id,
+            UpdateOrderStatusRequest request,
+            AppDbContext db,
+            IConfiguration configuration) =>
+        {
+            var order = await db.Orders
+                .Include(item => item.Items)
+                .FirstOrDefaultAsync(item => item.Id == id);
             if (order is null)
             {
                 return Results.NotFound(new { message = "Order not found." });
             }
 
-            order.Status = request.Status.Trim();
+            var nextStatus = request.Status.Trim();
+            if (!OrderStatuses.All.Contains(nextStatus))
+            {
+                return Results.BadRequest(new { message = "Order status is invalid." });
+            }
+
+            order.Status = nextStatus;
             order.TrackingNumber = request.TrackingNumber?.Trim();
+            order.PackageWeightKg = request.PackageWeightKg;
+            order.PackageDimensionsCm = request.PackageDimensionsCm?.Trim();
+            order.CourierPartner = request.CourierPartner?.Trim();
+            if (nextStatus == OrderStatuses.Shipped && order.ShippedAtUtc is null)
+            {
+                order.ShippedAtUtc = DateTime.UtcNow;
+            }
+            if (nextStatus == OrderStatuses.Delivered && order.DeliveredAtUtc is null)
+            {
+                order.DeliveredAtUtc = DateTime.UtcNow;
+            }
+            if (nextStatus == OrderStatuses.Cancelled && order.CancelledAtUtc is null)
+            {
+                order.CancelledAtUtc = DateTime.UtcNow;
+                order.RefundStatus = order.PaymentStatus == PaymentStatuses.Paid
+                    ? RefundStatuses.Pending
+                    : RefundStatuses.Approved;
+            }
             order.UpdatedAtUtc = DateTime.UtcNow;
             await db.SaveChangesAsync();
 
-            return Results.Ok(order);
+            return Results.Ok(MapOrderDto(order, configuration));
         });
 
-        group.MapGet("/custom-orders", async (AppDbContext db) =>
-            Results.Ok(await db.CustomOrderRequests
-                .AsNoTracking()
+        group.MapPut("/orders/{id:int}/refund", async (
+            int id,
+            UpdateRefundStatusRequest request,
+            AppDbContext db,
+            IConfiguration configuration) =>
+        {
+            var order = await db.Orders
+                .Include(item => item.Items)
+                .FirstOrDefaultAsync(item => item.Id == id);
+            if (order is null)
+            {
+                return Results.NotFound(new { message = "Order not found." });
+            }
+
+            var nextRefundStatus = request.RefundStatus.Trim();
+            if (!RefundStatuses.All.Contains(nextRefundStatus))
+            {
+                return Results.BadRequest(new { message = "Refund status is invalid." });
+            }
+
+            order.RefundStatus = nextRefundStatus;
+            if (!string.IsNullOrWhiteSpace(request.AdminNote))
+            {
+                order.CancellationReason = string.IsNullOrWhiteSpace(order.CancellationReason)
+                    ? request.AdminNote.Trim()
+                    : $"{order.CancellationReason} Admin: {request.AdminNote.Trim()}";
+            }
+            order.UpdatedAtUtc = DateTime.UtcNow;
+            await db.SaveChangesAsync();
+
+            return Results.Ok(MapOrderDto(order, configuration));
+        });
+
+        group.MapGet("/custom-orders", async (
+            AppDbContext db,
+            string? status,
+            DateTime? dateFrom,
+            DateTime? dateTo,
+            string? customer) =>
+        {
+            IQueryable<CustomOrderRequest> query = db.CustomOrderRequests.AsNoTracking();
+
+            if (!string.IsNullOrWhiteSpace(status))
+            {
+                query = query.Where(order => order.Status == status.Trim());
+            }
+
+            if (dateFrom is not null)
+            {
+                query = query.Where(order => order.CreatedAtUtc >= dateFrom.Value.Date);
+            }
+
+            if (dateTo is not null)
+            {
+                query = query.Where(order => order.CreatedAtUtc < dateTo.Value.Date.AddDays(1));
+            }
+
+            if (!string.IsNullOrWhiteSpace(customer))
+            {
+                var term = customer.Trim().ToLowerInvariant();
+                query = query.Where(order =>
+                    order.Name.ToLower().Contains(term) ||
+                    order.Email.ToLower().Contains(term) ||
+                    order.WhatsAppNumber.ToLower().Contains(term) ||
+                    order.ReferenceCode.ToLower().Contains(term));
+            }
+
+            var customOrders = await query
                 .OrderByDescending(order => order.CreatedAtUtc)
-                .Select(order => new
-                {
-                    order.Id,
-                    order.ReferenceCode,
-                    order.Name,
-                    order.Email,
-                    order.WhatsAppNumber,
-                    order.Occasion,
-                    order.Size,
-                    order.ColorPreference,
-                    order.PhotoUrl,
-                    order.CharacterDescription,
-                    order.Status,
-                    order.QuoteAmountInr,
-                    order.AdminNotes,
-                    order.CreatedAtUtc
-                })
-                .ToListAsync()));
+                .ToListAsync();
+
+            return Results.Ok(customOrders.Select(MapCustomOrderDto));
+        });
 
         group.MapPut("/custom-orders/{id:int}", async (int id, UpdateCustomOrderRequest request, AppDbContext db) =>
         {
@@ -424,13 +522,42 @@ public static class AdminEndpoints
                 return Results.NotFound(new { message = "Custom order not found." });
             }
 
-            customOrder.Status = request.Status.Trim();
+            var nextStatus = request.Status.Trim();
+            if (!CustomOrderStatuses.All.Contains(nextStatus))
+            {
+                return Results.BadRequest(new { message = "Custom order status is invalid." });
+            }
+
+            customOrder.Status = nextStatus;
             customOrder.QuoteAmountInr = request.QuoteAmountInr;
             customOrder.AdminNotes = request.AdminNotes?.Trim();
+            customOrder.TrackingNumber = request.TrackingNumber?.Trim();
+            customOrder.PackageWeightKg = request.PackageWeightKg;
+            customOrder.PackageDimensionsCm = request.PackageDimensionsCm?.Trim();
+            customOrder.CourierPartner = request.CourierPartner?.Trim();
+            customOrder.RefundStatus = string.IsNullOrWhiteSpace(request.RefundStatus)
+                ? customOrder.RefundStatus
+                : request.RefundStatus.Trim();
+            customOrder.CancellationReason = request.CancellationReason?.Trim();
+            if (nextStatus == CustomOrderStatuses.Shipped && customOrder.ShippedAtUtc is null)
+            {
+                customOrder.ShippedAtUtc = DateTime.UtcNow;
+            }
+            if (nextStatus == CustomOrderStatuses.Delivered && customOrder.DeliveredAtUtc is null)
+            {
+                customOrder.DeliveredAtUtc = DateTime.UtcNow;
+            }
+            if (nextStatus == CustomOrderStatuses.Cancelled && customOrder.CancelledAtUtc is null)
+            {
+                customOrder.CancelledAtUtc = DateTime.UtcNow;
+                customOrder.RefundStatus = customOrder.QuoteAmountInr > 0
+                    ? RefundStatuses.Pending
+                    : RefundStatuses.Approved;
+            }
             customOrder.UpdatedAtUtc = DateTime.UtcNow;
             await db.SaveChangesAsync();
 
-            return Results.Ok(customOrder);
+            return Results.Ok(MapCustomOrderDto(customOrder));
         });
 
         group.MapGet("/users", async (AppDbContext db) =>
@@ -604,8 +731,109 @@ public static class AdminEndpoints
 
     public sealed record UpdateProductImageOrderRequest(List<int> ImageIds);
     public sealed record InventoryAdjustmentRequest(int ProductId, int QuantityChange, string Reason, string? Notes);
-    public sealed record UpdateOrderStatusRequest(string Status, string? TrackingNumber);
-    public sealed record UpdateCustomOrderRequest(string Status, decimal? QuoteAmountInr, string? AdminNotes);
+    public sealed record UpdateOrderStatusRequest(
+        string Status,
+        string? TrackingNumber,
+        decimal? PackageWeightKg,
+        string? PackageDimensionsCm,
+        string? CourierPartner);
+    public sealed record UpdateRefundStatusRequest(string RefundStatus, string? AdminNote);
+    public sealed record UpdateCustomOrderRequest(
+        string Status,
+        decimal? QuoteAmountInr,
+        string? AdminNotes,
+        string? TrackingNumber,
+        decimal? PackageWeightKg,
+        string? PackageDimensionsCm,
+        string? CourierPartner,
+        string? RefundStatus,
+        string? CancellationReason);
     public sealed record CreateUserRequest(string FullName, string Email, string Phone, string Password, string Role);
     private sealed record ProductImageResponse(int Id, string ImageUrl, int SortOrder, int Width, int Height);
+
+    private static bool IsCancellationAllowed(string status, IConfiguration configuration)
+    {
+        if (status == OrderStatuses.Cancelled || status == OrderStatuses.Delivered)
+        {
+            return false;
+        }
+
+        var allowAfterShipment = configuration.GetValue("Orders:AllowCancellationAfterShipment", false);
+        return allowAfterShipment || status is not OrderStatuses.Shipped;
+    }
+
+    private static object MapOrderDto(Order order, IConfiguration configuration) => new
+    {
+        order.Id,
+        order.OrderCode,
+        order.CustomerName,
+        order.Email,
+        order.Phone,
+        order.Status,
+        order.PaymentStatus,
+        order.PaymentMethod,
+        order.SubtotalInr,
+        order.ShippingFeeInr,
+        order.TotalPriceInr,
+        order.Notes,
+        order.TrackingNumber,
+        order.PackageWeightKg,
+        order.PackageDimensionsCm,
+        order.CourierPartner,
+        order.RefundStatus,
+        order.CancellationReason,
+        order.CancelledAtUtc,
+        order.ShippedAtUtc,
+        order.DeliveredAtUtc,
+        order.CreatedAtUtc,
+        cancellationEligible = IsCancellationAllowed(order.Status, configuration),
+        shippingAddress = new
+        {
+            order.CustomerName,
+            order.Email,
+            order.Phone,
+            order.Line1,
+            order.Line2,
+            order.City,
+            order.State,
+            order.Country,
+            order.Pincode
+        },
+        items = order.Items.Select(item => new
+        {
+            item.ProductName,
+            item.Quantity,
+            item.TotalPriceInr
+        })
+    };
+
+    private static object MapCustomOrderDto(CustomOrderRequest order) => new
+    {
+        order.Id,
+        order.ReferenceCode,
+        order.Name,
+        order.Email,
+        order.WhatsAppNumber,
+        order.Occasion,
+        order.Size,
+        order.ColorPreference,
+        order.PhotoUrl,
+        order.CharacterDescription,
+        order.BaseMessage,
+        order.Pincode,
+        order.Status,
+        order.QuoteAmountInr,
+        order.AdminNotes,
+        order.TrackingNumber,
+        order.PackageWeightKg,
+        order.PackageDimensionsCm,
+        order.CourierPartner,
+        order.RefundStatus,
+        order.CancellationReason,
+        order.CancelledAtUtc,
+        order.ShippedAtUtc,
+        order.DeliveredAtUtc,
+        order.CreatedAtUtc,
+        order.UpdatedAtUtc
+    };
 }

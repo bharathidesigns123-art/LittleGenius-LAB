@@ -22,6 +22,14 @@ public sealed class Order
     public decimal TotalPriceInr { get; set; }
     public string? Notes { get; set; }
     public string? TrackingNumber { get; set; }
+    public decimal? PackageWeightKg { get; set; }
+    public string? PackageDimensionsCm { get; set; }
+    public string? CourierPartner { get; set; }
+    public string RefundStatus { get; set; } = RefundStatuses.NotRequested;
+    public string? CancellationReason { get; set; }
+    public DateTime? CancelledAtUtc { get; set; }
+    public DateTime? ShippedAtUtc { get; set; }
+    public DateTime? DeliveredAtUtc { get; set; }
     public DateTime CreatedAtUtc { get; set; } = DateTime.UtcNow;
     public DateTime UpdatedAtUtc { get; set; } = DateTime.UtcNow;
 

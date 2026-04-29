@@ -129,13 +129,46 @@ export type AccountProfile = {
 
 export type OrderSummary = {
   id: number;
+  orderType?: "standard" | "custom";
   orderCode: string;
+  customerName?: string;
+  email?: string;
+  phone?: string;
   status: string;
   paymentStatus: string;
   paymentMethod: string;
+  subtotalInr?: number;
+  shippingFeeInr?: number;
   totalPriceInr: number;
+  notes?: string | null;
   createdAtUtc: string;
   trackingNumber?: string | null;
+  packageWeightKg?: number | null;
+  packageDimensionsCm?: string | null;
+  courierPartner?: string | null;
+  refundStatus?: string | null;
+  cancellationReason?: string | null;
+  cancelledAtUtc?: string | null;
+  shippedAtUtc?: string | null;
+  deliveredAtUtc?: string | null;
+  cancellationEligible?: boolean;
+  occasion?: string | null;
+  size?: string | null;
+  colorPreference?: string | null;
+  characterDescription?: string | null;
+  photoUrl?: string | null;
+  baseMessage?: string | null;
+  shippingAddress?: {
+    customerName: string;
+    email: string;
+    phone: string;
+    line1: string;
+    line2?: string | null;
+    city: string;
+    state: string;
+    country: string;
+    pincode: string;
+  };
   items: Array<{
     productName: string;
     quantity: number;
@@ -153,12 +186,33 @@ export type CartItem = {
 };
 
 export type TrackOrderResponse = {
+  orderType?: "standard" | "custom";
+  id?: number;
+  customerName?: string;
+  email?: string;
+  phone?: string;
   orderCode: string;
   status: string;
   paymentStatus: string;
   paymentMethod: string;
+  subtotalInr?: number | null;
+  shippingFeeInr?: number | null;
+  totalPriceInr?: number;
+  notes?: string | null;
   trackingNumber?: string | null;
   createdAtUtc: string;
+  refundStatus?: string | null;
+  cancellationReason?: string | null;
+  cancelledAtUtc?: string | null;
+  shippedAtUtc?: string | null;
+  deliveredAtUtc?: string | null;
+  cancellationEligible?: boolean;
+  occasion?: string | null;
+  size?: string | null;
+  colorPreference?: string | null;
+  characterDescription?: string | null;
+  photoUrl?: string | null;
+  baseMessage?: string | null;
   items: Array<{
     productName: string;
     quantity: number;
@@ -267,8 +321,20 @@ export type AdminCustomOrder = {
   colorPreference: string;
   photoUrl?: string | null;
   characterDescription?: string | null;
+  baseMessage?: string | null;
+  pincode?: string | null;
   status: string;
   quoteAmountInr?: number | null;
   adminNotes?: string | null;
+  trackingNumber?: string | null;
+  packageWeightKg?: number | null;
+  packageDimensionsCm?: string | null;
+  courierPartner?: string | null;
+  refundStatus?: string | null;
+  cancellationReason?: string | null;
+  cancelledAtUtc?: string | null;
+  shippedAtUtc?: string | null;
+  deliveredAtUtc?: string | null;
   createdAtUtc: string;
+  updatedAtUtc?: string;
 };

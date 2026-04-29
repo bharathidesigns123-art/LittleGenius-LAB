@@ -380,6 +380,7 @@ public static class StorefrontEndpoints
             }
 
             if (string.IsNullOrWhiteSpace(request.CustomerName) ||
+                string.IsNullOrWhiteSpace(request.Email) ||
                 string.IsNullOrWhiteSpace(request.Phone) ||
                 string.IsNullOrWhiteSpace(request.Line1) ||
                 string.IsNullOrWhiteSpace(request.City) ||
@@ -475,7 +476,8 @@ public static class StorefrontEndpoints
         group.MapGet("/orders/track/{orderCode}", async (
             string orderCode,
             string phone,
-            AppDbContext db) =>
+            AppDbContext db,
+            IConfiguration configuration) =>
         {
             var trimmedPhone = phone.Trim();
             var order = await db.Orders
@@ -496,6 +498,12 @@ public static class StorefrontEndpoints
                 order.PaymentMethod,
                 order.TrackingNumber,
                 order.CreatedAtUtc,
+                order.RefundStatus,
+                order.CancellationReason,
+                order.CancelledAtUtc,
+                order.ShippedAtUtc,
+                order.DeliveredAtUtc,
+                cancellationEligible = IsCancellationAllowed(order.Status, configuration),
                 items = order.Items.Select(item => new
                 {
                     item.ProductName,
@@ -565,6 +573,49 @@ public static class StorefrontEndpoints
                     currency = razorpayOrder.Currency
                 }
             });
+        });
+
+        group.MapPost("/orders/track/{orderCode}/cancel", async (
+            string orderCode,
+            CancelTrackedOrderRequest request,
+            AppDbContext db,
+            IConfiguration configuration) =>
+        {
+            if (string.IsNullOrWhiteSpace(request.Phone))
+            {
+                return Results.BadRequest(new { message = "Phone number is required to cancel a guest order." });
+            }
+
+            var trimmedPhone = request.Phone.Trim();
+            var order = await db.Orders
+                .Include(item => item.Items)
+                .FirstOrDefaultAsync(item => item.OrderCode == orderCode && item.Phone == trimmedPhone);
+
+            if (order is null)
+            {
+                return Results.NotFound(new { message = "No matching order found." });
+            }
+
+            var cancelResult = await CancelOrderAsync(order, request.Reason, db, configuration);
+            return cancelResult is not null ? cancelResult : Results.Ok(MapOrderCancellation(order, configuration));
+        });
+
+        group.MapGet("/custom-orders/track/{referenceCode}", async (
+            string referenceCode,
+            string phone,
+            AppDbContext db) =>
+        {
+            var trimmedPhone = phone.Trim();
+            var customOrder = await db.CustomOrderRequests
+                .AsNoTracking()
+                .FirstOrDefaultAsync(item => item.ReferenceCode == referenceCode && item.WhatsAppNumber == trimmedPhone);
+
+            if (customOrder is null)
+            {
+                return Results.NotFound(new { message = "No matching custom order found." });
+            }
+
+            return Results.Ok(MapCustomOrderTracking(customOrder));
         });
 
         group.MapPost("/payments/razorpay/verify", async (
@@ -663,6 +714,7 @@ public static class StorefrontEndpoints
         List<CreateOrderItemRequest> Items);
 
     public sealed record CreateOrderItemRequest(int ProductId, int Quantity);
+    public sealed record CancelTrackedOrderRequest(string Phone, string? Reason);
     public sealed record CreateRazorpayOrderRequest(string OrderCode);
     public sealed record VerifyRazorpayPaymentRequest(
         string OrderCode,
@@ -693,4 +745,106 @@ public static class StorefrontEndpoints
     }
 
     private sealed record ProductImageResponse(int Id, string ImageUrl, int SortOrder, int Width, int Height);
+
+    private static bool IsCancellationAllowed(string status, IConfiguration configuration)
+    {
+        if (status == OrderStatuses.Cancelled || status == OrderStatuses.Delivered)
+        {
+            return false;
+        }
+
+        var allowAfterShipment = configuration.GetValue("Orders:AllowCancellationAfterShipment", false);
+        return allowAfterShipment || status is not OrderStatuses.Shipped;
+    }
+
+    private static async Task<IResult?> CancelOrderAsync(
+        Order order,
+        string? reason,
+        AppDbContext db,
+        IConfiguration configuration)
+    {
+        if (!IsCancellationAllowed(order.Status, configuration))
+        {
+            return Results.BadRequest(new { message = "This order is no longer eligible for cancellation." });
+        }
+
+        if (order.Status == OrderStatuses.Cancelled)
+        {
+            return Results.BadRequest(new { message = "This order is already cancelled." });
+        }
+
+        foreach (var item in order.Items)
+        {
+            var product = await db.Products.FirstOrDefaultAsync(product => product.Id == item.ProductId);
+            if (product is not null)
+            {
+                product.StockQuantity += item.Quantity;
+                product.UpdatedAtUtc = DateTime.UtcNow;
+            }
+        }
+
+        order.Status = OrderStatuses.Cancelled;
+        order.RefundStatus = order.PaymentStatus == PaymentStatuses.Paid
+            ? RefundStatuses.Pending
+            : RefundStatuses.Approved;
+        order.CancellationReason = string.IsNullOrWhiteSpace(reason) ? "Customer requested cancellation." : reason.Trim();
+        order.CancelledAtUtc = DateTime.UtcNow;
+        order.UpdatedAtUtc = DateTime.UtcNow;
+
+        await db.SaveChangesAsync();
+        return null;
+    }
+
+    private static object MapOrderCancellation(Order order, IConfiguration configuration) => new
+    {
+        order.Id,
+        order.OrderCode,
+        order.Status,
+        order.RefundStatus,
+        order.CancellationReason,
+        order.CancelledAtUtc,
+        cancellationEligible = IsCancellationAllowed(order.Status, configuration)
+    };
+
+    private static object MapCustomOrderTracking(CustomOrderRequest order) => new
+    {
+        orderType = "custom",
+        id = order.Id,
+        orderCode = order.ReferenceCode,
+        customerName = order.Name,
+        email = order.Email,
+        phone = order.WhatsAppNumber,
+        order.Status,
+        paymentStatus = order.QuoteAmountInr is null ? "Quote Pending" : "Quote Shared",
+        paymentMethod = "Custom Order",
+        subtotalInr = order.QuoteAmountInr,
+        shippingFeeInr = (decimal?)null,
+        totalPriceInr = order.QuoteAmountInr ?? 0,
+        notes = order.AdminNotes,
+        order.TrackingNumber,
+        order.RefundStatus,
+        order.CancellationReason,
+        order.CancelledAtUtc,
+        order.ShippedAtUtc,
+        order.DeliveredAtUtc,
+        cancellationEligible = false,
+        order.Occasion,
+        order.Size,
+        order.ColorPreference,
+        order.CharacterDescription,
+        order.PhotoUrl,
+        order.BaseMessage,
+        order.CreatedAtUtc,
+        items = new[]
+        {
+            new
+            {
+                productName = string.IsNullOrWhiteSpace(order.CharacterDescription)
+                    ? "Custom 3D printed toy request"
+                    : order.CharacterDescription,
+                quantity = 1,
+                totalPriceInr = order.QuoteAmountInr ?? 0
+            }
+        }
+    };
 }

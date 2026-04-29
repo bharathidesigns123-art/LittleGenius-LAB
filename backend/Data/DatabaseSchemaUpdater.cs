@@ -16,6 +16,8 @@ public static class DatabaseSchemaUpdater
         {
             await EnsureSqliteProductImagesTableAsync(db, cancellationToken);
             await ApplySqliteReviewUpgradeAsync(db, cancellationToken);
+            await ApplySqliteOrderFulfillmentUpgradeAsync(db, cancellationToken);
+            await ApplySqliteCustomOrderFulfillmentUpgradeAsync(db, cancellationToken);
             return;
         }
 
@@ -23,6 +25,8 @@ public static class DatabaseSchemaUpdater
         {
             await EnsureSqlServerProductImagesTableAsync(db, cancellationToken);
             await ApplySqlServerReviewUpgradeAsync(db, cancellationToken);
+            await ApplySqlServerOrderFulfillmentUpgradeAsync(db, cancellationToken);
+            await ApplySqlServerCustomOrderFulfillmentUpgradeAsync(db, cancellationToken);
         }
     }
 
@@ -175,6 +179,124 @@ public static class DatabaseSchemaUpdater
         await db.Database.ExecuteSqlRawAsync(
             "IF NOT EXISTS (SELECT 1 FROM sys.indexes WHERE name = 'IX_Reviews_ProductId_OrderId_UserId' AND object_id = OBJECT_ID('dbo.Reviews')) CREATE INDEX [IX_Reviews_ProductId_OrderId_UserId] ON [Reviews] ([ProductId], [OrderId], [UserId]);",
             cancellationToken);
+    }
+
+    private static async Task ApplySqliteOrderFulfillmentUpgradeAsync(AppDbContext db, CancellationToken cancellationToken)
+    {
+        var columns = await GetSqliteColumnsAsync(db, "Orders", cancellationToken);
+        if (columns.Count == 0)
+        {
+            return;
+        }
+
+        var statements = new Dictionary<string, string>(StringComparer.OrdinalIgnoreCase)
+        {
+            ["PackageWeightKg"] = "ALTER TABLE \"Orders\" ADD COLUMN \"PackageWeightKg\" TEXT NULL;",
+            ["PackageDimensionsCm"] = "ALTER TABLE \"Orders\" ADD COLUMN \"PackageDimensionsCm\" TEXT NULL;",
+            ["CourierPartner"] = "ALTER TABLE \"Orders\" ADD COLUMN \"CourierPartner\" TEXT NULL;",
+            ["RefundStatus"] = "ALTER TABLE \"Orders\" ADD COLUMN \"RefundStatus\" TEXT NOT NULL DEFAULT 'NotRequested';",
+            ["CancellationReason"] = "ALTER TABLE \"Orders\" ADD COLUMN \"CancellationReason\" TEXT NULL;",
+            ["CancelledAtUtc"] = "ALTER TABLE \"Orders\" ADD COLUMN \"CancelledAtUtc\" TEXT NULL;",
+            ["ShippedAtUtc"] = "ALTER TABLE \"Orders\" ADD COLUMN \"ShippedAtUtc\" TEXT NULL;",
+            ["DeliveredAtUtc"] = "ALTER TABLE \"Orders\" ADD COLUMN \"DeliveredAtUtc\" TEXT NULL;"
+        };
+
+        foreach (var statement in statements)
+        {
+            if (!columns.Contains(statement.Key))
+            {
+                await db.Database.ExecuteSqlRawAsync(statement.Value, cancellationToken);
+            }
+        }
+    }
+
+    private static async Task ApplySqlServerOrderFulfillmentUpgradeAsync(AppDbContext db, CancellationToken cancellationToken)
+    {
+        var columns = await GetSqlServerColumnsAsync(db, "Orders", cancellationToken);
+        if (columns.Count == 0)
+        {
+            return;
+        }
+
+        var statements = new Dictionary<string, string>(StringComparer.OrdinalIgnoreCase)
+        {
+            ["PackageWeightKg"] = "ALTER TABLE [Orders] ADD [PackageWeightKg] decimal(18,2) NULL;",
+            ["PackageDimensionsCm"] = "ALTER TABLE [Orders] ADD [PackageDimensionsCm] nvarchar(80) NULL;",
+            ["CourierPartner"] = "ALTER TABLE [Orders] ADD [CourierPartner] nvarchar(120) NULL;",
+            ["RefundStatus"] = "ALTER TABLE [Orders] ADD [RefundStatus] nvarchar(32) NOT NULL CONSTRAINT [DF_Orders_RefundStatus] DEFAULT 'NotRequested';",
+            ["CancellationReason"] = "ALTER TABLE [Orders] ADD [CancellationReason] nvarchar(500) NULL;",
+            ["CancelledAtUtc"] = "ALTER TABLE [Orders] ADD [CancelledAtUtc] datetime2 NULL;",
+            ["ShippedAtUtc"] = "ALTER TABLE [Orders] ADD [ShippedAtUtc] datetime2 NULL;",
+            ["DeliveredAtUtc"] = "ALTER TABLE [Orders] ADD [DeliveredAtUtc] datetime2 NULL;"
+        };
+
+        foreach (var statement in statements)
+        {
+            if (!columns.Contains(statement.Key))
+            {
+                await db.Database.ExecuteSqlRawAsync(statement.Value, cancellationToken);
+            }
+        }
+    }
+
+    private static async Task ApplySqliteCustomOrderFulfillmentUpgradeAsync(AppDbContext db, CancellationToken cancellationToken)
+    {
+        var columns = await GetSqliteColumnsAsync(db, "CustomOrderRequests", cancellationToken);
+        if (columns.Count == 0)
+        {
+            return;
+        }
+
+        var statements = new Dictionary<string, string>(StringComparer.OrdinalIgnoreCase)
+        {
+            ["TrackingNumber"] = "ALTER TABLE \"CustomOrderRequests\" ADD COLUMN \"TrackingNumber\" TEXT NULL;",
+            ["PackageWeightKg"] = "ALTER TABLE \"CustomOrderRequests\" ADD COLUMN \"PackageWeightKg\" TEXT NULL;",
+            ["PackageDimensionsCm"] = "ALTER TABLE \"CustomOrderRequests\" ADD COLUMN \"PackageDimensionsCm\" TEXT NULL;",
+            ["CourierPartner"] = "ALTER TABLE \"CustomOrderRequests\" ADD COLUMN \"CourierPartner\" TEXT NULL;",
+            ["RefundStatus"] = "ALTER TABLE \"CustomOrderRequests\" ADD COLUMN \"RefundStatus\" TEXT NOT NULL DEFAULT 'NotRequested';",
+            ["CancellationReason"] = "ALTER TABLE \"CustomOrderRequests\" ADD COLUMN \"CancellationReason\" TEXT NULL;",
+            ["CancelledAtUtc"] = "ALTER TABLE \"CustomOrderRequests\" ADD COLUMN \"CancelledAtUtc\" TEXT NULL;",
+            ["ShippedAtUtc"] = "ALTER TABLE \"CustomOrderRequests\" ADD COLUMN \"ShippedAtUtc\" TEXT NULL;",
+            ["DeliveredAtUtc"] = "ALTER TABLE \"CustomOrderRequests\" ADD COLUMN \"DeliveredAtUtc\" TEXT NULL;"
+        };
+
+        foreach (var statement in statements)
+        {
+            if (!columns.Contains(statement.Key))
+            {
+                await db.Database.ExecuteSqlRawAsync(statement.Value, cancellationToken);
+            }
+        }
+    }
+
+    private static async Task ApplySqlServerCustomOrderFulfillmentUpgradeAsync(AppDbContext db, CancellationToken cancellationToken)
+    {
+        var columns = await GetSqlServerColumnsAsync(db, "CustomOrderRequests", cancellationToken);
+        if (columns.Count == 0)
+        {
+            return;
+        }
+
+        var statements = new Dictionary<string, string>(StringComparer.OrdinalIgnoreCase)
+        {
+            ["TrackingNumber"] = "ALTER TABLE [CustomOrderRequests] ADD [TrackingNumber] nvarchar(120) NULL;",
+            ["PackageWeightKg"] = "ALTER TABLE [CustomOrderRequests] ADD [PackageWeightKg] decimal(18,2) NULL;",
+            ["PackageDimensionsCm"] = "ALTER TABLE [CustomOrderRequests] ADD [PackageDimensionsCm] nvarchar(80) NULL;",
+            ["CourierPartner"] = "ALTER TABLE [CustomOrderRequests] ADD [CourierPartner] nvarchar(120) NULL;",
+            ["RefundStatus"] = "ALTER TABLE [CustomOrderRequests] ADD [RefundStatus] nvarchar(32) NOT NULL CONSTRAINT [DF_CustomOrderRequests_RefundStatus] DEFAULT 'NotRequested';",
+            ["CancellationReason"] = "ALTER TABLE [CustomOrderRequests] ADD [CancellationReason] nvarchar(500) NULL;",
+            ["CancelledAtUtc"] = "ALTER TABLE [CustomOrderRequests] ADD [CancelledAtUtc] datetime2 NULL;",
+            ["ShippedAtUtc"] = "ALTER TABLE [CustomOrderRequests] ADD [ShippedAtUtc] datetime2 NULL;",
+            ["DeliveredAtUtc"] = "ALTER TABLE [CustomOrderRequests] ADD [DeliveredAtUtc] datetime2 NULL;"
+        };
+
+        foreach (var statement in statements)
+        {
+            if (!columns.Contains(statement.Key))
+            {
+                await db.Database.ExecuteSqlRawAsync(statement.Value, cancellationToken);
+            }
+        }
     }
 
     private static async Task<HashSet<string>> GetSqliteColumnsAsync(

@@ -198,10 +198,28 @@ export const browserApi = {
       body: payload,
     }),
 
+  cancelAccountOrder: (token: string, id: number, reason?: string) =>
+    apiRequest<OrderSummary>(`/api/account/orders/${id}/cancel`, {
+      method: "POST",
+      token,
+      body: { reason },
+    }),
+
   trackOrder: (orderCode: string, phone: string) =>
     apiRequest<TrackOrderResponse>(
       `/api/store/orders/track/${orderCode}?phone=${encodeURIComponent(phone)}`,
     ),
+
+  trackCustomOrder: (referenceCode: string, phone: string) =>
+    apiRequest<TrackOrderResponse>(
+      `/api/store/custom-orders/track/${referenceCode}?phone=${encodeURIComponent(phone)}`,
+    ),
+
+  cancelTrackedOrder: (orderCode: string, phone: string, reason?: string) =>
+    apiRequest<TrackOrderResponse>(`/api/store/orders/track/${orderCode}/cancel`, {
+      method: "POST",
+      body: { phone, reason },
+    }),
 
   getProductReviews: (slug: string) =>
     apiRequest<ProductReviewSummary>(`/api/store/products/${slug}/reviews`),
@@ -337,12 +355,28 @@ export const browserApi = {
       body: payload,
     }),
 
-  getAdminOrders: (token: string) => apiRequest<OrderSummary[]>("/api/admin/orders", { token }),
+  getAdminOrders: (
+    token: string,
+    filters?: { status?: string; dateFrom?: string; dateTo?: string; customer?: string },
+  ) => {
+    const params = new URLSearchParams();
+    if (filters?.status) params.set("status", filters.status);
+    if (filters?.dateFrom) params.set("dateFrom", filters.dateFrom);
+    if (filters?.dateTo) params.set("dateTo", filters.dateTo);
+    if (filters?.customer) params.set("customer", filters.customer);
+    return apiRequest<OrderSummary[]>(`/api/admin/orders${params.size ? `?${params}` : ""}`, { token });
+  },
 
   updateOrderStatus: (
     token: string,
     id: number,
-    payload: { status: string; trackingNumber?: string },
+    payload: {
+      status: string;
+      trackingNumber?: string;
+      packageWeightKg?: number | null;
+      packageDimensionsCm?: string;
+      courierPartner?: string;
+    },
   ) =>
     apiRequest<OrderSummary>(`/api/admin/orders/${id}/status`, {
       method: "PUT",
@@ -350,13 +384,45 @@ export const browserApi = {
       body: payload,
     }),
 
-  getAdminCustomOrders: (token: string) =>
-    apiRequest<AdminCustomOrder[]>("/api/admin/custom-orders", { token }),
+  updateRefundStatus: (
+    token: string,
+    id: number,
+    payload: { refundStatus: string; adminNote?: string },
+  ) =>
+    apiRequest<OrderSummary>(`/api/admin/orders/${id}/refund`, {
+      method: "PUT",
+      token,
+      body: payload,
+    }),
+
+  getAdminCustomOrders: (
+    token: string,
+    filters?: { status?: string; dateFrom?: string; dateTo?: string; customer?: string },
+  ) => {
+    const params = new URLSearchParams();
+    if (filters?.status) params.set("status", filters.status);
+    if (filters?.dateFrom) params.set("dateFrom", filters.dateFrom);
+    if (filters?.dateTo) params.set("dateTo", filters.dateTo);
+    if (filters?.customer) params.set("customer", filters.customer);
+    return apiRequest<AdminCustomOrder[]>(`/api/admin/custom-orders${params.size ? `?${params}` : ""}`, {
+      token,
+    });
+  },
 
   updateAdminCustomOrder: (
     token: string,
     id: number,
-    payload: { status: string; quoteAmountInr?: number; adminNotes?: string },
+    payload: {
+      status: string;
+      quoteAmountInr?: number;
+      adminNotes?: string;
+      trackingNumber?: string;
+      packageWeightKg?: number | null;
+      packageDimensionsCm?: string;
+      courierPartner?: string;
+      refundStatus?: string;
+      cancellationReason?: string;
+    },
   ) =>
     apiRequest<AdminCustomOrder>(`/api/admin/custom-orders/${id}`, {
       method: "PUT",

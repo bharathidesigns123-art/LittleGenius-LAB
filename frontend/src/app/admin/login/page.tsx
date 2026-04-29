@@ -7,8 +7,8 @@ import { useAuth } from "@/components/providers/auth-provider";
 export default function AdminLoginPage() {
   const router = useRouter();
   const { login, loading: authLoading, isAuthenticated, isAdmin } = useAuth();
-  const [email, setEmail] = useState("admin@littlegeniuslab.in");
-  const [password, setPassword] = useState("Admin@12345");
+  const [email, setEmail] = useState("");
+  const [password, setPassword] = useState("");
   const [error, setError] = useState("");
   const [loading, setLoading] = useState(false);
 

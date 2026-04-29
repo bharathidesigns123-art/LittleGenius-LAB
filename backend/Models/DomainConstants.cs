@@ -10,9 +10,36 @@ public static class OrderStatuses
 {
     public const string Pending = "Pending";
     public const string Printing = "Printing";
+    public const string Packed = "Packed";
     public const string Shipped = "Shipped";
     public const string Delivered = "Delivered";
     public const string Cancelled = "Cancelled";
+
+    public static readonly string[] All =
+    [
+        Pending,
+        Printing,
+        Packed,
+        Shipped,
+        Delivered,
+        Cancelled
+    ];
+}
+
+public static class RefundStatuses
+{
+    public const string NotRequested = "NotRequested";
+    public const string Pending = "Pending";
+    public const string Approved = "Approved";
+    public const string Rejected = "Rejected";
+
+    public static readonly string[] All =
+    [
+        NotRequested,
+        Pending,
+        Approved,
+        Rejected
+    ];
 }
 
 public static class PaymentStatuses
@@ -30,5 +57,21 @@ public static class CustomOrderStatuses
     public const string Quoted = "Quoted";
     public const string Approved = "Approved";
     public const string Printing = "Printing";
+    public const string Packed = "Packed";
+    public const string Shipped = "Shipped";
     public const string Delivered = "Delivered";
+    public const string Cancelled = "Cancelled";
+
+    public static readonly string[] All =
+    [
+        New,
+        Reviewing,
+        Quoted,
+        Approved,
+        Printing,
+        Packed,
+        Shipped,
+        Delivered,
+        Cancelled
+    ];
 }
