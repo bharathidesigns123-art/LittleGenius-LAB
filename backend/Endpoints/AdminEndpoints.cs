@@ -2,6 +2,7 @@ using LittleGeniusLab.Api.Data;
 using LittleGeniusLab.Api.Helpers;
 using LittleGeniusLab.Api.Models;
 using LittleGeniusLab.Api.Services;
+using Microsoft.AspNetCore.Identity;
 using Microsoft.EntityFrameworkCore;
 
 namespace LittleGeniusLab.Api.Endpoints;
