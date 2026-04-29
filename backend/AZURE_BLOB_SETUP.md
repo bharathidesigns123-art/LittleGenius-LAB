@@ -24,6 +24,6 @@ Notes:
 Testing locally:
 1. Set the Azure__Blob__ConnectionString environment variable with a connection string that contains AccountName and AccountKey.
 2. Start the backend: dotnet run
-3. POST multipart/form-data to POST /api/store/uploads/image with `file` form field and optional `folder` value. The response will contain { url: "<blob-url-or-sas-url>" }.
+3. POST JSON to `/api/store/uploads/sas` with `fileName` and `contentType`. Upload the file directly to the returned `uploadUrl` with `PUT`, `x-ms-blob-type: BlockBlob`, and the original content type.
 
-If you want the backend to keep using local filesystem instead, leave AzureBlob:ConnectionString empty.
+Azure Blob Storage is required for uploads. The old local filesystem upload path has been removed.

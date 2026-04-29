@@ -19,7 +19,6 @@ type ProductFormState = {
   priceInr: number;
   compareAtPriceInr: string | number;
   badge: string;
-  heroImageUrl: string;
   colourway: string;
   material: string;
   finish: string;
@@ -53,7 +52,6 @@ function createEmptyProduct(categoryId = 1): ProductFormState {
     priceInr: 0,
     compareAtPriceInr: "",
     badge: "",
-    heroImageUrl: "",
     colourway: "",
     material: "Child-safe PLA",
     finish: "Smooth matte surface",
@@ -349,7 +347,6 @@ export default function AdminProductsPage() {
       priceInr: product.priceInr,
       compareAtPriceInr: product.compareAtPriceInr ?? "",
       badge: product.badge,
-      heroImageUrl: product.heroImageUrl,
       colourway: product.colourway,
       material: product.material,
       finish: product.finish,
@@ -378,6 +375,7 @@ export default function AdminProductsPage() {
     try {
       const savedProduct = await browserApi.saveProduct(token, {
         ...form,
+        heroImageUrl: editingProduct?.heroImageUrl ?? "",
         priceInr: Number(form.priceInr),
         compareAtPriceInr: form.compareAtPriceInr ? Number(form.compareAtPriceInr) : null,
         sizeMm: Number(form.sizeMm),
@@ -491,8 +489,7 @@ export default function AdminProductsPage() {
             {form.id ? "Edit product" : "Add product"}
           </h2>
           <p className="mt-2 text-sm leading-7 text-[var(--color-ink-soft)]">
-            Existing products can keep their single image URL. New uploads add a managed gallery without
-            replacing legacy data.
+            Manage catalogue details and attach gallery images through the Azure upload flow.
           </p>
 
           {error ? (
@@ -523,7 +520,6 @@ export default function AdminProductsPage() {
               ["slug", "Slug"],
               ["sku", "SKU"],
               ["badge", "Badge"],
-              ["heroImageUrl", "Legacy image URL or fallback image"],
               ["colourway", "Colourway"],
               ["material", "Material"],
               ["finish", "Finish"],
@@ -676,28 +672,9 @@ export default function AdminProductsPage() {
                     ))}
                   </div>
                 </div>
-              ) : form.heroImageUrl ? (
-                <div className="mt-4">
-                  <h4 className="text-sm font-semibold text-[var(--color-blue)]">Legacy fallback image</h4>
-                  <div className="mt-3 max-w-xs rounded-[1.6rem] border border-[var(--color-border)] bg-white p-3">
-                    <div className="overflow-hidden rounded-[1.2rem] bg-[var(--color-surface)]">
-                      <Image
-                        src={resolveAssetUrl(form.heroImageUrl)}
-                        alt={`${form.name || editingProduct?.name || "Product"} legacy preview`}
-                        width={320}
-                        height={320}
-                        unoptimized
-                        className="h-36 w-full object-cover"
-                      />
-                    </div>
-                    <p className="mt-3 text-sm text-[var(--color-ink-soft)]">
-                      This existing image URL will continue to work until you add uploaded gallery images.
-                    </p>
-                  </div>
-                </div>
               ) : (
                 <p className="mt-4 text-sm leading-7 text-[var(--color-ink-soft)]">
-                  Save the product with a legacy image URL or add uploads to create its gallery.
+                  Add uploaded images to create this product gallery.
                 </p>
               )
             ) : (
@@ -755,9 +732,7 @@ export default function AdminProductsPage() {
                     <p className="mt-1 text-xs font-semibold uppercase tracking-[0.15em] text-[var(--color-blue)]">
                       {product.imageCount > 0
                         ? `${product.imageCount} uploaded image${product.imageCount === 1 ? "" : "s"}`
-                        : product.heroImageUrl
-                          ? "Using legacy image URL"
-                          : "No image yet"}
+                        : "No uploaded images yet"}
                     </p>
                   </div>
                 </div>

@@ -146,7 +146,6 @@ public static class AdminEndpoints
         group.MapDelete("/products/{id:int}", async (
             int id,
             AppDbContext db,
-            FileStorageService storage,
             CancellationToken cancellationToken) =>
         {
             var product = await db.Products
@@ -157,16 +156,8 @@ public static class AdminEndpoints
                 return Results.NotFound(new { message = "Product not found." });
             }
 
-            var imageUrls = (product.Images ?? [])
-                .Select(image => image.ImageUrl)
-                .ToList();
             db.Products.Remove(product);
             await db.SaveChangesAsync(cancellationToken);
-
-            foreach (var imageUrl in imageUrls)
-            {
-                storage.DeleteImage(imageUrl);
-            }
 
             return Results.Ok(new { message = "Product deleted." });
         });
@@ -184,83 +175,6 @@ public static class AdminEndpoints
             }
 
             return Results.Ok(MapProductImages(product));
-        });
-
-        group.MapPost("/products/{id:int}/images", async (
-            int id,
-            HttpRequest request,
-            AppDbContext db,
-            FileStorageService storage,
-            CancellationToken cancellationToken) =>
-        {
-            var product = await db.Products
-                .Include(item => item.Images)
-                .FirstOrDefaultAsync(item => item.Id == id, cancellationToken);
-
-            if (product is null)
-            {
-                return Results.NotFound(new { message = "Product not found." });
-            }
-
-            if (!request.HasFormContentType)
-            {
-                return Results.BadRequest(new { message = "Multipart form data is required." });
-            }
-
-            var form = await request.ReadFormAsync(cancellationToken);
-            var files = form.Files.GetFiles("files");
-            if (files.Count == 0)
-            {
-                return Results.BadRequest(new { message = "At least one image file is required." });
-            }
-
-            // Ensure Images collection is initialized
-            product.Images ??= [];
-
-            var nextSortOrder = product.Images.Count == 0
-                ? 0
-                : product.Images.Max(image => image.SortOrder) + 1;
-            var uploadedPaths = new List<string>();
-
-            try
-            {
-                foreach (var file in files)
-                {
-                    var storedImage = await storage.SaveProductImageAsync(
-                        file,
-                        $"products/{product.Id}",
-                        cancellationToken);
-                    uploadedPaths.Add(storedImage.Url);
-
-                    product.Images.Add(new ProductImage
-                    {
-                        ProductId = product.Id,
-                        ImageUrl = storedImage.Url,
-                        SortOrder = nextSortOrder++,
-                        Width = storedImage.Width,
-                        Height = storedImage.Height
-                    });
-                }
-
-                product.UpdatedAtUtc = DateTime.UtcNow;
-                await db.SaveChangesAsync(cancellationToken);
-            }
-            catch (InvalidOperationException exception)
-            {
-                foreach (var imageUrl in uploadedPaths)
-                {
-                    storage.DeleteImage(imageUrl);
-                }
-
-                return Results.BadRequest(new { message = exception.Message });
-            }
-
-            return Results.Created($"/api/admin/products/{product.Id}/images", new
-            {
-                images = MapProductImages(product),
-                heroImageUrl = GetPrimaryImageUrl(product),
-                imageCount = product.Images.Count
-            });
         });
 
         group.MapPost("/products/{id:int}/images/register", async (
@@ -358,7 +272,6 @@ public static class AdminEndpoints
             int productId,
             int imageId,
             AppDbContext db,
-            FileStorageService storage,
             CancellationToken cancellationToken) =>
         {
             var product = await db.Products
@@ -379,7 +292,6 @@ public static class AdminEndpoints
                 return Results.NotFound(new { message = "Product image not found." });
             }
 
-            var deletedUrl = image.ImageUrl;
             db.ProductImages.Remove(image);
             product.Images.Remove(image);
 
@@ -393,7 +305,6 @@ public static class AdminEndpoints
 
             product.UpdatedAtUtc = DateTime.UtcNow;
             await db.SaveChangesAsync(cancellationToken);
-            storage.DeleteImage(deletedUrl);
 
             return Results.Ok(new
             {

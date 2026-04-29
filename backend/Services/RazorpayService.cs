@@ -25,11 +25,7 @@ public sealed class RazorpayService(HttpClient httpClient, IOptions<RazorpayOpti
     {
         if (!IsConfigured)
         {
-            return new RazorpayOrderResult(
-                ProviderOrderId: $"mock_order_{Guid.NewGuid():N[..12]}",
-                AmountInPaise: decimal.ToInt32(amountInr * 100),
-                Currency: "INR",
-                IsMock: true);
+            throw new InvalidOperationException("Razorpay is not configured.");
         }
 
         var credentials = Convert.ToBase64String(Encoding.UTF8.GetBytes($"{_options.KeyId}:{_options.KeySecret}"));
@@ -62,15 +58,14 @@ public sealed class RazorpayService(HttpClient httpClient, IOptions<RazorpayOpti
         return new RazorpayOrderResult(
             ProviderOrderId: root.GetProperty("id").GetString() ?? string.Empty,
             AmountInPaise: root.GetProperty("amount").GetInt32(),
-            Currency: root.GetProperty("currency").GetString() ?? "INR",
-            IsMock: false);
+            Currency: root.GetProperty("currency").GetString() ?? "INR");
     }
 
     public bool VerifySignature(string orderId, string paymentId, string signature)
     {
         if (!IsConfigured)
         {
-            return true;
+            throw new InvalidOperationException("Razorpay is not configured.");
         }
 
         var payload = $"{orderId}|{paymentId}";
@@ -85,5 +80,4 @@ public sealed class RazorpayService(HttpClient httpClient, IOptions<RazorpayOpti
 public sealed record RazorpayOrderResult(
     string ProviderOrderId,
     int AmountInPaise,
-    string Currency,
-    bool IsMock);
+    string Currency);

@@ -22,6 +22,12 @@ type RequestOptions = {
   isFormData?: boolean;
 };
 
+type BlobUploadResponse = {
+  uploadUrl: string;
+  readUrl?: string;
+  blobUrl?: string;
+};
+
 async function apiRequest<T>(path: string, options: RequestOptions = {}): Promise<T> {
   const headers = new Headers();
   if (!options.isFormData) {
@@ -56,6 +62,36 @@ async function apiRequest<T>(path: string, options: RequestOptions = {}): Promis
   return (await response.json()) as T;
 }
 
+async function uploadBlobFile(file: File, token?: string | null): Promise<string> {
+  const fileName = `${Date.now()}-${file.name.replace(/\s+/g, "-")}`;
+  const sasResp = await apiRequest<BlobUploadResponse>("/api/store/uploads/sas", {
+    method: "POST",
+    token,
+    body: { fileName, contentType: file.type },
+  });
+
+  const uploadUrl = sasResp.uploadUrl || sasResp.blobUrl;
+  if (!uploadUrl) {
+    throw new Error("Failed to get upload URL");
+  }
+
+  const uploadRes = await fetch(uploadUrl, {
+    method: "PUT",
+    headers: {
+      "x-ms-blob-type": "BlockBlob",
+      "Content-Type": file.type || "application/octet-stream",
+    },
+    body: file,
+  });
+
+  if (!uploadRes.ok) {
+    const text = await uploadRes.text();
+    throw new Error(`Upload failed: ${uploadRes.status} ${text || uploadRes.statusText}`);
+  }
+
+  return sasResp.readUrl || sasResp.blobUrl || uploadUrl;
+}
+
 export const browserApi = {
   signup: (payload: {
     fullName: string;
@@ -83,32 +119,7 @@ export const browserApi = {
   uploadImage: async (formData: FormData) => {
     const file = formData.get("file") as File | null;
     if (!file) throw new Error("No file provided");
-    const fileName = `${Date.now()}-${file.name.replace(/\s+/g, "-")}`;
-    const sasResp = await apiRequest<{ uploadUrl: string; readUrl?: string; blobUrl?: string }>(
-      "/api/store/uploads/sas",
-      { method: "POST", body: { fileName, contentType: file.type } },
-    );
-
-    const uploadUrl = sasResp.uploadUrl || sasResp.blobUrl;
-    if (!uploadUrl) {
-      throw new Error("Failed to get upload URL");
-    }
-
-    const uploadRes = await fetch(uploadUrl, {
-      method: "PUT",
-      headers: {
-        "x-ms-blob-type": "BlockBlob",
-        "Content-Type": file.type || "application/octet-stream",
-      },
-      body: file,
-    });
-
-    if (!uploadRes.ok) {
-      const text = await uploadRes.text();
-      throw new Error(`Upload failed: ${uploadRes.status} ${text || uploadRes.statusText}`);
-    }
-
-    return { url: sasResp.readUrl ?? sasResp.uploadUrl ?? sasResp.blobUrl };
+    return { url: await uploadBlobFile(file) };
   },
 
 
@@ -254,6 +265,8 @@ export const browserApi = {
       token,
     }),
 
+  uploadCategoryImage: (token: string, file: File) => uploadBlobFile(file, token),
+
   getAdminProducts: (token: string) =>
     apiRequest<AdminProduct[]>("/api/admin/products", { token }),
 
@@ -271,33 +284,7 @@ export const browserApi = {
     const uploadedUrls: string[] = [];
 
     for (const file of files) {
-      const fileName = `${Date.now()}-${file.name.replace(/\s+/g, "-")}`;
-      const sasResp = await apiRequest<{ uploadUrl: string; readUrl?: string; blobUrl?: string }>(
-        "/api/store/uploads/sas",
-        { method: "POST", token, body: { fileName, contentType: file.type } },
-      );
-
-      const uploadUrl = sasResp.uploadUrl || sasResp.blobUrl;
-      if (!uploadUrl) {
-        throw new Error("Failed to get upload URL");
-      }
-      const readUrl = sasResp.readUrl || sasResp.blobUrl || uploadUrl;
-
-      const uploadRes = await fetch(uploadUrl, {
-        method: "PUT",
-        headers: {
-          "x-ms-blob-type": "BlockBlob",
-          "Content-Type": file.type || "application/octet-stream",
-        },
-        body: file,
-      });
-
-      if (!uploadRes.ok) {
-        const text = await uploadRes.text();
-        throw new Error(`Failed to upload file: ${uploadRes.status} ${text || uploadRes.statusText}`);
-      }
-
-      uploadedUrls.push(readUrl);
+      uploadedUrls.push(await uploadBlobFile(file, token));
     }
 
     // register uploaded URLs with admin API

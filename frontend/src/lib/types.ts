@@ -179,7 +179,6 @@ export type RazorpayOrderResponse = {
     id: string;
     amount: number;
     currency: string;
-    isMock: boolean;
   };
 };
 

@@ -1,9 +1,3 @@
-import {
-  fallbackHomeData,
-  fallbackProductDetails,
-  fallbackProductReviewSummaries,
-  fallbackProducts,
-} from "@/lib/fallback-data";
 import type {
   Category,
   HomeData,
@@ -28,44 +22,46 @@ async function fetchStoreJson<T>(path: string): Promise<T> {
 }
 
 export async function getHomeData(): Promise<HomeData> {
-  try {
-    return await fetchStoreJson<HomeData>("/api/store/home");
-  } catch {
-    return fallbackHomeData;
-  }
+  return fetchStoreJson<HomeData>("/api/store/home");
 }
 
 export async function getCategories(): Promise<Category[]> {
-  try {
-    return await fetchStoreJson<Category[]>("/api/store/categories");
-  } catch {
-    return fallbackHomeData.categories;
-  }
+  return fetchStoreJson<Category[]>("/api/store/categories");
 }
 
 export async function getProducts(category?: string): Promise<ProductSummary[]> {
-  try {
-    const suffix = category ? `?category=${category}` : "";
-    return await fetchStoreJson<ProductSummary[]>(`/api/store/products${suffix}`);
-  } catch {
-    return category
-      ? fallbackProducts.filter((product) => product.categorySlug === category)
-      : fallbackProducts;
-  }
+  const suffix = category ? `?category=${category}` : "";
+  return fetchStoreJson<ProductSummary[]>(`/api/store/products${suffix}`);
 }
 
 export async function getProductDetail(slug: string): Promise<ProductDetail | null> {
-  try {
-    return await fetchStoreJson<ProductDetail>(`/api/store/products/${slug}`);
-  } catch {
-    return fallbackProductDetails[slug] ?? null;
+  const response = await fetch(`${API_BASE_URL}/api/store/products/${slug}`, {
+    cache: "no-store",
+  });
+
+  if (response.status === 404) {
+    return null;
   }
+
+  if (!response.ok) {
+    throw new Error(`Request failed: /api/store/products/${slug}`);
+  }
+
+  return (await response.json()) as ProductDetail;
 }
 
 export async function getProductReviews(slug: string): Promise<ProductReviewSummary | null> {
-  try {
-    return await fetchStoreJson<ProductReviewSummary>(`/api/store/products/${slug}/reviews`);
-  } catch {
-    return fallbackProductReviewSummaries[slug] ?? null;
+  const response = await fetch(`${API_BASE_URL}/api/store/products/${slug}/reviews`, {
+    cache: "no-store",
+  });
+
+  if (response.status === 404) {
+    return null;
   }
+
+  if (!response.ok) {
+    throw new Error(`Request failed: /api/store/products/${slug}/reviews`);
+  }
+
+  return (await response.json()) as ProductReviewSummary;
 }

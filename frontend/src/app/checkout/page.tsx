@@ -37,19 +37,6 @@ export default function CheckoutPage() {
     [items],
   );
 
-  const verifyMockPayment = async (
-    orderCode: string,
-    providerOrderId: string,
-  ) => {
-    await browserApi.verifyRazorpayPayment({
-      orderCode,
-      serverOrderId: providerOrderId,
-      razorpayOrderId: providerOrderId,
-      razorpayPaymentId: `mock_payment_${Date.now()}`,
-      razorpaySignature: "mock_signature",
-    });
-  };
-
   const handleSubmit = async (event: React.FormEvent<HTMLFormElement>) => {
     event.preventDefault();
     setSubmitting(true);
@@ -63,12 +50,8 @@ export default function CheckoutPage() {
 
       if (form.paymentMethod === "Razorpay") {
         const payment = await browserApi.createRazorpayOrder(order.orderCode);
-        if (payment.razorpayOrder.isMock || !window.Razorpay || !payment.publicKey) {
-          await verifyMockPayment(order.orderCode, payment.razorpayOrder.id);
-          clearCart();
-          setSuccessOrderCode(order.orderCode);
-          setSubmitting(false);
-          return;
+        if (!window.Razorpay || !payment.publicKey) {
+          throw new Error("Razorpay checkout is unavailable. Please try again in a moment.");
         }
 
         const razorpay = new window.Razorpay({

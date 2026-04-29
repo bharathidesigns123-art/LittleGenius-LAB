@@ -7,7 +7,6 @@ using LittleGeniusLab.Api.Services;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.EntityFrameworkCore;
-using Microsoft.Extensions.FileProviders;
 using Microsoft.IdentityModel.Tokens;
 using Microsoft.OpenApi.Models;
 
@@ -150,11 +149,8 @@ builder.Services.AddHttpContextAccessor();
 
 var app = builder.Build();
 
-var webRoot = app.Environment.WebRootPath ?? Path.Combine(app.Environment.ContentRootPath, "wwwroot");
-var uploadsRoot = Path.Combine(webRoot, "uploads");
 var dataRoot = Path.Combine(app.Environment.ContentRootPath, "data");
 
-Directory.CreateDirectory(uploadsRoot);
 Directory.CreateDirectory(dataRoot);
 
 using (var scope = app.Services.CreateScope())
@@ -169,11 +165,6 @@ app.UseSwagger();
 app.UseSwaggerUI();
 
 app.UseCors("frontend");
-app.UseStaticFiles(new StaticFileOptions
-{
-    FileProvider = new PhysicalFileProvider(webRoot),
-    RequestPath = string.Empty
-});
 app.UseAuthentication();
 app.UseAuthorization();
 
@@ -181,8 +172,7 @@ app.MapGet("/", () => Results.Ok(new
 {
     name = "LittleGenius LAB API",
     status = "running",
-    docs = "/swagger",
-    uploadedAssets = "/uploads"
+    docs = "/swagger"
 }));
 
 app.MapGet("/api/health", () => Results.Ok(new

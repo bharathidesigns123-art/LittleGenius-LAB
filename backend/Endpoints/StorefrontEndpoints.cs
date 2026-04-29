@@ -206,7 +206,7 @@ public static class StorefrontEndpoints
                 ? 0
                 : Math.Round(approvedReviews.Average(review => review.Rating), 1, MidpointRounding.AwayFromZero);
             var primaryImageUrl = GetPrimaryImageUrl(product);
-            var productImages = MapProductImages(product, includeLegacyFallback: true);
+            var productImages = MapProductImages(product);
 
             var relatedProducts = await db.Products
                 .AsNoTracking()
@@ -289,31 +289,8 @@ public static class StorefrontEndpoints
             return Results.Ok(new
             {
                 productId = product.Id,
-                images = MapProductImages(product, includeLegacyFallback: true)
+                images = MapProductImages(product)
             });
-        });
-
-        group.MapPost("/uploads/image", async (
-            HttpRequest request,
-            FileStorageService storage,
-            CancellationToken cancellationToken) =>
-        {
-            if (!request.HasFormContentType)
-            {
-                return Results.BadRequest(new { message = "Multipart form data is required." });
-            }
-
-            var form = await request.ReadFormAsync(cancellationToken);
-            var file = form.Files["file"];
-            var folder = form["folder"].FirstOrDefault() ?? "general";
-
-            if (file is null || file.Length == 0)
-            {
-                return Results.BadRequest(new { message = "An image file is required." });
-            }
-
-            var url = await storage.SaveImageAsync(file, folder, cancellationToken);
-            return Results.Ok(new { url });
         });
 
         group.MapPost("/uploads/sas", async (HttpRequest request, FileStorageService storage) =>
@@ -540,6 +517,11 @@ public static class StorefrontEndpoints
                 return Results.NotFound(new { message = "Order not found." });
             }
 
+            if (!razorpayService.IsConfigured)
+            {
+                return Results.BadRequest(new { message = "Razorpay is not configured." });
+            }
+
             var razorpayOrder = await razorpayService.CreateOrderAsync(order.OrderCode, order.TotalPriceInr, cancellationToken);
 
             var transaction = new PaymentTransaction
@@ -572,8 +554,7 @@ public static class StorefrontEndpoints
                 {
                     id = razorpayOrder.ProviderOrderId,
                     amount = razorpayOrder.AmountInPaise,
-                    currency = razorpayOrder.Currency,
-                    isMock = razorpayOrder.IsMock
+                    currency = razorpayOrder.Currency
                 }
             });
         });
@@ -680,14 +661,11 @@ public static class StorefrontEndpoints
             .Select(image => image.ImageUrl)
             .FirstOrDefault() ?? product.HeroImageUrl;
 
-    private static IReadOnlyList<ProductImageResponse> MapProductImages(
-        Product product,
-        bool includeLegacyFallback)
+    private static IReadOnlyList<ProductImageResponse> MapProductImages(Product product)
     {
-        // Ensure Images collection is not null
         var images = product.Images ?? [];
         
-        var uploadedImages = images
+        return images
             .OrderBy(image => image.SortOrder)
             .Select(image => new ProductImageResponse(
                 image.Id,
@@ -696,24 +674,6 @@ public static class StorefrontEndpoints
                 image.Width,
                 image.Height))
             .ToList();
-
-        // If we have uploaded images, always return them
-        if (uploadedImages.Count > 0)
-        {
-            return uploadedImages;
-        }
-
-        // If no uploaded images but legacy fallback is enabled and hero image exists, return it
-        if (includeLegacyFallback && !string.IsNullOrWhiteSpace(product.HeroImageUrl))
-        {
-            return
-            [
-                new ProductImageResponse(0, product.HeroImageUrl, 0, 0, 0)
-            ];
-        }
-
-        // No images available
-        return [];
     }
 
     private sealed record ProductImageResponse(int Id, string ImageUrl, int SortOrder, int Width, int Height);
