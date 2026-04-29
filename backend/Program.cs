@@ -104,7 +104,13 @@ builder.Services.AddCors(options =>
 var sqlServerConnection = builder.Configuration.GetConnectionString("SqlServer");
 
 builder.Services.AddDbContext<AppDbContext>(options =>
-    options.UseSqlServer(sqlServerConnection));
+{
+    if (string.IsNullOrWhiteSpace(sqlServerConnection))
+    {
+        throw new InvalidOperationException("Connection string 'SqlServer' not found.");
+    }
+    options.UseSqlServer(sqlServerConnection);
+});
 
 var jwtOptions = builder.Configuration
     .GetSection(JwtOptions.SectionName)

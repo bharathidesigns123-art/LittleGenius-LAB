@@ -207,7 +207,8 @@ public static class DatabaseSchemaUpdater
         CancellationToken cancellationToken)
     {
         var columns = new HashSet<string>(StringComparer.OrdinalIgnoreCase);
-        await using var connection = db.Database.GetDbConnection();
+        var connection = db.Database.GetDbConnection();
+        
         if (connection.State != ConnectionState.Open)
         {
             await connection.OpenAsync(cancellationToken);
