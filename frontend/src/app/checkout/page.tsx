@@ -50,11 +50,16 @@ export default function CheckoutPage() {
 
       if (form.paymentMethod === "Razorpay") {
         const payment = await browserApi.createRazorpayOrder(order.orderCode);
-        if (!window.Razorpay || !payment.publicKey) {
+        
+        if (typeof window === "undefined") {
+            throw new Error("Payment can only be processed in a browser environment.");
+        }
+
+        if (!(window as any).Razorpay || !payment.publicKey) {
           throw new Error("Razorpay checkout is unavailable. Please try again in a moment.");
         }
 
-        const razorpay = new window.Razorpay({
+        const razorpay = new (window as any).Razorpay({
           key: payment.publicKey,
           amount: payment.razorpayOrder.amount,
           currency: payment.razorpayOrder.currency,

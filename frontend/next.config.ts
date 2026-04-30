@@ -5,12 +5,12 @@ const nextConfig: NextConfig = {
     unoptimized: true,
     remotePatterns: [
       {
-        protocol: "http",
-        hostname: "**",
+        protocol: "https",
+        hostname: "littlegeniusstorage.blob.core.windows.net",
       },
       {
         protocol: "https",
-        hostname: "**",
+        hostname: "little-genius-lab.vercel.app",
       },
     ],
   },

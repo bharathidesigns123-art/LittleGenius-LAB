@@ -81,17 +81,20 @@ builder.Services.AddCors(options =>
             {
                 if (string.IsNullOrWhiteSpace(origin)) return false;
                 
+                // Normalise origin by removing trailing slash for comparison
+                var normalizedOrigin = origin.TrimEnd('/');
+
                 // Allow localhost
-                if (origin.Contains("localhost") || origin.Contains("127.0.0.1")) return true;
+                if (normalizedOrigin.Contains("localhost") || normalizedOrigin.Contains("127.0.0.1")) return true;
                 
                 // Allow production domain
-                if (origin.Equals("https://little-genius-lab.vercel.app", StringComparison.OrdinalIgnoreCase)) return true;
+                if (normalizedOrigin.Equals("https://little-genius-lab.vercel.app", StringComparison.OrdinalIgnoreCase)) return true;
                 
                 // Allow Vercel preview URLs
-                if (origin.EndsWith(".vercel.app", StringComparison.OrdinalIgnoreCase)) return true;
+                if (normalizedOrigin.EndsWith(".vercel.app", StringComparison.OrdinalIgnoreCase)) return true;
 
                 // Allow configured URL
-                if (!string.IsNullOrWhiteSpace(frontendUrl) && origin.Equals(frontendUrl, StringComparison.OrdinalIgnoreCase)) return true;
+                if (!string.IsNullOrWhiteSpace(frontendUrl) && normalizedOrigin.Equals(frontendUrl.TrimEnd('/'), StringComparison.OrdinalIgnoreCase)) return true;
 
                 return false;
             })
@@ -151,7 +154,15 @@ var app = builder.Build();
 using (var scope = app.Services.CreateScope())
 {
     var db = scope.ServiceProvider.GetRequiredService<AppDbContext>();
-    db.Database.EnsureCreated();
+    // Use Migrate() for production-ready schema management instead of EnsureCreated()
+    if (db.Database.IsRelational())
+    {
+        await db.Database.MigrateAsync();
+    }
+    else
+    {
+        db.Database.EnsureCreated();
+    }
     await DatabaseSchemaUpdater.ApplyAsync(db);
     await SeedData.InitializeAsync(db);
 }
