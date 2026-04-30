@@ -1,5 +1,6 @@
 import type { Metadata } from "next";
 import { DM_Sans, Fraunces } from "next/font/google";
+import { SpeedInsights } from "@vercel/speed-insights/next";
 import { AppProviders } from "@/components/providers/app-providers";
 import "./globals.css";
 
@@ -31,6 +32,7 @@ export default function RootLayout({
     <html lang="en" className={`${bodyFont.variable} ${displayFont.variable}`}>
       <body>
         <AppProviders>{children}</AppProviders>
+        <SpeedInsights />
       </body>
     </html>
   );
