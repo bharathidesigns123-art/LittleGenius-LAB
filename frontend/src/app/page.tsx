@@ -133,29 +133,23 @@ export default async function HomePage() {
       </section>
 
       <section className="page-shell py-14">
-        <div className="grid gap-5 md:grid-cols-3">
+        <SectionHeading
+          eyebrow="Custom Toy Journey"
+          title="From upload to delivery in four clear steps"
+          description="A simple WhatsApp-assisted flow that feels familiar to Indian shoppers and reduces back-and-forth."
+        />
+        <div className="grid gap-5 md:grid-cols-4">
           {[
-            {
-              step: "01",
-              title: "Browse and choose",
-              description: "Browse categories, open a detail page, and add products to the cart without being forced to log in.",
-            },
-            {
-              step: "02",
-              title: "Print with care",
-              description: "Inventory, order management, and status transitions now live in the backend so the business can track every order.",
-            },
-            {
-              step: "03",
-              title: "Deliver with confidence",
-              description: "Guest order tracking and account order history both sit on the same order model for a smoother support experience.",
-            },
+            { step: "01", title: "Upload reference", description: "Share photos or a concept. We validate details instantly." },
+            { step: "02", title: "Preview rendering", description: "Receive 3D preview for review and revisions." },
+            { step: "03", title: "Approve design", description: "Approve on WhatsApp and confirm payment securely." },
+            { step: "04", title: "Production & shipping", description: "Printed, packed, and delivered in 5-7 days." },
           ].map((item) => (
             <div key={item.step} className="surface-card card-shadow rounded-[2rem] p-6">
               <p className="text-sm font-bold uppercase tracking-[0.24em] text-[var(--color-orange)]">
                 Step {item.step}
               </p>
-              <h3 className="mt-4 text-2xl font-semibold text-[var(--color-blue)]">{item.title}</h3>
+              <h3 className="mt-4 text-xl font-semibold text-[var(--color-blue)]">{item.title}</h3>
               <p className="mt-4 text-sm leading-7 text-[var(--color-ink-soft)]">{item.description}</p>
             </div>
           ))}
@@ -191,6 +185,10 @@ export default async function HomePage() {
               >
                 Chat on WhatsApp
               </a>
+            </div>
+            <div className="mt-6 grid gap-2 rounded-2xl border border-white/20 bg-white/10 p-4 text-sm text-white/90">
+              <p className="font-semibold text-[var(--color-yellow)]">WhatsApp status updates</p>
+              <p>Order received -&gt; Rendering in progress -&gt; Awaiting approval -&gt; In production -&gt; Shipped</p>
             </div>
           </div>
         </div>

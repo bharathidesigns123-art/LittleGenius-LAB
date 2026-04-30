@@ -30,6 +30,7 @@ export default function CheckoutPage() {
   });
   const [submitting, setSubmitting] = useState(false);
   const [error, setError] = useState("");
+  const [fieldErrors, setFieldErrors] = useState<Record<string, string>>({});
   const [successOrderCode, setSuccessOrderCode] = useState("");
 
   const orderItems = useMemo(
@@ -37,8 +38,23 @@ export default function CheckoutPage() {
     [items],
   );
 
+  const validateForm = () => {
+    const nextErrors: Record<string, string> = {};
+    if (!/^\S+@\S+\.\S+$/.test(form.email)) nextErrors.email = "Please enter a valid email address.";
+    if (!/^\d{10}$/.test(form.phone.trim())) nextErrors.phone = "Phone number must be 10 digits.";
+    if (!/^\d{6}$/.test(form.pincode.trim())) nextErrors.pincode = "Pincode must be 6 digits.";
+    if (form.line1.trim().length < 6) nextErrors.line1 = "Address line 1 is too short.";
+    if (!form.city.trim()) nextErrors.city = "City is required.";
+    if (!form.customerName.trim()) nextErrors.customerName = "Name is required.";
+    setFieldErrors(nextErrors);
+    return Object.keys(nextErrors).length === 0;
+  };
+
   const handleSubmit = async (event: React.FormEvent<HTMLFormElement>) => {
     event.preventDefault();
+    if (!validateForm()) {
+      return;
+    }
     setSubmitting(true);
     setError("");
 
@@ -139,13 +155,21 @@ export default function CheckoutPage() {
           />
         ) : (
           <div className="grid gap-8 md:grid-cols-[1fr_360px]">
-            <form onSubmit={handleSubmit} className="surface-card card-shadow rounded-[2.5rem] p-8">
+            <form id="checkout-form" onSubmit={handleSubmit} className="surface-card card-shadow rounded-[2.5rem] p-8">
               <p className="text-sm font-bold uppercase tracking-[0.24em] text-[var(--color-orange)]">
                 Checkout
               </p>
               <h1 className="display-font mt-2 text-4xl font-semibold text-[var(--color-blue)]">
                 Shipping and payment
               </h1>
+              <p className="mt-3 text-sm text-[var(--color-ink-soft)]">
+                Delivery in 2-4 days | Secure payments via Razorpay / UPI / COD
+              </p>
+              <div className="mt-4 flex flex-wrap gap-2 text-xs font-semibold text-[var(--color-ink-soft)]">
+                <span className="rounded-full bg-[var(--color-surface)] px-3 py-2">Secure payment</span>
+                <span className="rounded-full bg-[var(--color-surface)] px-3 py-2">Made in India</span>
+                <span className="rounded-full bg-[var(--color-surface)] px-3 py-2">Safe material</span>
+              </div>
               <div className="mt-6 grid gap-4 md:grid-cols-2">
                 {[
                   ["customerName", "Full name"],
@@ -168,6 +192,7 @@ export default function CheckoutPage() {
                       className="rounded-[1.4rem] border border-[var(--color-border)] px-4 py-3 outline-none"
                       required
                     />
+                    {fieldErrors[key] ? <span className="text-xs text-red-600">{fieldErrors[key]}</span> : null}
                   </label>
                 ))}
                 <label className="flex flex-col gap-2 md:col-span-2">
@@ -178,6 +203,7 @@ export default function CheckoutPage() {
                     className="rounded-[1.4rem] border border-[var(--color-border)] px-4 py-3 outline-none"
                     required
                   />
+                  {fieldErrors.line1 ? <span className="text-xs text-red-600">{fieldErrors.line1}</span> : null}
                 </label>
                 <label className="flex flex-col gap-2 md:col-span-2">
                   <span className="text-sm font-semibold text-[var(--color-blue)]">Address line 2</span>
@@ -253,10 +279,31 @@ export default function CheckoutPage() {
                   <span>Rs. {total}</span>
                 </div>
               </div>
+              <p className="mt-4 text-xs text-[var(--color-ink-soft)]">
+                Need help? Share your cart on WhatsApp and our team will assist with checkout.
+              </p>
             </aside>
           </div>
         )}
       </div>
+      {items.length > 0 && !successOrderCode ? (
+        <div className="fixed inset-x-0 bottom-0 z-40 border-t border-[var(--color-border)] bg-white/95 p-3 backdrop-blur md:hidden">
+          <div className="page-shell flex items-center justify-between gap-3">
+            <div>
+              <p className="text-xs text-[var(--color-ink-soft)]">Payable</p>
+              <p className="text-lg font-bold text-[var(--color-blue)]">Rs. {total}</p>
+            </div>
+            <button
+              type="submit"
+              form="checkout-form"
+              disabled={submitting}
+              className="site-button site-button-primary min-w-44"
+            >
+              {submitting ? "Placing..." : "Place Order"}
+            </button>
+          </div>
+        </div>
+      ) : null}
     </StorefrontShell>
   );
 }

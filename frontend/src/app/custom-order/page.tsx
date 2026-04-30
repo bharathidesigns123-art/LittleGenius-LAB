@@ -2,7 +2,7 @@
 
 import Image from "next/image";
 import Link from "next/link";
-import { useState } from "react";
+import { useMemo, useState } from "react";
 import { StorefrontShell } from "@/components/site/storefront-shell";
 import { useAuth } from "@/components/providers/auth-provider";
 import { browserApi } from "@/lib/browser-api";
@@ -25,10 +25,15 @@ export default function CustomOrderPage() {
   const [uploading, setUploading] = useState(false);
   const [submitting, setSubmitting] = useState(false);
   const [error, setError] = useState("");
+  const [fieldErrors, setFieldErrors] = useState<Record<string, string>>({});
   const [success, setSuccess] = useState<{
     referenceCode: string;
     whatsappUrl: string;
   } | null>(null);
+  const flowSteps = ["Upload reference", "Preview rendering", "Approval", "Production & shipping"];
+  const activeStep = form.photoUrl || form.characterDescription.trim().length > 8 ? 2 : 1;
+  const progress = Math.round((activeStep / flowSteps.length) * 100);
+  const canSubmit = useMemo(() => !uploading && !submitting, [uploading, submitting]);
 
   const handleUpload = async (file: File) => {
     setUploading(true);
@@ -47,8 +52,24 @@ export default function CustomOrderPage() {
     }
   };
 
+  const validate = () => {
+    const nextErrors: Record<string, string> = {};
+    if (!form.name.trim()) nextErrors.name = "Please enter your full name.";
+    if (!/^\S+@\S+\.\S+$/.test(form.email)) nextErrors.email = "Enter a valid email.";
+    if (!/^\d{10}$/.test(form.whatsAppNumber.trim())) nextErrors.whatsAppNumber = "Enter a valid 10-digit WhatsApp number.";
+    if (!/^\d{6}$/.test(form.pincode.trim())) nextErrors.pincode = "Enter a valid 6-digit pincode.";
+    if (!form.photoUrl && form.characterDescription.trim().length < 12) {
+      nextErrors.reference = "Upload a photo or add a detailed character description.";
+    }
+    setFieldErrors(nextErrors);
+    return Object.keys(nextErrors).length === 0;
+  };
+
   const handleSubmit = async (event: React.FormEvent<HTMLFormElement>) => {
     event.preventDefault();
+    if (!validate()) {
+      return;
+    }
     setSubmitting(true);
     setError("");
 
@@ -67,65 +88,50 @@ export default function CustomOrderPage() {
 
   return (
     <StorefrontShell>
-      {/* Hero Section */}
       <section className="page-shell py-12">
-        <div className="grid gap-8 rounded-[3rem] bg-[linear-gradient(135deg,#1a3c6e_0%,#264b82_55%,#e05c1a_180%)] p-10 text-white md:grid-cols-[1fr_1fr] items-center">
+        <div className="grid items-start gap-8 rounded-[3rem] bg-[linear-gradient(135deg,#1a3c6e_0%,#264b82_55%,#e05c1a_180%)] p-6 text-white md:grid-cols-[1.1fr_0.9fr] md:p-10">
           <div>
-            <p className="text-sm font-bold uppercase tracking-[0.24em] text-[var(--color-yellow)] mb-4">
-              Made Just For You 🎨
+            <p className="mb-4 text-sm font-bold uppercase tracking-[0.24em] text-[var(--color-yellow)]">
+              Custom Toy Studio
             </p>
             <h1 className="display-font text-5xl md:text-6xl font-semibold leading-tight">
-              Turn Your Memory <br /> into a Toy
+              Turn your memory into a premium keepsake
             </h1>
-            <p className="mt-6 text-lg leading-relaxed text-white/80 max-w-lg">
-              Send us a photo. We&apos;ll design and 3D print a one-of-a-kind figurine — of your child, your pet, or any character you love. No two are ever the same.
+            <p className="mt-4 max-w-lg text-base leading-8 text-white/80 md:text-lg">
+              Upload a reference, approve a 3D render on WhatsApp, and receive your printed toy in 5-7 days.
             </p>
-            
-            <div className="mt-8 flex flex-wrap gap-4 text-sm font-medium">
-              <span className="flex items-center gap-2 bg-white/10 px-4 py-2 rounded-full border border-white/10">
-                ✅ Free design preview
-              </span>
-              <span className="flex items-center gap-2 bg-white/10 px-4 py-2 rounded-full border border-white/10">
-                ✅ 2 revisions included
-              </span>
-              <span className="flex items-center gap-2 bg-white/10 px-4 py-2 rounded-full border border-white/10">
-                ✅ From Rs. 800
-              </span>
+            <div className="mt-6 flex flex-wrap gap-3 text-sm font-medium">
+              {["Free design preview", "2 revisions included", "From Rs. 800", "Made in India"].map((item) => (
+                <span key={item} className="rounded-full border border-white/20 bg-white/10 px-4 py-2">
+                  {item}
+                </span>
+              ))}
             </div>
           </div>
-          
-          <div className="rounded-[2.5rem] bg-white/10 backdrop-blur-md p-8 border border-white/10">
-            <h2 className="display-font text-2xl font-bold text-[var(--color-yellow)] mb-6">
-              It&apos;s Easier Than You Think ✨
-            </h2>
-            <div className="space-y-6">
-              <div className="flex gap-4">
-                <div className="w-10 h-10 rounded-full bg-[var(--color-yellow)] text-[var(--color-blue)] flex items-center justify-center font-bold flex-shrink-0">1</div>
-                <div>
-                  <h4 className="font-bold">Share Your Photo</h4>
-                  <p className="text-sm text-white/70">Upload a clear photo or describe your character idea.</p>
+          <div className="rounded-[2.5rem] border border-white/15 bg-white/10 p-6 backdrop-blur-md">
+            <p className="text-sm font-bold uppercase tracking-[0.24em] text-[var(--color-yellow)]">Progress tracker</p>
+            <div className="mt-4 h-2 rounded-full bg-white/20">
+              <div className="h-full rounded-full bg-[var(--color-yellow)] transition-all" style={{ width: `${progress}%` }} />
+            </div>
+            <p className="mt-2 text-xs text-white/80">{progress}% journey completed</p>
+            <div className="mt-5 space-y-3 text-sm">
+              {flowSteps.map((step, index) => (
+                <div key={step} className="flex items-center gap-3">
+                  <div
+                    className={`flex h-7 w-7 items-center justify-center rounded-full text-xs font-bold ${
+                      index + 1 <= activeStep ? "bg-[var(--color-yellow)] text-[var(--color-blue)]" : "bg-white/20 text-white"
+                    }`}
+                  >
+                    {index + 1}
+                  </div>
+                  <span className={index + 1 <= activeStep ? "text-white" : "text-white/70"}>{step}</span>
                 </div>
-              </div>
-              <div className="flex gap-4">
-                <div className="w-10 h-10 rounded-full bg-[var(--color-yellow)] text-[var(--color-blue)] flex items-center justify-center font-bold flex-shrink-0">2</div>
-                <div>
-                  <h4 className="font-bold">Get a Design Preview</h4>
-                  <p className="text-sm text-white/70">We send a 3D model render to your WhatsApp within 2 hours.</p>
-                </div>
-              </div>
-              <div className="flex gap-4">
-                <div className="w-10 h-10 rounded-full bg-[var(--color-yellow)] text-[var(--color-blue)] flex items-center justify-center font-bold flex-shrink-0">3</div>
-                <div>
-                  <h4 className="font-bold">Your Toy Gets Printed</h4>
-                  <p className="text-sm text-white/70">Once you approve, we print, pack, and ship it to you.</p>
-                </div>
-              </div>
+              ))}
             </div>
           </div>
         </div>
       </section>
 
-      {/* Form Section */}
       <section className="page-shell pb-20">
         <div className="surface-card card-shadow rounded-[3rem] p-8 md:p-12">
           {success ? (
@@ -135,7 +141,7 @@ export default function CustomOrderPage() {
                 We&apos;ve Got Your Request!
               </h2>
               <p className="text-lg text-[var(--color-ink-soft)] mb-8">
-                Expect a WhatsApp message from us within 2 hours with your design quote.
+                Expect your first WhatsApp update in 2 hours with a design quote.
                 Your reference code is <span className="font-bold text-[var(--color-orange)]">#{success.referenceCode}</span>.
               </p>
               <div className="flex flex-col sm:flex-row gap-4 justify-center">
@@ -156,19 +162,18 @@ export default function CustomOrderPage() {
             <>
               <div className="mb-10">
                 <h3 className="display-font text-3xl font-bold text-[var(--color-blue)]">
-                  Tell Us About Your Toy 🎨
+                  Tell us about your toy
                 </h3>
                 <p className="text-[var(--color-ink-soft)] mt-2">
-                  No payment needed now. We&apos;ll confirm everything on WhatsApp first.
+                  No upfront payment needed. We finalize everything on WhatsApp before production.
                 </p>
               </div>
 
               <form onSubmit={handleSubmit} className="grid gap-8 md:grid-cols-2">
-                {/* Step 1: Visuals */}
                 <div className="md:col-span-2">
                   <div className="flex items-center gap-3 mb-4">
                     <span className="w-8 h-8 rounded-full bg-blue-100 text-blue-600 flex items-center justify-center text-xs font-bold">1</span>
-                    <h4 className="font-bold text-[var(--color-ink)] uppercase tracking-wider text-sm">Upload Photo or Describe</h4>
+                    <h4 className="font-bold text-[var(--color-ink)] uppercase tracking-wider text-sm">Upload reference</h4>
                   </div>
                   
                   <div className="grid md:grid-cols-2 gap-6">
@@ -191,9 +196,9 @@ export default function CustomOrderPage() {
                           </>
                         ) : (
                           <>
-                            <div className="text-4xl mb-3">📸</div>
+                            <div className="text-4xl mb-3">Upload</div>
                             <p className="text-sm font-semibold text-[var(--color-blue)] mb-1">Upload Your Photo</p>
-                            <p className="text-xs text-[var(--color-ink-soft)] mb-4">Front-facing works best! (JPG, PNG under 10MB)</p>
+                            <p className="text-xs text-[var(--color-ink-soft)] mb-4">Front-facing works best (JPG, PNG under 10MB)</p>
                             <input
                               type="file"
                               accept=".jpg,.jpeg,.png,.webp"
@@ -210,6 +215,7 @@ export default function CustomOrderPage() {
                           </>
                         )}
                       </div>
+                      {fieldErrors.reference ? <p className="mt-2 text-sm text-red-600">{fieldErrors.reference}</p> : null}
                     </div>
 
                     <textarea
@@ -221,7 +227,6 @@ export default function CustomOrderPage() {
                   </div>
                 </div>
 
-                {/* Step 2: Customization */}
                 <div className="md:col-span-2 pt-4">
                   <div className="flex items-center gap-3 mb-4">
                     <span className="w-8 h-8 rounded-full bg-orange-100 text-orange-600 flex items-center justify-center text-xs font-bold">2</span>
@@ -230,7 +235,7 @@ export default function CustomOrderPage() {
                   
                   <div className="grid md:grid-cols-3 gap-6">
                     <label className="flex flex-col gap-2">
-                      <span className="text-xs font-bold text-[var(--color-blue)] uppercase tracking-wide ml-2">Occasion 🎉</span>
+                      <span className="text-xs font-bold text-[var(--color-blue)] uppercase tracking-wide ml-2">Occasion</span>
                       <select
                         value={form.occasion}
                         onChange={(event) => setForm(c => ({ ...c, occasion: event.target.value }))}
@@ -245,7 +250,7 @@ export default function CustomOrderPage() {
                     </label>
 
                     <label className="flex flex-col gap-2">
-                      <span className="text-xs font-bold text-[var(--color-blue)] uppercase tracking-wide ml-2">Select Size 📏</span>
+                      <span className="text-xs font-bold text-[var(--color-blue)] uppercase tracking-wide ml-2">Select Size</span>
                       <select
                         value={form.size}
                         onChange={(event) => setForm(c => ({ ...c, size: event.target.value }))}
@@ -258,7 +263,7 @@ export default function CustomOrderPage() {
                     </label>
 
                     <label className="flex flex-col gap-2">
-                      <span className="text-xs font-bold text-[var(--color-blue)] uppercase tracking-wide ml-2">Base Message (Optional) 💬</span>
+                      <span className="text-xs font-bold text-[var(--color-blue)] uppercase tracking-wide ml-2">Base Message (Optional)</span>
                       <input
                         value={form.baseMessage}
                         onChange={(event) => setForm(c => ({ ...c, baseMessage: event.target.value }))}
@@ -270,14 +275,13 @@ export default function CustomOrderPage() {
                   </div>
                 </div>
 
-                {/* Step 3: Contact */}
                 <div className="md:col-span-2 pt-4">
                   <div className="flex items-center gap-3 mb-4">
                     <span className="w-8 h-8 rounded-full bg-yellow-100 text-yellow-700 flex items-center justify-center text-xs font-bold">3</span>
                     <h4 className="font-bold text-[var(--color-ink)] uppercase tracking-wider text-sm">Contact Details</h4>
                   </div>
                   
-                  <div className="grid md:grid-cols-3 gap-6">
+                  <div className="grid md:grid-cols-2 gap-6">
                     <label className="flex flex-col gap-2">
                       <span className="text-xs font-bold text-[var(--color-blue)] uppercase tracking-wide ml-2">Your Name</span>
                       <input
@@ -286,10 +290,23 @@ export default function CustomOrderPage() {
                         required
                         className="rounded-full border border-[var(--color-border)] px-6 py-3 outline-none focus:border-[var(--color-blue)]"
                       />
+                      {fieldErrors.name ? <span className="text-xs text-red-600">{fieldErrors.name}</span> : null}
                     </label>
 
                     <label className="flex flex-col gap-2">
-                      <span className="text-xs font-bold text-[var(--color-blue)] uppercase tracking-wide ml-2">WhatsApp Number 📱</span>
+                      <span className="text-xs font-bold text-[var(--color-blue)] uppercase tracking-wide ml-2">Email Address</span>
+                      <input
+                        value={form.email}
+                        onChange={(event) => setForm(c => ({ ...c, email: event.target.value }))}
+                        required
+                        placeholder="you@example.com"
+                        className="rounded-full border border-[var(--color-border)] px-6 py-3 outline-none focus:border-[var(--color-blue)]"
+                      />
+                      {fieldErrors.email ? <span className="text-xs text-red-600">{fieldErrors.email}</span> : null}
+                    </label>
+
+                    <label className="flex flex-col gap-2">
+                      <span className="text-xs font-bold text-[var(--color-blue)] uppercase tracking-wide ml-2">WhatsApp Number</span>
                       <input
                         value={form.whatsAppNumber}
                         onChange={(event) => setForm(c => ({ ...c, whatsAppNumber: event.target.value }))}
@@ -297,6 +314,7 @@ export default function CustomOrderPage() {
                         placeholder="10-digit number"
                         className="rounded-full border border-[var(--color-border)] px-6 py-3 outline-none focus:border-[var(--color-blue)]"
                       />
+                      {fieldErrors.whatsAppNumber ? <span className="text-xs text-red-600">{fieldErrors.whatsAppNumber}</span> : null}
                     </label>
 
                     <label className="flex flex-col gap-2">
@@ -308,7 +326,17 @@ export default function CustomOrderPage() {
                         placeholder="6-digit PIN"
                         className="rounded-full border border-[var(--color-border)] px-6 py-3 outline-none focus:border-[var(--color-blue)]"
                       />
+                      {fieldErrors.pincode ? <span className="text-xs text-red-600">{fieldErrors.pincode}</span> : null}
                     </label>
+                  </div>
+                  <div className="mt-4 rounded-2xl border border-[var(--color-border)] bg-[var(--color-surface)] p-4">
+                    <p className="text-sm font-bold text-[var(--color-blue)]">WhatsApp-style status updates</p>
+                    <div className="mt-3 space-y-2 text-sm text-[var(--color-ink-soft)]">
+                      <p>09:45 - Request received</p>
+                      <p>11:20 - 3D preview shared</p>
+                      <p>12:05 - Awaiting approval</p>
+                      <p>14:30 - In production (ETA 5-7 days)</p>
+                    </div>
                   </div>
                 </div>
 
@@ -320,14 +348,14 @@ export default function CustomOrderPage() {
 
                 <div className="md:col-span-2 pt-6">
                   <button
-                    disabled={submitting}
+                    disabled={!canSubmit}
                     aria-label="Send custom order request"
                     className="site-button site-button-primary w-full py-4 text-lg shadow-lg shadow-orange-500/20 disabled:opacity-60"
                   >
                     {submitting ? "Sending Request..." : "Send My Request — Get a Quote in 2 Hours"}
                   </button>
                   <p className="mt-4 text-center text-sm text-[var(--color-ink-soft)]">
-                    No payment needed now. We&apos;ll WhatsApp you a quote before anything is confirmed.
+                    We share quote and delivery timeline before confirming your order.
                   </p>
                 </div>
               </form>
@@ -336,11 +364,10 @@ export default function CustomOrderPage() {
         </div>
       </section>
 
-      {/* Social Proof */}
       <section className="page-shell pb-20">
         <div className="text-center mb-10">
           <h4 className="display-font text-2xl font-bold text-[var(--color-blue)]">
-            200+ Custom Toys Made & Delivered 🎨
+            200+ custom toys made and delivered
           </h4>
         </div>
         <div className="grid grid-cols-2 md:grid-cols-4 gap-4">

@@ -6,7 +6,7 @@ export function StorefrontShell({ children }: { children: ReactNode }) {
   return (
     <div className="min-h-screen">
       <SiteHeader />
-      <main>{children}</main>
+      <main className="pb-20 md:pb-0">{children}</main>
       <SiteFooter />
     </div>
   );

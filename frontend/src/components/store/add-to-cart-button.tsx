@@ -6,6 +6,7 @@ import { useCart } from "@/components/providers/cart-provider";
 export function AddToCartButton({
   product,
   className,
+  disabled,
 }: {
   product: {
     id: number;
@@ -15,13 +16,18 @@ export function AddToCartButton({
     priceInr: number;
   };
   className?: string;
+  disabled?: boolean;
 }) {
   const { addItem } = useCart();
   const [added, setAdded] = useState(false);
 
   return (
     <button
+      disabled={disabled}
       onClick={() => {
+        if (disabled) {
+          return;
+        }
         addItem({
           productId: product.id,
           slug: product.slug,
@@ -32,9 +38,9 @@ export function AddToCartButton({
         setAdded(true);
         window.setTimeout(() => setAdded(false), 1400);
       }}
-      className={className ?? "site-button site-button-primary"}
+      className={`${className ?? "site-button site-button-primary"} ${disabled ? "cursor-not-allowed opacity-60" : ""}`}
     >
-      {added ? "Added to cart" : `Add to Cart - Rs. ${product.priceInr}`}
+      {disabled ? "Out of Stock" : added ? "Added to cart" : `Add to Cart - Rs. ${product.priceInr}`}
     </button>
   );
 }
