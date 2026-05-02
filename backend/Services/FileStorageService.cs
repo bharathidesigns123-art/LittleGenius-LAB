@@ -115,6 +115,8 @@ public sealed class FileStorageService(IConfiguration configuration)
         var origins = new List<string>
         {
             "https://little-genius-lab.vercel.app",
+            "https://littlegeniuslab.in",
+            "https://www.littlegeniuslab.in",
             "http://localhost:3000",
             "http://127.0.0.1:3000"
         };

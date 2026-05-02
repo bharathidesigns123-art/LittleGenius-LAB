@@ -12,6 +12,14 @@ const nextConfig: NextConfig = {
         protocol: "https",
         hostname: "little-genius-lab.vercel.app",
       },
+      {
+        protocol: "https",
+        hostname: "littlegeniuslab.in",
+      },
+      {
+        protocol: "https",
+        hostname: "www.littlegeniuslab.in",
+      },
     ],
   },
 };

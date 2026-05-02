@@ -67,7 +67,9 @@ builder.Services.AddCors(options =>
             "http://localhost:3000",
             "http://127.0.0.1:3000",
             "https://localhost:3000",
-            "https://little-genius-lab.vercel.app" 
+            "https://little-genius-lab.vercel.app",
+            "https://littlegeniuslab.in",
+            "https://www.littlegeniuslab.in"
         };
 
         if (!string.IsNullOrWhiteSpace(frontendUrl))
@@ -89,6 +91,8 @@ builder.Services.AddCors(options =>
                 
                 // Allow production domain
                 if (normalizedOrigin.Equals("https://little-genius-lab.vercel.app", StringComparison.OrdinalIgnoreCase)) return true;
+                if (normalizedOrigin.Equals("https://littlegeniuslab.in", StringComparison.OrdinalIgnoreCase)) return true;
+                if (normalizedOrigin.Equals("https://www.littlegeniuslab.in", StringComparison.OrdinalIgnoreCase)) return true;
                 
                 // Allow Vercel preview URLs
                 if (normalizedOrigin.EndsWith(".vercel.app", StringComparison.OrdinalIgnoreCase)) return true;

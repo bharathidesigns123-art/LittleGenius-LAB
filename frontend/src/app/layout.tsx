@@ -14,9 +14,13 @@ const displayFont = Fraunces({
 });
 
 export const metadata: Metadata = {
+  metadataBase: new URL("https://littlegeniuslab.in"),
   title: {
     default: "LittleGenius LAB",
     template: "%s | LittleGenius LAB",
+  },
+  alternates: {
+    canonical: "/",
   },
   description:
     "Full-stack toy commerce platform for LittleGenius LAB, an India-based 3D printed toy brand.",
