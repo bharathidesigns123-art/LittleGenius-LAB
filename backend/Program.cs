@@ -17,8 +17,10 @@ builder.Configuration
 
 builder.Services.Configure<JwtOptions>(builder.Configuration.GetSection(JwtOptions.SectionName));
 builder.Services.Configure<RazorpayOptions>(builder.Configuration.GetSection(RazorpayOptions.SectionName));
+builder.Services.Configure<AzureBlobOptions>(builder.Configuration.GetSection(AzureBlobOptions.SectionName));
 
 builder.Services.AddEndpointsApiExplorer();
+builder.Services.AddControllers();
 builder.Services.ConfigureHttpJsonOptions(options =>
 {
     options.SerializerOptions.PropertyNamingPolicy = System.Text.Json.JsonNamingPolicy.CamelCase;
@@ -148,6 +150,7 @@ builder.Services.AddAuthorization(options =>
 builder.Services.AddScoped<IPasswordHasher<AppUser>, PasswordHasher<AppUser>>();
 builder.Services.AddScoped<JwtTokenService>();
 builder.Services.AddScoped<FileStorageService>();
+builder.Services.AddScoped<IFileStorageService>(static sp => sp.GetRequiredService<FileStorageService>());
 builder.Services.AddHttpClient<RazorpayService>();
 builder.Services.AddHttpClient<ShiprocketService>();
 builder.Services.AddHttpClient<WhatsAppNotificationService>();
@@ -191,6 +194,8 @@ app.MapGet("/api/health", () => Results.Ok(new
     service = "LittleGenius LAB API",
     timestamp = DateTimeOffset.UtcNow
 }));
+
+app.MapControllers();
 
 app.MapAuthEndpoints();
 app.MapStorefrontEndpoints();
