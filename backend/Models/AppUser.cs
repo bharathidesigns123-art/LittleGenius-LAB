@@ -10,6 +10,9 @@ public sealed class AppUser
     public string Role { get; set; } = AppRoles.Customer;
     public bool IsActive { get; set; } = true;
     public DateTime CreatedAtUtc { get; set; } = DateTime.UtcNow;
+    public DateTime UpdatedAtUtc { get; set; } = DateTime.UtcNow;
+    /// <summary>When set, the account is soft-deleted and cannot sign in.</summary>
+    public DateTime? DeletedAtUtc { get; set; }
 
     public List<Address> Addresses { get; set; } = [];
     public List<Order> Orders { get; set; } = [];

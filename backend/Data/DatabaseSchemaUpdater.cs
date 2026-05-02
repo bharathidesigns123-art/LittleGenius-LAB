@@ -18,6 +18,7 @@ public static class DatabaseSchemaUpdater
             await ApplySqliteReviewUpgradeAsync(db, cancellationToken);
             await ApplySqliteOrderFulfillmentUpgradeAsync(db, cancellationToken);
             await ApplySqliteCustomOrderFulfillmentUpgradeAsync(db, cancellationToken);
+            await ApplySqliteUsersManagementUpgradeAsync(db, cancellationToken);
             return;
         }
 
@@ -28,6 +29,7 @@ public static class DatabaseSchemaUpdater
             await ApplySqlServerOrderFulfillmentUpgradeAsync(db, cancellationToken);
             await ApplySqlServerCustomOrderFulfillmentUpgradeAsync(db, cancellationToken);
             await ApplySqlServerPaymentTransactionPayFirstUpgradeAsync(db, cancellationToken);
+            await ApplySqlServerUsersManagementUpgradeAsync(db, cancellationToken);
         }
     }
 
@@ -299,6 +301,61 @@ public static class DatabaseSchemaUpdater
             END
             """,
             cancellationToken);
+    }
+
+    private static async Task ApplySqlServerUsersManagementUpgradeAsync(AppDbContext db, CancellationToken cancellationToken)
+    {
+        var columns = await GetSqlServerColumnsAsync(db, "Users", cancellationToken);
+        if (columns.Count == 0)
+        {
+            return;
+        }
+
+        if (!columns.Contains("UpdatedAtUtc"))
+        {
+            await db.Database.ExecuteSqlRawAsync(
+                "ALTER TABLE [Users] ADD [UpdatedAtUtc] datetime2 NULL;",
+                cancellationToken);
+            await db.Database.ExecuteSqlRawAsync(
+                "UPDATE [Users] SET [UpdatedAtUtc] = [CreatedAtUtc] WHERE [UpdatedAtUtc] IS NULL;",
+                cancellationToken);
+            await db.Database.ExecuteSqlRawAsync(
+                "ALTER TABLE [Users] ALTER COLUMN [UpdatedAtUtc] datetime2 NOT NULL;",
+                cancellationToken);
+        }
+
+        if (!columns.Contains("DeletedAtUtc"))
+        {
+            await db.Database.ExecuteSqlRawAsync(
+                "ALTER TABLE [Users] ADD [DeletedAtUtc] datetime2 NULL;",
+                cancellationToken);
+        }
+    }
+
+    private static async Task ApplySqliteUsersManagementUpgradeAsync(AppDbContext db, CancellationToken cancellationToken)
+    {
+        var columns = await GetSqliteColumnsAsync(db, "Users", cancellationToken);
+        if (columns.Count == 0)
+        {
+            return;
+        }
+
+        if (!columns.Contains("UpdatedAtUtc"))
+        {
+            await db.Database.ExecuteSqlRawAsync(
+                "ALTER TABLE \"Users\" ADD COLUMN \"UpdatedAtUtc\" TEXT NOT NULL DEFAULT '1970-01-01T00:00:00Z';",
+                cancellationToken);
+            await db.Database.ExecuteSqlRawAsync(
+                "UPDATE \"Users\" SET \"UpdatedAtUtc\" = \"CreatedAtUtc\";",
+                cancellationToken);
+        }
+
+        if (!columns.Contains("DeletedAtUtc"))
+        {
+            await db.Database.ExecuteSqlRawAsync(
+                "ALTER TABLE \"Users\" ADD COLUMN \"DeletedAtUtc\" TEXT NULL;",
+                cancellationToken);
+        }
     }
 
     private static async Task ApplySqlServerCustomOrderFulfillmentUpgradeAsync(AppDbContext db, CancellationToken cancellationToken)

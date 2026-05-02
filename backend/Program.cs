@@ -16,6 +16,7 @@ builder.Configuration
     .AddJsonFile("appsettings.Local.json", optional: true, reloadOnChange: true);
 
 builder.Services.Configure<JwtOptions>(builder.Configuration.GetSection(JwtOptions.SectionName));
+builder.Services.Configure<AdminOptions>(builder.Configuration.GetSection(AdminOptions.SectionName));
 builder.Services.Configure<RazorpayOptions>(builder.Configuration.GetSection(RazorpayOptions.SectionName));
 builder.Services.Configure<AzureBlobOptions>(builder.Configuration.GetSection(AzureBlobOptions.SectionName));
 
@@ -203,6 +204,5 @@ app.MapGuestOrderMergeEndpoint();
 app.MapAccountEndpoints();
 app.MapReviewEndpoints();
 app.MapAdminEndpoints();
-app.MapPublicAdminEndpoints();
 
 app.Run();

@@ -1,9 +1,12 @@
+using LittleGeniusLab.Api.Configuration;
 using LittleGeniusLab.Api.Data;
 using LittleGeniusLab.Api.Helpers;
 using LittleGeniusLab.Api.Models;
 using LittleGeniusLab.Api.Services;
+using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.Extensions.Options;
 
 namespace LittleGeniusLab.Api.Endpoints;
 
@@ -599,10 +602,38 @@ public static class AdminEndpoints
             return Results.Ok(MapCustomOrderDto(customOrder));
         });
 
-        group.MapGet("/users", async (AppDbContext db) =>
-            Results.Ok(await db.Users
-                .AsNoTracking()
-                .OrderByDescending(user => user.CreatedAtUtc)
+        group.MapGet("/users", async (
+            AppDbContext db,
+            string? q,
+            int page = 1,
+            int pageSize = 20,
+            string? sort = "createdDesc") =>
+        {
+            page = Math.Clamp(page, 1, 10_000);
+            pageSize = Math.Clamp(pageSize, 1, 100);
+
+            var query = db.Users.AsNoTracking().Where(user => user.DeletedAtUtc == null);
+            if (!string.IsNullOrWhiteSpace(q))
+            {
+                var term = q.Trim().ToLowerInvariant();
+                query = query.Where(user =>
+                    user.FullName.ToLower().Contains(term) ||
+                    user.Email.ToLower().Contains(term));
+            }
+
+            query = sort switch
+            {
+                "nameAsc" => query.OrderBy(user => user.FullName),
+                "nameDesc" => query.OrderByDescending(user => user.FullName),
+                "emailAsc" => query.OrderBy(user => user.Email),
+                "createdAsc" => query.OrderBy(user => user.CreatedAtUtc),
+                _ => query.OrderByDescending(user => user.CreatedAtUtc)
+            };
+
+            var total = await query.CountAsync();
+            var items = await query
+                .Skip((page - 1) * pageSize)
+                .Take(pageSize)
                 .Select(user => new
                 {
                     user.Id,
@@ -610,53 +641,215 @@ public static class AdminEndpoints
                     user.Email,
                     user.Phone,
                     user.Role,
+                    status = user.IsActive ? "active" : "blocked",
                     user.IsActive,
-                    user.CreatedAtUtc
+                    user.CreatedAtUtc,
+                    user.UpdatedAtUtc
                 })
-                .ToListAsync()));
+                .ToListAsync();
 
-        return routes;
-    }
+            return Results.Ok(new { items, total, page, pageSize });
+        });
 
-    public static IEndpointRouteBuilder MapPublicAdminEndpoints(this IEndpointRouteBuilder routes)
-    {
-        routes.MapPost("/api/admin/users", async (
-            CreateUserRequest request,
+        group.MapPost("/users", async (
+            AdminCreateUserRequest request,
             AppDbContext db,
             IPasswordHasher<AppUser> passwordHasher) =>
         {
+            if (string.IsNullOrWhiteSpace(request.Password))
+            {
+                return Results.BadRequest(new { message = "Password is required." });
+            }
+
             var normalizedEmail = request.Email.Trim().ToLowerInvariant();
-            if (await db.Users.AnyAsync(user => user.Email == normalizedEmail))
+            if (await db.Users.AnyAsync(user => user.Email == normalizedEmail && user.DeletedAtUtc == null))
             {
                 return Results.BadRequest(new { message = "An account with this email already exists." });
             }
 
+            var role = NormalizeAdminRoleOrDefault(request.Role);
             var user = new AppUser
             {
                 FullName = request.FullName.Trim(),
                 Email = normalizedEmail,
-                Phone = request.Phone.Trim(),
-                Role = request.Role.Trim()
+                Phone = string.IsNullOrWhiteSpace(request.Phone) ? string.Empty : request.Phone.Trim(),
+                Role = role,
+                IsActive = request.IsActive ?? true,
+                UpdatedAtUtc = DateTime.UtcNow
             };
             user.PasswordHash = passwordHasher.HashPassword(user, request.Password);
 
             db.Users.Add(user);
             await db.SaveChangesAsync();
 
-            return Results.Created($"/api/admin/users/{user.Id}", new
+            return Results.Created($"/api/admin/users/{user.Id}", MapAdminUserSummary(user));
+        });
+
+        group.MapPut("/users/{id:int}", async (
+            int id,
+            AdminUpdateUserRequest request,
+            AppDbContext db,
+            IPasswordHasher<AppUser> passwordHasher,
+            IOptions<AdminOptions> adminOptions) =>
+        {
+            var user = await db.Users.FirstOrDefaultAsync(u => u.Id == id && u.DeletedAtUtc == null);
+            if (user is null)
             {
-                user.Id,
-                user.FullName,
-                user.Email,
-                user.Phone,
-                user.Role,
-                user.IsActive,
-                user.CreatedAtUtc
-            });
-        }).AllowAnonymous();
+                return Results.NotFound(new { message = "User not found." });
+            }
+
+            var opts = adminOptions.Value;
+            var normalizedEmail = request.Email.Trim().ToLowerInvariant();
+            if (await db.Users.AnyAsync(u =>
+                    u.Email == normalizedEmail &&
+                    u.DeletedAtUtc == null &&
+                    u.Id != id))
+            {
+                return Results.BadRequest(new { message = "Another account already uses this email." });
+            }
+
+            if (IsSuperAdmin(user.Id, opts) &&
+                NormalizeAdminRoleOrDefault(request.Role) != AppRoles.Admin)
+            {
+                return Results.BadRequest(new { message = "The primary administrator cannot be demoted." });
+            }
+
+            user.FullName = request.FullName.Trim();
+            user.Email = normalizedEmail;
+            user.Phone = string.IsNullOrWhiteSpace(request.Phone) ? string.Empty : request.Phone.Trim();
+            user.Role = NormalizeAdminRoleOrDefault(request.Role);
+            user.IsActive = request.IsActive;
+            user.UpdatedAtUtc = DateTime.UtcNow;
+
+            if (IsSuperAdmin(user.Id, opts) && !user.IsActive)
+            {
+                return Results.BadRequest(new { message = "The primary administrator cannot be blocked." });
+            }
+
+            if (!string.IsNullOrWhiteSpace(request.NewPassword))
+            {
+                user.PasswordHash = passwordHasher.HashPassword(user, request.NewPassword!);
+            }
+
+            await db.SaveChangesAsync();
+            return Results.Ok(MapAdminUserSummary(user));
+        });
+
+        group.MapPatch("/users/{id:int}/status", async (
+            int id,
+            AdminUserStatusPatchRequest request,
+            AppDbContext db,
+            IOptions<AdminOptions> adminOptions) =>
+        {
+            var user = await db.Users.FirstOrDefaultAsync(u => u.Id == id && u.DeletedAtUtc == null);
+            if (user is null)
+            {
+                return Results.NotFound(new { message = "User not found." });
+            }
+
+            if (IsSuperAdmin(user.Id, adminOptions.Value) && !request.IsActive)
+            {
+                return Results.BadRequest(new { message = "The primary administrator cannot be blocked." });
+            }
+
+            user.IsActive = request.IsActive;
+            user.UpdatedAtUtc = DateTime.UtcNow;
+            await db.SaveChangesAsync();
+
+            return Results.Ok(MapAdminUserSummary(user));
+        });
+
+        group.MapPatch("/users/{id:int}/role", async (
+            int id,
+            AdminUserRolePatchRequest request,
+            AppDbContext db,
+            IOptions<AdminOptions> adminOptions) =>
+        {
+            var user = await db.Users.FirstOrDefaultAsync(u => u.Id == id && u.DeletedAtUtc == null);
+            if (user is null)
+            {
+                return Results.NotFound(new { message = "User not found." });
+            }
+
+            var nextRole = NormalizeAdminRoleOrDefault(request.Role);
+            if (IsSuperAdmin(user.Id, adminOptions.Value) && nextRole != AppRoles.Admin)
+            {
+                return Results.BadRequest(new { message = "The primary administrator cannot be demoted." });
+            }
+
+            user.Role = nextRole;
+            user.UpdatedAtUtc = DateTime.UtcNow;
+            await db.SaveChangesAsync();
+
+            return Results.Ok(MapAdminUserSummary(user));
+        });
+
+        group.MapDelete("/users/{id:int}", async (
+            int id,
+            HttpContext context,
+            AppDbContext db,
+            IOptions<AdminOptions> adminOptions) =>
+        {
+            var actorId = context.User.GetUserId();
+            if (actorId == id)
+            {
+                return Results.BadRequest(new { message = "You cannot delete the account you are signed in with." });
+            }
+
+            var user = await db.Users.FirstOrDefaultAsync(u => u.Id == id && u.DeletedAtUtc == null);
+            if (user is null)
+            {
+                return Results.NotFound(new { message = "User not found." });
+            }
+
+            if (IsSuperAdmin(user.Id, adminOptions.Value))
+            {
+                return Results.BadRequest(new { message = "The primary administrator account cannot be deleted." });
+            }
+
+            user.DeletedAtUtc = DateTime.UtcNow;
+            user.IsActive = false;
+            user.Email = $"archived+{user.Id}+{Guid.NewGuid():N}@users.internal";
+            user.UpdatedAtUtc = DateTime.UtcNow;
+            await db.SaveChangesAsync();
+
+            return Results.Ok(new { message = "User removed." });
+        });
 
         return routes;
     }
+
+    private static object MapAdminUserSummary(AppUser user) => new
+    {
+        user.Id,
+        user.FullName,
+        user.Email,
+        user.Phone,
+        user.Role,
+        status = user.IsActive ? "active" : "blocked",
+        user.IsActive,
+        user.CreatedAtUtc,
+        user.UpdatedAtUtc
+    };
+
+    private static string NormalizeAdminRoleOrDefault(string? role)
+    {
+        if (string.IsNullOrWhiteSpace(role))
+        {
+            return AppRoles.Customer;
+        }
+
+        var trimmed = role.Trim();
+        if (string.Equals(trimmed, AppRoles.Admin, StringComparison.OrdinalIgnoreCase))
+        {
+            return AppRoles.Admin;
+        }
+
+        return AppRoles.Customer;
+    }
+
+    private static bool IsSuperAdmin(int userId, AdminOptions options) =>
+        options.SuperAdminUserId is int superId && superId == userId;
 
     private static object ToAdminProductDto(Product product)
     {
@@ -787,7 +980,25 @@ public static class AdminEndpoints
         string? CourierPartner,
         string? RefundStatus,
         string? CancellationReason);
-    public sealed record CreateUserRequest(string FullName, string Email, string Phone, string Password, string Role);
+    public sealed record AdminCreateUserRequest(
+        string FullName,
+        string Email,
+        string? Phone,
+        string Password,
+        string? Role,
+        bool? IsActive);
+
+    public sealed record AdminUpdateUserRequest(
+        string FullName,
+        string Email,
+        string? Phone,
+        string Role,
+        bool IsActive,
+        string? NewPassword);
+
+    public sealed record AdminUserStatusPatchRequest(bool IsActive);
+
+    public sealed record AdminUserRolePatchRequest(string Role);
     private sealed record ProductImageResponse(int Id, string ImageUrl, int SortOrder, int Width, int Height);
 
     private static bool IsCancellationAllowed(string status, IConfiguration configuration)

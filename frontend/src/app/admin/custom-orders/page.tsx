@@ -396,7 +396,7 @@ export default function AdminCustomOrdersPage() {
                     <input
                       value={draft.packageWeightKg}
                       onChange={(event) => updateDraft(request, { packageWeightKg: event.target.value })}
-                      placeholder="Weight kg"
+                      placeholder="Weight (kg) e.g. 0.2"
                       className="rounded-[0.9rem] border border-[var(--color-border)] px-3 py-2 outline-none"
                     />
                     <input

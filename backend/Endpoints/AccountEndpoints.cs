@@ -1,6 +1,7 @@
 using LittleGeniusLab.Api.Data;
 using LittleGeniusLab.Api.Helpers;
 using LittleGeniusLab.Api.Models;
+using Microsoft.AspNetCore.Http;
 using Microsoft.EntityFrameworkCore;
 
 namespace LittleGeniusLab.Api.Endpoints;
@@ -17,6 +18,12 @@ public static class AccountEndpoints
             if (userId is null)
             {
                 return Results.Unauthorized();
+            }
+
+            var blocked = await UserLifecycleGuard.RejectIfCustomerDisabledAsync(db, userId);
+            if (blocked is not null)
+            {
+                return blocked;
             }
 
             var user = await db.Users
@@ -67,6 +74,12 @@ public static class AccountEndpoints
                 return Results.Unauthorized();
             }
 
+            var blocked = await UserLifecycleGuard.RejectIfCustomerDisabledAsync(db, userId);
+            if (blocked is not null)
+            {
+                return blocked;
+            }
+
             var user = await db.Users.FirstOrDefaultAsync(item => item.Id == userId.Value);
             if (user is null)
             {
@@ -75,6 +88,7 @@ public static class AccountEndpoints
 
             user.FullName = request.FullName.Trim();
             user.Phone = request.Phone.Trim();
+            user.UpdatedAtUtc = DateTime.UtcNow;
             await db.SaveChangesAsync();
 
             return Results.Ok(new
@@ -93,6 +107,12 @@ public static class AccountEndpoints
             if (userId is null)
             {
                 return Results.Unauthorized();
+            }
+
+            var blocked = await UserLifecycleGuard.RejectIfCustomerDisabledAsync(db, userId);
+            if (blocked is not null)
+            {
+                return blocked;
             }
 
             var user = await db.Users
@@ -218,6 +238,12 @@ public static class AccountEndpoints
                 return Results.Unauthorized();
             }
 
+            var blocked = await UserLifecycleGuard.RejectIfCustomerDisabledAsync(db, userId);
+            if (blocked is not null)
+            {
+                return blocked;
+            }
+
             var customOrders = await db.CustomOrderRequests
                 .AsNoTracking()
                 .Where(order => order.UserId == userId.Value)
@@ -258,6 +284,12 @@ public static class AccountEndpoints
             if (userId is null)
             {
                 return Results.Unauthorized();
+            }
+
+            var blocked = await UserLifecycleGuard.RejectIfCustomerDisabledAsync(db, userId);
+            if (blocked is not null)
+            {
+                return blocked;
             }
 
             var order = await db.Orders

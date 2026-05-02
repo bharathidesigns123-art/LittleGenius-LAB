@@ -244,6 +244,25 @@ export type DashboardMetrics = {
   lowStockProducts: number;
 };
 
+export type AdminUserRow = {
+  id: number;
+  fullName: string;
+  email: string;
+  phone: string;
+  role: string;
+  status: string;
+  isActive: boolean;
+  createdAtUtc: string;
+  updatedAtUtc: string;
+};
+
+export type AdminUserListResponse = {
+  items: AdminUserRow[];
+  total: number;
+  page: number;
+  pageSize: number;
+};
+
 export type ProductReviewEntry = {
   id: number;
   customerName: string;

@@ -2,6 +2,7 @@ using LittleGeniusLab.Api.Data;
 using LittleGeniusLab.Api.Helpers;
 using LittleGeniusLab.Api.Models;
 using LittleGeniusLab.Api.Services;
+using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.EntityFrameworkCore;
 
@@ -19,7 +20,8 @@ public static class AuthEndpoints
             IPasswordHasher<AppUser> passwordHasher,
             JwtTokenService tokenService) =>
         {
-            if (await db.Users.AnyAsync(user => user.Email == request.Email.Trim().ToLowerInvariant()))
+            var normalizedEmail = request.Email.Trim().ToLowerInvariant();
+            if (await db.Users.AnyAsync(user => user.Email == normalizedEmail && user.DeletedAtUtc == null))
             {
                 return Results.BadRequest(new { message = "An account with this email already exists." });
             }
@@ -27,9 +29,10 @@ public static class AuthEndpoints
             var user = new AppUser
             {
                 FullName = request.FullName.Trim(),
-                Email = request.Email.Trim().ToLowerInvariant(),
+                Email = normalizedEmail,
                 Phone = request.Phone.Trim(),
-                Role = AppRoles.Customer
+                Role = AppRoles.Customer,
+                UpdatedAtUtc = DateTime.UtcNow
             };
             user.PasswordHash = passwordHasher.HashPassword(user, request.Password);
 
@@ -51,7 +54,7 @@ public static class AuthEndpoints
             var normalizedEmail = request.Email.Trim().ToLowerInvariant();
             var user = await db.Users.FirstOrDefaultAsync(item => item.Email == normalizedEmail);
 
-            if (user is null || !user.IsActive)
+            if (user is null || !user.IsActive || user.DeletedAtUtc is not null)
             {
                 return Results.BadRequest(new { message = "Invalid email or password." });
             }
@@ -90,6 +93,13 @@ public static class AuthEndpoints
             if (user is null)
             {
                 return Results.NotFound(new { message = "User not found." });
+            }
+
+            if (!user.IsActive || user.DeletedAtUtc is not null)
+            {
+                return Results.Json(
+                    new { message = "Your account has been disabled. Contact support if you need help." },
+                    statusCode: StatusCodes.Status403Forbidden);
             }
 
             return Results.Ok(new

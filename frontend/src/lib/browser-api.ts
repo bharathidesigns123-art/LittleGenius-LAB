@@ -3,6 +3,8 @@ import type {
   AdminCategory,
   AdminCustomOrder,
   AdminProduct,
+  AdminUserListResponse,
+  AdminUserRow,
   AuthResponse,
   DashboardMetrics,
   OrderSummary,
@@ -16,7 +18,7 @@ const API_BASE_URL =
   process.env.NEXT_PUBLIC_API_BASE_URL ?? process.env.API_BASE_URL ?? "http://localhost:5252";
 
 type RequestOptions = {
-  method?: "GET" | "POST" | "PUT" | "DELETE";
+  method?: "GET" | "POST" | "PUT" | "PATCH" | "DELETE";
   token?: string | null;
   body?: unknown;
   isFormData?: boolean;
@@ -461,16 +463,71 @@ export const browserApi = {
       body: payload,
     }),
 
-  getAdminUsers: (token: string) =>
-    apiRequest<
-      Array<{
-        id: number;
-        fullName: string;
-        email: string;
-        phone: string;
-        role: string;
-        isActive: boolean;
-        createdAtUtc: string;
-      }>
-    >("/api/admin/users", { token }),
+  getAdminUsers: (
+    token: string,
+    params?: { q?: string; page?: number; pageSize?: number; sort?: string },
+  ) => {
+    const search = new URLSearchParams();
+    if (params?.q) search.set("q", params.q);
+    if (params?.page != null) search.set("page", String(params.page));
+    if (params?.pageSize != null) search.set("pageSize", String(params.pageSize));
+    if (params?.sort) search.set("sort", params.sort);
+    const qs = search.size ? `?${search}` : "";
+    return apiRequest<AdminUserListResponse>(`/api/admin/users${qs}`, { token });
+  },
+
+  createAdminUser: (
+    token: string,
+    payload: {
+      fullName: string;
+      email: string;
+      phone?: string;
+      password: string;
+      role?: string;
+      isActive?: boolean;
+    },
+  ) =>
+    apiRequest<AdminUserRow>("/api/admin/users", {
+      method: "POST",
+      token,
+      body: payload,
+    }),
+
+  updateAdminUser: (
+    token: string,
+    id: number,
+    payload: {
+      fullName: string;
+      email: string;
+      phone?: string;
+      role: string;
+      isActive: boolean;
+      newPassword?: string | null;
+    },
+  ) =>
+    apiRequest<AdminUserRow>(`/api/admin/users/${id}`, {
+      method: "PUT",
+      token,
+      body: payload,
+    }),
+
+  patchAdminUserStatus: (token: string, id: number, isActive: boolean) =>
+    apiRequest<AdminUserRow>(`/api/admin/users/${id}/status`, {
+      method: "PATCH",
+      token,
+      body: { isActive },
+    }),
+
+  patchAdminUserRole: (token: string, id: number, role: string) =>
+    apiRequest<AdminUserRow>(`/api/admin/users/${id}/role`, {
+      method: "PATCH",
+      token,
+      body: { role },
+    }),
+
+  deleteAdminUser: (token: string, id: number) =>
+    apiRequest<{ message: string }>(`/api/admin/users/${id}`, {
+      method: "DELETE",
+      token,
+    }),
 };

@@ -12,8 +12,14 @@ public sealed class ShiprocketService(HttpClient httpClient, IConfiguration conf
     private string? _cachedToken;
     private DateTime _tokenExpiry = DateTime.MinValue;
 
-    private async Task<string> GetTokenAsync()
+    public bool IsConfigured => 
+        !string.IsNullOrEmpty(configuration["Shiprocket:Email"]) && 
+        !string.IsNullOrEmpty(configuration["Shiprocket:Password"]);
+
+    private async Task<string?> GetTokenAsync()
     {
+        if (!IsConfigured) return null;
+
         if (!string.IsNullOrEmpty(_cachedToken) && _tokenExpiry > DateTime.UtcNow)
         {
             return _cachedToken;
@@ -25,19 +31,28 @@ public sealed class ShiprocketService(HttpClient httpClient, IConfiguration conf
             password = configuration["Shiprocket:Password"]
         };
 
-        var response = await httpClient.PostAsJsonAsync("https://apiv2.shiprocket.in/v1/external/auth/login", payload);
-        response.EnsureSuccessStatusCode();
+        try
+        {
+            var response = await httpClient.PostAsJsonAsync("https://apiv2.shiprocket.in/v1/external/auth/login", payload);
+            if (!response.IsSuccessStatusCode) return null;
 
-        var content = await response.Content.ReadFromJsonAsync<JsonElement>();
-        _cachedToken = content.GetProperty("token").GetString();
-        _tokenExpiry = DateTime.UtcNow.AddDays(9); // Shiprocket tokens are usually valid for 10 days
+            var content = await response.Content.ReadFromJsonAsync<JsonElement>();
+            _cachedToken = content.GetProperty("token").GetString();
+            _tokenExpiry = DateTime.UtcNow.AddDays(9);
 
-        return _cachedToken!;
+            return _cachedToken;
+        }
+        catch
+        {
+            return null;
+        }
     }
 
     public async Task<string?> CreateOrderAndGenerateAwbAsync(Order order)
     {
         var token = await GetTokenAsync();
+        if (string.IsNullOrEmpty(token)) return null;
+
         httpClient.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", token);
 
         var payload = new
@@ -76,16 +91,23 @@ public sealed class ShiprocketService(HttpClient httpClient, IConfiguration conf
             weight = order.PackageWeightKg ?? 0.5m
         };
 
-        var response = await httpClient.PostAsJsonAsync("https://apiv2.shiprocket.in/v1/external/orders/create/adhoc", payload);
-        
-        if (!response.IsSuccessStatusCode) return null;
-
-        var result = await response.Content.ReadFromJsonAsync<JsonElement>();
-        
-        // Return AWB code if generated successfully
-        if (result.TryGetProperty("awb_code", out var awbProp))
+        try
         {
-            return awbProp.GetString();
+            var response = await httpClient.PostAsJsonAsync("https://apiv2.shiprocket.in/v1/external/orders/create/adhoc", payload);
+            
+            if (!response.IsSuccessStatusCode) return null;
+
+            var result = await response.Content.ReadFromJsonAsync<JsonElement>();
+            
+            // Return AWB code if generated successfully
+            if (result.TryGetProperty("awb_code", out var awbProp))
+            {
+                return awbProp.GetString();
+            }
+        }
+        catch
+        {
+            // Silently fail to allow order status update to proceed
         }
 
         return null;

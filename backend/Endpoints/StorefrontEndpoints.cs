@@ -9,6 +9,7 @@ using Azure.Storage.Sas;
 using Azure.Storage;
 using Azure.Storage.Blobs;
 using Azure.Storage.Blobs.Models;
+using Microsoft.AspNetCore.Http;
 
 namespace LittleGeniusLab.Api.Endpoints;
 
@@ -337,6 +338,13 @@ public static class StorefrontEndpoints
                 {
                     message = "Name, email, WhatsApp number, and either a photo or description are required."
                 });
+            }
+
+            var customUid = context.User.GetUserId();
+            var customBlocked = await UserLifecycleGuard.RejectIfCustomerDisabledAsync(db, customUid);
+            if (customBlocked is not null)
+            {
+                return customBlocked;
             }
 
             var referenceCode = $"LGL-{Random.Shared.Next(1000, 9999)}";
@@ -772,6 +780,13 @@ public static class StorefrontEndpoints
                 return Results.NotFound(new { message = "User not found." });
             }
 
+            if (!user.IsActive || user.DeletedAtUtc is not null)
+            {
+                return Results.Json(
+                    new { message = "Your account has been disabled. Contact support if you need help." },
+                    statusCode: StatusCodes.Status403Forbidden);
+            }
+
             var normalizedUserEmail = user.Email.Trim().ToLowerInvariant();
             var candidates = await db.Orders
                 .Where(o => o.GuestId == guestKey && o.UserId == null)
@@ -867,6 +882,12 @@ public static class StorefrontEndpoints
         }
 
         var userId = context.User.GetUserId();
+        var checkoutGuard = await UserLifecycleGuard.RejectIfCustomerDisabledAsync(db, userId);
+        if (checkoutGuard is not null)
+        {
+            return (null, checkoutGuard);
+        }
+
         string? guestId = null;
         if (userId is null)
         {
