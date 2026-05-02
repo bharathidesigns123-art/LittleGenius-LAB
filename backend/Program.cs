@@ -115,21 +115,13 @@ builder.Services.AddCors(options =>
 });
 
 var sqlServerConnection = builder.Configuration.GetConnectionString("SqlServer");
-var sqliteConnection = builder.Configuration.GetConnectionString("Sqlite");
 
 builder.Services.AddDbContext<AppDbContext>(options =>
 {
-    if (builder.Environment.IsDevelopment() && !string.IsNullOrWhiteSpace(sqliteConnection))
-    {
-        options.UseSqlite(sqliteConnection);
-        return;
-    }
-
     if (string.IsNullOrWhiteSpace(sqlServerConnection))
     {
         throw new InvalidOperationException("Connection string 'SqlServer' not found.");
     }
-
     options.UseSqlServer(sqlServerConnection);
 });
 

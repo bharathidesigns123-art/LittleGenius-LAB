@@ -12,17 +12,6 @@ public static class DatabaseSchemaUpdater
             return;
         }
 
-        if (db.Database.IsSqlite())
-        {
-            await EnsureSqliteNotificationLogsTableAsync(db, cancellationToken);
-            await EnsureSqliteProductImagesTableAsync(db, cancellationToken);
-            await ApplySqliteReviewUpgradeAsync(db, cancellationToken);
-            await ApplySqliteOrderFulfillmentUpgradeAsync(db, cancellationToken);
-            await ApplySqliteCustomOrderFulfillmentUpgradeAsync(db, cancellationToken);
-            await ApplySqliteUsersManagementUpgradeAsync(db, cancellationToken);
-            return;
-        }
-
         if (db.Database.IsSqlServer())
         {
             await EnsureSqlServerNotificationLogsTableAsync(db, cancellationToken);
@@ -33,33 +22,6 @@ public static class DatabaseSchemaUpdater
             await ApplySqlServerPaymentTransactionPayFirstUpgradeAsync(db, cancellationToken);
             await ApplySqlServerUsersManagementUpgradeAsync(db, cancellationToken);
         }
-    }
-
-    private static async Task EnsureSqliteNotificationLogsTableAsync(AppDbContext db, CancellationToken cancellationToken)
-    {
-        await db.Database.ExecuteSqlRawAsync(
-            """
-            CREATE TABLE IF NOT EXISTS "NotificationLogs" (
-                "Id" INTEGER NOT NULL CONSTRAINT "PK_NotificationLogs" PRIMARY KEY AUTOINCREMENT,
-                "Type" TEXT NOT NULL,
-                "EventName" TEXT NOT NULL,
-                "Recipient" TEXT NOT NULL,
-                "Status" TEXT NOT NULL,
-                "Message" TEXT NOT NULL,
-                "AttemptCount" INTEGER NOT NULL DEFAULT 0,
-                "Error" TEXT NULL,
-                "CreatedAtUtc" TEXT NOT NULL DEFAULT '1970-01-01T00:00:00Z',
-                "SentAtUtc" TEXT NULL
-            );
-            """,
-            cancellationToken);
-
-        await db.Database.ExecuteSqlRawAsync(
-            "CREATE INDEX IF NOT EXISTS \"IX_NotificationLogs_Status\" ON \"NotificationLogs\" (\"Status\");",
-            cancellationToken);
-        await db.Database.ExecuteSqlRawAsync(
-            "CREATE INDEX IF NOT EXISTS \"IX_NotificationLogs_CreatedAtUtc\" ON \"NotificationLogs\" (\"CreatedAtUtc\");",
-            cancellationToken);
     }
 
     private static async Task EnsureSqlServerNotificationLogsTableAsync(AppDbContext db, CancellationToken cancellationToken)
@@ -93,31 +55,6 @@ public static class DatabaseSchemaUpdater
             cancellationToken);
     }
 
-    private static async Task EnsureSqliteProductImagesTableAsync(AppDbContext db, CancellationToken cancellationToken)
-    {
-        await db.Database.ExecuteSqlRawAsync(
-            """
-            CREATE TABLE IF NOT EXISTS "ProductImages" (
-                "Id" INTEGER NOT NULL CONSTRAINT "PK_ProductImages" PRIMARY KEY AUTOINCREMENT,
-                "ProductId" INTEGER NOT NULL,
-                "ImageUrl" TEXT NOT NULL,
-                "SortOrder" INTEGER NOT NULL DEFAULT 0,
-                "Width" INTEGER NOT NULL DEFAULT 0,
-                "Height" INTEGER NOT NULL DEFAULT 0,
-                "CreatedAtUtc" TEXT NOT NULL DEFAULT '1970-01-01T00:00:00Z',
-                CONSTRAINT "FK_ProductImages_Products_ProductId" FOREIGN KEY ("ProductId") REFERENCES "Products" ("Id") ON DELETE CASCADE
-            );
-            """,
-            cancellationToken);
-
-        await db.Database.ExecuteSqlRawAsync(
-            "CREATE INDEX IF NOT EXISTS \"IX_ProductImages_ProductId\" ON \"ProductImages\" (\"ProductId\");",
-            cancellationToken);
-        await db.Database.ExecuteSqlRawAsync(
-            "CREATE INDEX IF NOT EXISTS \"IX_ProductImages_ProductId_SortOrder\" ON \"ProductImages\" (\"ProductId\", \"SortOrder\");",
-            cancellationToken);
-    }
-
     private static async Task EnsureSqlServerProductImagesTableAsync(AppDbContext db, CancellationToken cancellationToken)
     {
         await db.Database.ExecuteSqlRawAsync(
@@ -144,56 +81,6 @@ public static class DatabaseSchemaUpdater
             cancellationToken);
         await db.Database.ExecuteSqlRawAsync(
             "IF NOT EXISTS (SELECT 1 FROM sys.indexes WHERE name = 'IX_ProductImages_ProductId_SortOrder' AND object_id = OBJECT_ID('dbo.ProductImages')) CREATE INDEX [IX_ProductImages_ProductId_SortOrder] ON [ProductImages] ([ProductId], [SortOrder]);",
-            cancellationToken);
-    }
-
-    private static async Task ApplySqliteReviewUpgradeAsync(AppDbContext db, CancellationToken cancellationToken)
-    {
-        var columns = await GetSqliteColumnsAsync(db, "Reviews", cancellationToken);
-        if (columns.Count == 0)
-        {
-            return;
-        }
-
-        if (!columns.Contains("UserId"))
-        {
-            await db.Database.ExecuteSqlRawAsync(
-                "ALTER TABLE \"Reviews\" ADD COLUMN \"UserId\" INTEGER NULL;",
-                cancellationToken);
-        }
-
-        if (!columns.Contains("OrderId"))
-        {
-            await db.Database.ExecuteSqlRawAsync(
-                "ALTER TABLE \"Reviews\" ADD COLUMN \"OrderId\" INTEGER NULL;",
-                cancellationToken);
-        }
-
-        if (!columns.Contains("IsVerifiedPurchase"))
-        {
-            await db.Database.ExecuteSqlRawAsync(
-                "ALTER TABLE \"Reviews\" ADD COLUMN \"IsVerifiedPurchase\" INTEGER NOT NULL DEFAULT 0;",
-                cancellationToken);
-        }
-
-        if (!columns.Contains("UpdatedAtUtc"))
-        {
-            await db.Database.ExecuteSqlRawAsync(
-                "ALTER TABLE \"Reviews\" ADD COLUMN \"UpdatedAtUtc\" TEXT NOT NULL DEFAULT '1970-01-01T00:00:00Z';",
-                cancellationToken);
-            await db.Database.ExecuteSqlRawAsync(
-                "UPDATE \"Reviews\" SET \"UpdatedAtUtc\" = COALESCE(\"CreatedAtUtc\", '1970-01-01T00:00:00Z') WHERE \"UpdatedAtUtc\" = '1970-01-01T00:00:00Z';",
-                cancellationToken);
-        }
-
-        await db.Database.ExecuteSqlRawAsync(
-            "CREATE INDEX IF NOT EXISTS \"IX_Reviews_OrderId\" ON \"Reviews\" (\"OrderId\");",
-            cancellationToken);
-        await db.Database.ExecuteSqlRawAsync(
-            "CREATE INDEX IF NOT EXISTS \"IX_Reviews_UserId\" ON \"Reviews\" (\"UserId\");",
-            cancellationToken);
-        await db.Database.ExecuteSqlRawAsync(
-            "CREATE INDEX IF NOT EXISTS \"IX_Reviews_ProductId_OrderId_UserId\" ON \"Reviews\" (\"ProductId\", \"OrderId\", \"UserId\");",
             cancellationToken);
     }
 
@@ -244,36 +131,6 @@ public static class DatabaseSchemaUpdater
             cancellationToken);
     }
 
-    private static async Task ApplySqliteOrderFulfillmentUpgradeAsync(AppDbContext db, CancellationToken cancellationToken)
-    {
-        var columns = await GetSqliteColumnsAsync(db, "Orders", cancellationToken);
-        if (columns.Count == 0)
-        {
-            return;
-        }
-
-        var statements = new Dictionary<string, string>(StringComparer.OrdinalIgnoreCase)
-        {
-            ["GuestId"] = "ALTER TABLE \"Orders\" ADD COLUMN \"GuestId\" TEXT NULL;",
-            ["PackageWeightKg"] = "ALTER TABLE \"Orders\" ADD COLUMN \"PackageWeightKg\" TEXT NULL;",
-            ["PackageDimensionsCm"] = "ALTER TABLE \"Orders\" ADD COLUMN \"PackageDimensionsCm\" TEXT NULL;",
-            ["CourierPartner"] = "ALTER TABLE \"Orders\" ADD COLUMN \"CourierPartner\" TEXT NULL;",
-            ["RefundStatus"] = "ALTER TABLE \"Orders\" ADD COLUMN \"RefundStatus\" TEXT NOT NULL DEFAULT 'NotRequested';",
-            ["CancellationReason"] = "ALTER TABLE \"Orders\" ADD COLUMN \"CancellationReason\" TEXT NULL;",
-            ["CancelledAtUtc"] = "ALTER TABLE \"Orders\" ADD COLUMN \"CancelledAtUtc\" TEXT NULL;",
-            ["ShippedAtUtc"] = "ALTER TABLE \"Orders\" ADD COLUMN \"ShippedAtUtc\" TEXT NULL;",
-            ["DeliveredAtUtc"] = "ALTER TABLE \"Orders\" ADD COLUMN \"DeliveredAtUtc\" TEXT NULL;"
-        };
-
-        foreach (var statement in statements)
-        {
-            if (!columns.Contains(statement.Key))
-            {
-                await db.Database.ExecuteSqlRawAsync(statement.Value, cancellationToken);
-            }
-        }
-    }
-
     private static async Task ApplySqlServerOrderFulfillmentUpgradeAsync(AppDbContext db, CancellationToken cancellationToken)
     {
         var columns = await GetSqlServerColumnsAsync(db, "Orders", cancellationToken);
@@ -293,36 +150,6 @@ public static class DatabaseSchemaUpdater
             ["CancelledAtUtc"] = "ALTER TABLE [Orders] ADD [CancelledAtUtc] datetime2 NULL;",
             ["ShippedAtUtc"] = "ALTER TABLE [Orders] ADD [ShippedAtUtc] datetime2 NULL;",
             ["DeliveredAtUtc"] = "ALTER TABLE [Orders] ADD [DeliveredAtUtc] datetime2 NULL;"
-        };
-
-        foreach (var statement in statements)
-        {
-            if (!columns.Contains(statement.Key))
-            {
-                await db.Database.ExecuteSqlRawAsync(statement.Value, cancellationToken);
-            }
-        }
-    }
-
-    private static async Task ApplySqliteCustomOrderFulfillmentUpgradeAsync(AppDbContext db, CancellationToken cancellationToken)
-    {
-        var columns = await GetSqliteColumnsAsync(db, "CustomOrderRequests", cancellationToken);
-        if (columns.Count == 0)
-        {
-            return;
-        }
-
-        var statements = new Dictionary<string, string>(StringComparer.OrdinalIgnoreCase)
-        {
-            ["TrackingNumber"] = "ALTER TABLE \"CustomOrderRequests\" ADD COLUMN \"TrackingNumber\" TEXT NULL;",
-            ["PackageWeightKg"] = "ALTER TABLE \"CustomOrderRequests\" ADD COLUMN \"PackageWeightKg\" TEXT NULL;",
-            ["PackageDimensionsCm"] = "ALTER TABLE \"CustomOrderRequests\" ADD COLUMN \"PackageDimensionsCm\" TEXT NULL;",
-            ["CourierPartner"] = "ALTER TABLE \"CustomOrderRequests\" ADD COLUMN \"CourierPartner\" TEXT NULL;",
-            ["RefundStatus"] = "ALTER TABLE \"CustomOrderRequests\" ADD COLUMN \"RefundStatus\" TEXT NOT NULL DEFAULT 'NotRequested';",
-            ["CancellationReason"] = "ALTER TABLE \"CustomOrderRequests\" ADD COLUMN \"CancellationReason\" TEXT NULL;",
-            ["CancelledAtUtc"] = "ALTER TABLE \"CustomOrderRequests\" ADD COLUMN \"CancelledAtUtc\" TEXT NULL;",
-            ["ShippedAtUtc"] = "ALTER TABLE \"CustomOrderRequests\" ADD COLUMN \"ShippedAtUtc\" TEXT NULL;",
-            ["DeliveredAtUtc"] = "ALTER TABLE \"CustomOrderRequests\" ADD COLUMN \"DeliveredAtUtc\" TEXT NULL;"
         };
 
         foreach (var statement in statements)
@@ -392,32 +219,6 @@ public static class DatabaseSchemaUpdater
         }
     }
 
-    private static async Task ApplySqliteUsersManagementUpgradeAsync(AppDbContext db, CancellationToken cancellationToken)
-    {
-        var columns = await GetSqliteColumnsAsync(db, "Users", cancellationToken);
-        if (columns.Count == 0)
-        {
-            return;
-        }
-
-        if (!columns.Contains("UpdatedAtUtc"))
-        {
-            await db.Database.ExecuteSqlRawAsync(
-                "ALTER TABLE \"Users\" ADD COLUMN \"UpdatedAtUtc\" TEXT NOT NULL DEFAULT '1970-01-01T00:00:00Z';",
-                cancellationToken);
-            await db.Database.ExecuteSqlRawAsync(
-                "UPDATE \"Users\" SET \"UpdatedAtUtc\" = \"CreatedAtUtc\";",
-                cancellationToken);
-        }
-
-        if (!columns.Contains("DeletedAtUtc"))
-        {
-            await db.Database.ExecuteSqlRawAsync(
-                "ALTER TABLE \"Users\" ADD COLUMN \"DeletedAtUtc\" TEXT NULL;",
-                cancellationToken);
-        }
-    }
-
     private static async Task ApplySqlServerCustomOrderFulfillmentUpgradeAsync(AppDbContext db, CancellationToken cancellationToken)
     {
         var columns = await GetSqlServerColumnsAsync(db, "CustomOrderRequests", cancellationToken);
@@ -446,30 +247,6 @@ public static class DatabaseSchemaUpdater
                 await db.Database.ExecuteSqlRawAsync(statement.Value, cancellationToken);
             }
         }
-    }
-
-    private static async Task<HashSet<string>> GetSqliteColumnsAsync(
-        AppDbContext db,
-        string tableName,
-        CancellationToken cancellationToken)
-    {
-        var columns = new HashSet<string>(StringComparer.OrdinalIgnoreCase);
-        await using var connection = db.Database.GetDbConnection();
-        if (connection.State != ConnectionState.Open)
-        {
-            await connection.OpenAsync(cancellationToken);
-        }
-
-        await using var command = connection.CreateCommand();
-        command.CommandText = $"PRAGMA table_info(\"{tableName}\");";
-
-        await using var reader = await command.ExecuteReaderAsync(cancellationToken);
-        while (await reader.ReadAsync(cancellationToken))
-        {
-            columns.Add(reader.GetString(1));
-        }
-
-        return columns;
     }
 
     private static async Task<HashSet<string>> GetSqlServerColumnsAsync(
