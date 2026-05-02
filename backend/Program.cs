@@ -19,6 +19,9 @@ builder.Services.Configure<JwtOptions>(builder.Configuration.GetSection(JwtOptio
 builder.Services.Configure<AdminOptions>(builder.Configuration.GetSection(AdminOptions.SectionName));
 builder.Services.Configure<RazorpayOptions>(builder.Configuration.GetSection(RazorpayOptions.SectionName));
 builder.Services.Configure<AzureBlobOptions>(builder.Configuration.GetSection(AzureBlobOptions.SectionName));
+builder.Services.Configure<EmailOptions>(builder.Configuration.GetSection(EmailOptions.SectionName));
+builder.Services.Configure<SmsOptions>(builder.Configuration.GetSection(SmsOptions.SectionName));
+builder.Services.Configure<NotificationOptions>(builder.Configuration.GetSection(NotificationOptions.SectionName));
 
 builder.Services.AddEndpointsApiExplorer();
 builder.Services.AddControllers();
@@ -112,13 +115,21 @@ builder.Services.AddCors(options =>
 });
 
 var sqlServerConnection = builder.Configuration.GetConnectionString("SqlServer");
+var sqliteConnection = builder.Configuration.GetConnectionString("Sqlite");
 
 builder.Services.AddDbContext<AppDbContext>(options =>
 {
+    if (builder.Environment.IsDevelopment() && !string.IsNullOrWhiteSpace(sqliteConnection))
+    {
+        options.UseSqlite(sqliteConnection);
+        return;
+    }
+
     if (string.IsNullOrWhiteSpace(sqlServerConnection))
     {
         throw new InvalidOperationException("Connection string 'SqlServer' not found.");
     }
+
     options.UseSqlServer(sqlServerConnection);
 });
 
@@ -155,6 +166,10 @@ builder.Services.AddScoped<IFileStorageService>(static sp => sp.GetRequiredServi
 builder.Services.AddHttpClient<RazorpayService>();
 builder.Services.AddHttpClient<ShiprocketService>();
 builder.Services.AddHttpClient<WhatsAppNotificationService>();
+builder.Services.AddHttpClient("sms");
+builder.Services.AddScoped<INotificationService, NotificationService>();
+builder.Services.AddSingleton<INotificationQueue, NotificationQueue>();
+builder.Services.AddHostedService<NotificationBackgroundService>();
 builder.Services.AddHttpContextAccessor();
 
 var app = builder.Build();

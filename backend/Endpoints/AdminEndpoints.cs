@@ -403,7 +403,8 @@ public static class AdminEndpoints
             AppDbContext db,
             IConfiguration configuration,
             ShiprocketService shiprocketService,
-            WhatsAppNotificationService whatsappService) =>
+            WhatsAppNotificationService whatsappService,
+            INotificationQueue notificationQueue) =>
         {
             var order = await db.Orders
                 .Include(item => item.Items)
@@ -463,6 +464,10 @@ public static class AdminEndpoints
             }
             order.UpdatedAtUtc = DateTime.UtcNow;
             await db.SaveChangesAsync();
+            if (previousStatus != nextStatus && nextStatus is OrderStatuses.Shipped or OrderStatuses.Delivered or OrderStatuses.Cancelled)
+            {
+                await notificationQueue.EnqueueAsync(new NotificationJob(NotificationJobKind.OrderStatusUpdate, order.Id));
+            }
 
             return Results.Ok(MapOrderDto(order, configuration));
         });

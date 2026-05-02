@@ -383,7 +383,8 @@ public static class StorefrontEndpoints
         group.MapPost("/orders", async (
             HttpContext context,
             CreateOrderRequest request,
-            AppDbContext db) =>
+            AppDbContext db,
+            INotificationQueue notificationQueue) =>
         {
             if (string.Equals(request.PaymentMethod.Trim(), "Razorpay", StringComparison.OrdinalIgnoreCase))
             {
@@ -401,6 +402,7 @@ public static class StorefrontEndpoints
             }
 
             var order = await PersistCodOrderAsync(db, cart!, context, request.PaymentMethod.Trim());
+            await QueueOrderPlacedNotificationsAsync(notificationQueue, order.Id);
             return Results.Created($"/api/store/orders/{order.Id}", new
             {
                 order.Id,
@@ -548,7 +550,8 @@ public static class StorefrontEndpoints
             string orderCode,
             CancelTrackedOrderRequest request,
             AppDbContext db,
-            IConfiguration configuration) =>
+            IConfiguration configuration,
+            INotificationQueue notificationQueue) =>
         {
             if (string.IsNullOrWhiteSpace(request.Phone))
             {
@@ -566,6 +569,10 @@ public static class StorefrontEndpoints
             }
 
             var cancelResult = await CancelOrderAsync(order, request.Reason, db, configuration);
+            if (cancelResult is null)
+            {
+                await notificationQueue.EnqueueAsync(new NotificationJob(NotificationJobKind.OrderStatusUpdate, order.Id));
+            }
             return cancelResult is not null ? cancelResult : Results.Ok(MapOrderCancellation(order, configuration));
         });
 
@@ -592,6 +599,7 @@ public static class StorefrontEndpoints
             HttpContext httpContext,
             AppDbContext db,
             RazorpayService razorpayService,
+            INotificationQueue notificationQueue,
             CancellationToken cancellationToken) =>
         {
             var transaction = await db.PaymentTransactions
@@ -673,6 +681,7 @@ public static class StorefrontEndpoints
                 orderRow.UpdatedAtUtc = DateTime.UtcNow;
 
                 await db.SaveChangesAsync(cancellationToken);
+                await QueueOrderPlacedNotificationsAsync(notificationQueue, orderRow.Id, cancellationToken);
 
                 return Results.Ok(new
                 {
@@ -722,6 +731,7 @@ public static class StorefrontEndpoints
             transaction.UpdatedAtUtc = DateTime.UtcNow;
 
             await db.SaveChangesAsync(cancellationToken);
+            await QueueOrderPlacedNotificationsAsync(notificationQueue, paidOrder.Id, cancellationToken);
 
             return Results.Ok(new
             {
@@ -837,6 +847,15 @@ public static class StorefrontEndpoints
         string Pincode,
         string? Notes,
         List<(Product Product, int Quantity)> Lines);
+
+    private static async Task QueueOrderPlacedNotificationsAsync(
+        INotificationQueue notificationQueue,
+        int orderId,
+        CancellationToken cancellationToken = default)
+    {
+        await notificationQueue.EnqueueAsync(new NotificationJob(NotificationJobKind.OrderPlaced, orderId), cancellationToken);
+        await notificationQueue.EnqueueAsync(new NotificationJob(NotificationJobKind.AdminNewOrderAlert, orderId), cancellationToken);
+    }
 
     private static async Task<(CheckoutCartState? State, IResult? Error)> TryValidateCheckoutAsync(
         HttpContext context,

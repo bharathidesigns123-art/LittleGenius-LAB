@@ -18,7 +18,8 @@ public static class AuthEndpoints
             SignUpRequest request,
             AppDbContext db,
             IPasswordHasher<AppUser> passwordHasher,
-            JwtTokenService tokenService) =>
+            JwtTokenService tokenService,
+            INotificationQueue notificationQueue) =>
         {
             var normalizedEmail = request.Email.Trim().ToLowerInvariant();
             if (await db.Users.AnyAsync(user => user.Email == normalizedEmail && user.DeletedAtUtc == null))
@@ -38,6 +39,7 @@ public static class AuthEndpoints
 
             db.Users.Add(user);
             await db.SaveChangesAsync();
+            await notificationQueue.EnqueueAsync(new NotificationJob(NotificationJobKind.WelcomeEmail, user.Id));
 
             var token = tokenService.CreateToken(user);
             return Results.Ok(new AuthResponse(
@@ -49,7 +51,8 @@ public static class AuthEndpoints
             LoginRequest request,
             AppDbContext db,
             IPasswordHasher<AppUser> passwordHasher,
-            JwtTokenService tokenService) =>
+            JwtTokenService tokenService,
+            INotificationQueue notificationQueue) =>
         {
             var normalizedEmail = request.Email.Trim().ToLowerInvariant();
             var user = await db.Users.FirstOrDefaultAsync(item => item.Email == normalizedEmail);
@@ -66,6 +69,7 @@ public static class AuthEndpoints
             }
 
             var token = tokenService.CreateToken(user);
+            await notificationQueue.EnqueueAsync(new NotificationJob(NotificationJobKind.LoginAlert, user.Id));
             return Results.Ok(new AuthResponse(
                 Token: token,
                 User: new UserDto(user.Id, user.FullName, user.Email, user.Phone, user.Role)));

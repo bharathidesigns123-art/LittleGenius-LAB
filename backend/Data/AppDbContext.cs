@@ -16,6 +16,7 @@ public sealed class AppDbContext(DbContextOptions<AppDbContext> options) : DbCon
     public DbSet<CustomOrderRequest> CustomOrderRequests => Set<CustomOrderRequest>();
     public DbSet<PaymentTransaction> PaymentTransactions => Set<PaymentTransaction>();
     public DbSet<InventoryAdjustment> InventoryAdjustments => Set<InventoryAdjustment>();
+    public DbSet<NotificationLog> NotificationLogs => Set<NotificationLog>();
 
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {
@@ -31,6 +32,8 @@ public sealed class AppDbContext(DbContextOptions<AppDbContext> options) : DbCon
         modelBuilder.Entity<ProductReview>().HasIndex(review => review.OrderId);
         modelBuilder.Entity<ProductReview>().HasIndex(review => review.UserId);
         modelBuilder.Entity<ProductReview>().HasIndex(review => new { review.ProductId, review.OrderId, review.UserId });
+        modelBuilder.Entity<NotificationLog>().HasIndex(log => log.Status);
+        modelBuilder.Entity<NotificationLog>().HasIndex(log => log.CreatedAtUtc);
 
         modelBuilder.Entity<Product>()
             .HasOne(product => product.Category)

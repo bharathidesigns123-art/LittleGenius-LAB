@@ -14,6 +14,7 @@ public static class DatabaseSchemaUpdater
 
         if (db.Database.IsSqlite())
         {
+            await EnsureSqliteNotificationLogsTableAsync(db, cancellationToken);
             await EnsureSqliteProductImagesTableAsync(db, cancellationToken);
             await ApplySqliteReviewUpgradeAsync(db, cancellationToken);
             await ApplySqliteOrderFulfillmentUpgradeAsync(db, cancellationToken);
@@ -24,6 +25,7 @@ public static class DatabaseSchemaUpdater
 
         if (db.Database.IsSqlServer())
         {
+            await EnsureSqlServerNotificationLogsTableAsync(db, cancellationToken);
             await EnsureSqlServerProductImagesTableAsync(db, cancellationToken);
             await ApplySqlServerReviewUpgradeAsync(db, cancellationToken);
             await ApplySqlServerOrderFulfillmentUpgradeAsync(db, cancellationToken);
@@ -31,6 +33,64 @@ public static class DatabaseSchemaUpdater
             await ApplySqlServerPaymentTransactionPayFirstUpgradeAsync(db, cancellationToken);
             await ApplySqlServerUsersManagementUpgradeAsync(db, cancellationToken);
         }
+    }
+
+    private static async Task EnsureSqliteNotificationLogsTableAsync(AppDbContext db, CancellationToken cancellationToken)
+    {
+        await db.Database.ExecuteSqlRawAsync(
+            """
+            CREATE TABLE IF NOT EXISTS "NotificationLogs" (
+                "Id" INTEGER NOT NULL CONSTRAINT "PK_NotificationLogs" PRIMARY KEY AUTOINCREMENT,
+                "Type" TEXT NOT NULL,
+                "EventName" TEXT NOT NULL,
+                "Recipient" TEXT NOT NULL,
+                "Status" TEXT NOT NULL,
+                "Message" TEXT NOT NULL,
+                "AttemptCount" INTEGER NOT NULL DEFAULT 0,
+                "Error" TEXT NULL,
+                "CreatedAtUtc" TEXT NOT NULL DEFAULT '1970-01-01T00:00:00Z',
+                "SentAtUtc" TEXT NULL
+            );
+            """,
+            cancellationToken);
+
+        await db.Database.ExecuteSqlRawAsync(
+            "CREATE INDEX IF NOT EXISTS \"IX_NotificationLogs_Status\" ON \"NotificationLogs\" (\"Status\");",
+            cancellationToken);
+        await db.Database.ExecuteSqlRawAsync(
+            "CREATE INDEX IF NOT EXISTS \"IX_NotificationLogs_CreatedAtUtc\" ON \"NotificationLogs\" (\"CreatedAtUtc\");",
+            cancellationToken);
+    }
+
+    private static async Task EnsureSqlServerNotificationLogsTableAsync(AppDbContext db, CancellationToken cancellationToken)
+    {
+        await db.Database.ExecuteSqlRawAsync(
+            """
+            IF OBJECT_ID(N'[dbo].[NotificationLogs]', N'U') IS NULL
+            BEGIN
+                CREATE TABLE [dbo].[NotificationLogs] (
+                    [Id] int NOT NULL IDENTITY,
+                    [Type] nvarchar(16) NOT NULL,
+                    [EventName] nvarchar(80) NOT NULL,
+                    [Recipient] nvarchar(320) NOT NULL,
+                    [Status] nvarchar(16) NOT NULL,
+                    [Message] nvarchar(1000) NOT NULL,
+                    [AttemptCount] int NOT NULL CONSTRAINT [DF_NotificationLogs_AttemptCount] DEFAULT 0,
+                    [Error] nvarchar(max) NULL,
+                    [CreatedAtUtc] datetime2 NOT NULL CONSTRAINT [DF_NotificationLogs_CreatedAtUtc] DEFAULT SYSUTCDATETIME(),
+                    [SentAtUtc] datetime2 NULL,
+                    CONSTRAINT [PK_NotificationLogs] PRIMARY KEY ([Id])
+                );
+            END
+            """,
+            cancellationToken);
+
+        await db.Database.ExecuteSqlRawAsync(
+            "IF NOT EXISTS (SELECT 1 FROM sys.indexes WHERE name = 'IX_NotificationLogs_Status' AND object_id = OBJECT_ID('dbo.NotificationLogs')) CREATE INDEX [IX_NotificationLogs_Status] ON [NotificationLogs] ([Status]);",
+            cancellationToken);
+        await db.Database.ExecuteSqlRawAsync(
+            "IF NOT EXISTS (SELECT 1 FROM sys.indexes WHERE name = 'IX_NotificationLogs_CreatedAtUtc' AND object_id = OBJECT_ID('dbo.NotificationLogs')) CREATE INDEX [IX_NotificationLogs_CreatedAtUtc] ON [NotificationLogs] ([CreatedAtUtc]);",
+            cancellationToken);
     }
 
     private static async Task EnsureSqliteProductImagesTableAsync(AppDbContext db, CancellationToken cancellationToken)

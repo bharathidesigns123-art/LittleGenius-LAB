@@ -1,6 +1,7 @@
 using LittleGeniusLab.Api.Data;
 using LittleGeniusLab.Api.Helpers;
 using LittleGeniusLab.Api.Models;
+using LittleGeniusLab.Api.Services;
 using Microsoft.AspNetCore.Http;
 using Microsoft.EntityFrameworkCore;
 
@@ -278,7 +279,8 @@ public static class AccountEndpoints
             HttpContext context,
             CancelOrderRequest request,
             AppDbContext db,
-            IConfiguration configuration) =>
+            IConfiguration configuration,
+            INotificationQueue notificationQueue) =>
         {
             var userId = context.User.GetUserId();
             if (userId is null)
@@ -302,6 +304,10 @@ public static class AccountEndpoints
             }
 
             var cancelResult = await CancelOrderAsync(order, request.Reason, db, configuration);
+            if (cancelResult is null)
+            {
+                await notificationQueue.EnqueueAsync(new NotificationJob(NotificationJobKind.OrderStatusUpdate, order.Id));
+            }
             return cancelResult is not null ? cancelResult : Results.Ok(MapOrderCancellation(order, configuration));
         });
 
