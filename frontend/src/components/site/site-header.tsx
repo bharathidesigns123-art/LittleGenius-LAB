@@ -8,6 +8,7 @@ import { useCart } from "@/components/providers/cart-provider";
 
 const navItems = [
   { href: "/shop", label: "Shop" },
+  { href: "/orders", label: "Orders" },
   { href: "/custom-order", label: "Custom Orders" },
   { href: "/gallery", label: "Gallery" },
   { href: "/how-it-works", label: "How It Works" },
@@ -118,24 +119,27 @@ export function SiteHeader() {
       </header>
 
       <nav className="fixed inset-x-3 bottom-3 z-40 rounded-2xl border border-[var(--color-border)] bg-white/95 p-2 shadow-lg backdrop-blur md:hidden">
-        <div className="grid grid-cols-5 text-center text-xs font-semibold text-[var(--color-ink-soft)]">
+        <div className="grid grid-cols-6 text-center text-[0.65rem] font-semibold leading-tight text-[var(--color-ink-soft)] sm:text-xs">
           <Link href="/" className={pathname === "/" ? "text-[var(--color-blue)]" : ""}>
             Home
           </Link>
           <Link href="/shop" className={pathname.startsWith("/shop") ? "text-[var(--color-blue)]" : ""}>
             Shop
           </Link>
+          <Link href="/orders" className={pathname === "/orders" ? "text-[var(--color-blue)]" : ""}>
+            Orders
+          </Link>
           <Link href="/custom-order" className={pathname === "/custom-order" ? "text-[var(--color-blue)]" : ""}>
             Custom
           </Link>
           <Link href="/cart" className={pathname === "/cart" ? "text-[var(--color-blue)]" : ""}>
-            Cart {isClient ? `(${itemCount})` : ""}
+            Cart{isClient ? ` ${itemCount}` : ""}
           </Link>
           <Link
             href={user ? "/account" : "/login"}
             className={pathname === "/account" || pathname === "/login" ? "text-[var(--color-blue)]" : ""}
           >
-            {user ? "Account" : "Login"}
+            {user ? "You" : "Login"}
           </Link>
         </div>
       </nav>

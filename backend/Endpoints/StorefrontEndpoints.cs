@@ -3,6 +3,7 @@ using LittleGeniusLab.Api.Data;
 using LittleGeniusLab.Api.Helpers;
 using LittleGeniusLab.Api.Models;
 using LittleGeniusLab.Api.Services;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.EntityFrameworkCore;
 using Azure.Storage.Sas;
 using Azure.Storage;
@@ -13,6 +14,8 @@ namespace LittleGeniusLab.Api.Endpoints;
 
 public static class StorefrontEndpoints
 {
+    private static readonly JsonSerializerOptions WebJson = new(JsonSerializerDefaults.Web);
+
     public static IEndpointRouteBuilder MapStorefrontEndpoints(this IEndpointRouteBuilder routes)
     {
         var group = routes.MapGroup("/api/store");
@@ -374,95 +377,22 @@ public static class StorefrontEndpoints
             CreateOrderRequest request,
             AppDbContext db) =>
         {
-            if (request.Items.Count == 0)
+            if (string.Equals(request.PaymentMethod.Trim(), "Razorpay", StringComparison.OrdinalIgnoreCase))
             {
-                return Results.BadRequest(new { message = "At least one cart item is required." });
-            }
-
-            if (string.IsNullOrWhiteSpace(request.CustomerName) ||
-                string.IsNullOrWhiteSpace(request.Email) ||
-                string.IsNullOrWhiteSpace(request.Phone) ||
-                string.IsNullOrWhiteSpace(request.Line1) ||
-                string.IsNullOrWhiteSpace(request.City) ||
-                string.IsNullOrWhiteSpace(request.State) ||
-                string.IsNullOrWhiteSpace(request.Pincode))
-            {
-                return Results.BadRequest(new { message = "Shipping details are incomplete." });
-            }
-
-            var productIds = request.Items.Select(item => item.ProductId).Distinct().ToList();
-            var products = await db.Products
-                .Where(product => product.IsPublished && productIds.Contains(product.Id))
-                .ToListAsync();
-
-            if (products.Count != productIds.Count)
-            {
-                return Results.BadRequest(new { message = "One or more cart items are invalid." });
-            }
-
-            foreach (var item in request.Items)
-            {
-                var product = products.First(product => product.Id == item.ProductId);
-                if (product.StockQuantity < item.Quantity)
+                return Results.BadRequest(new
                 {
-                    return Results.BadRequest(new { message = $"{product.Name} does not have enough stock." });
-                }
-            }
-
-            var order = new Order
-            {
-                UserId = context.User.GetUserId(),
-                OrderCode = $"LGL-ORD-{Random.Shared.Next(10000, 99999)}",
-                CustomerName = request.CustomerName.Trim(),
-                Email = request.Email.Trim().ToLowerInvariant(),
-                Phone = request.Phone.Trim(),
-                Line1 = request.Line1.Trim(),
-                Line2 = request.Line2?.Trim(),
-                City = request.City.Trim(),
-                State = request.State.Trim(),
-                Country = string.IsNullOrWhiteSpace(request.Country) ? "India" : request.Country.Trim(),
-                Pincode = request.Pincode.Trim(),
-                PaymentMethod = request.PaymentMethod.Trim(),
-                PaymentStatus = PaymentStatuses.Pending,
-                Status = OrderStatuses.Pending,
-                Notes = request.Notes?.Trim()
-            };
-
-            foreach (var item in request.Items)
-            {
-                var product = products.First(product => product.Id == item.ProductId);
-                var quantity = Math.Max(1, item.Quantity);
-
-                product.StockQuantity -= quantity;
-                product.UpdatedAtUtc = DateTime.UtcNow;
-
-                order.Items.Add(new OrderItem
-                {
-                    ProductId = product.Id,
-                    ProductName = product.Name,
-                    ProductSlug = product.Slug,
-                    Quantity = quantity,
-                    UnitPriceInr = product.PriceInr,
-                    TotalPriceInr = product.PriceInr * quantity
-                });
-
-                db.InventoryAdjustments.Add(new InventoryAdjustment
-                {
-                    ProductId = product.Id,
-                    UpdatedByUserId = context.User.GetUserId(),
-                    QuantityChange = -quantity,
-                    Reason = "Order placed",
-                    Notes = order.OrderCode
+                    message =
+                        "Online card/UPI payment does not create an order until payment succeeds. Choose Razorpay on checkout and complete payment — your order is created automatically after Razorpay confirms."
                 });
             }
 
-            order.SubtotalInr = order.Items.Sum(item => item.TotalPriceInr);
-            order.ShippingFeeInr = order.SubtotalInr >= 499 ? 0 : 60;
-            order.TotalPriceInr = order.SubtotalInr + order.ShippingFeeInr;
+            var (cart, validationError) = await TryValidateCheckoutAsync(context, request, db);
+            if (validationError is not null)
+            {
+                return validationError;
+            }
 
-            db.Orders.Add(order);
-            await db.SaveChangesAsync();
-
+            var order = await PersistCodOrderAsync(db, cart!, context, request.PaymentMethod.Trim());
             return Results.Created($"/api/store/orders/{order.Id}", new
             {
                 order.Id,
@@ -513,47 +443,73 @@ public static class StorefrontEndpoints
             });
         });
 
-        group.MapPost("/payments/razorpay/order", async (
-            CreateRazorpayOrderRequest request,
+        group.MapPost("/payments/razorpay/prepare", async (
+            HttpContext context,
+            CreateOrderRequest request,
             AppDbContext db,
             RazorpayService razorpayService,
             CancellationToken cancellationToken) =>
         {
-            var order = await db.Orders.FirstOrDefaultAsync(item => item.OrderCode == request.OrderCode, cancellationToken);
-            if (order is null)
-            {
-                return Results.NotFound(new { message = $"Order with code {request.OrderCode} not found in the production database." });
-            }
-
             if (!razorpayService.IsConfigured)
             {
-                return Results.BadRequest(new { 
-                    message = "Razorpay is not configured on the server. Check Azure App Service environment variables: Razorpay__KeyId and Razorpay__KeySecret." 
+                return Results.BadRequest(new
+                {
+                    message =
+                        "Razorpay is not configured on the server. Check Azure App Service environment variables: Razorpay__KeyId and Razorpay__KeySecret."
                 });
             }
 
+            var (cart, validationError) = await TryValidateCheckoutAsync(context, request, db);
+            if (validationError is not null)
+            {
+                return validationError;
+            }
+
+            var subtotal = cart!.Lines.Sum(line => line.Product.PriceInr * line.Quantity);
+            var shippingFee = subtotal >= 499 ? 0 : 60;
+            var total = subtotal + shippingFee;
+
+            var receipt = $"LGL-PAY-{Guid.NewGuid():N}";
             RazorpayOrderResult razorpayOrder;
             try
             {
-                razorpayOrder = await razorpayService.CreateOrderAsync(order.OrderCode, order.TotalPriceInr, cancellationToken);
+                razorpayOrder = await razorpayService.CreateOrderAsync(receipt, total, cancellationToken);
             }
             catch (Exception exception)
             {
                 return Results.Problem(
-                    detail: exception.Message, 
+                    detail: exception.Message,
                     title: "Razorpay API Error",
                     statusCode: 500);
             }
 
+            var snapshot = new PendingRazorpayCheckoutSnapshot(
+                cart.UserId,
+                cart.GuestId,
+                cart.CustomerName,
+                cart.Email,
+                cart.Phone,
+                cart.Line1,
+                cart.Line2,
+                cart.City,
+                cart.State,
+                cart.Country,
+                cart.Pincode,
+                cart.Notes,
+                cart.Lines
+                    .Select(line => new PendingRazorpayLineSnapshot(line.Product.Id, line.Quantity, line.Product.PriceInr))
+                    .ToList());
+
             var transaction = new PaymentTransaction
             {
-                OrderId = order.Id,
+                OrderId = null,
                 Provider = "Razorpay",
                 ProviderOrderId = razorpayOrder.ProviderOrderId,
-                Receipt = order.OrderCode,
-                AmountInr = order.TotalPriceInr,
+                Receipt = receipt,
+                AmountInr = total,
                 Currency = razorpayOrder.Currency,
                 Status = PaymentStatuses.Pending,
+                PendingCheckoutJson = JsonSerializer.Serialize(snapshot, WebJson),
                 RawPayloadJson = JsonSerializer.Serialize(razorpayOrder)
             };
 
@@ -564,12 +520,12 @@ public static class StorefrontEndpoints
             {
                 publicKey = razorpayService.PublicKeyId,
                 callbackUrl = razorpayService.CallbackUrl,
-                orderCode = order.OrderCode,
+                checkoutReceipt = receipt,
                 customer = new
                 {
-                    order.CustomerName,
-                    order.Email,
-                    order.Phone
+                    customerName = cart.CustomerName,
+                    email = cart.Email,
+                    phone = cart.Phone
                 },
                 razorpayOrder = new
                 {
@@ -625,26 +581,42 @@ public static class StorefrontEndpoints
 
         group.MapPost("/payments/razorpay/verify", async (
             VerifyRazorpayPaymentRequest request,
+            HttpContext httpContext,
             AppDbContext db,
             RazorpayService razorpayService,
             CancellationToken cancellationToken) =>
         {
-            var order = await db.Orders
-                .Include(item => item.Payments)
-                .FirstOrDefaultAsync(item => item.OrderCode == request.OrderCode, cancellationToken);
-
-            if (order is null)
-            {
-                return Results.NotFound(new { message = "Order not found." });
-            }
-
-            var transaction = order.Payments
-                .OrderByDescending(payment => payment.CreatedAtUtc)
-                .FirstOrDefault(payment => payment.ProviderOrderId == request.RazorpayOrderId);
+            var transaction = await db.PaymentTransactions
+                .FirstOrDefaultAsync(
+                    payment => payment.ProviderOrderId == request.RazorpayOrderId,
+                    cancellationToken);
 
             if (transaction is null)
             {
-                return Results.BadRequest(new { message = "Payment transaction not found." });
+                return Results.NotFound(new { message = "Payment transaction not found." });
+            }
+
+            if (!string.Equals(transaction.ProviderOrderId, request.ServerOrderId, StringComparison.Ordinal) ||
+                !string.Equals(transaction.ProviderOrderId, request.RazorpayOrderId, StringComparison.Ordinal))
+            {
+                return Results.BadRequest(new { message = "Razorpay order id mismatch." });
+            }
+
+            if (transaction.Status == PaymentStatuses.Paid && transaction.OrderId is not null)
+            {
+                var existing = await db.Orders.AsNoTracking()
+                    .FirstAsync(order => order.Id == transaction.OrderId, cancellationToken);
+                return Results.Ok(new
+                {
+                    orderCode = existing.OrderCode,
+                    existing.Status,
+                    existing.PaymentStatus
+                });
+            }
+
+            if (transaction.Status == PaymentStatuses.Failed)
+            {
+                return Results.BadRequest(new { message = "This payment attempt already failed verification." });
             }
 
             bool signatureValid;
@@ -670,27 +642,486 @@ public static class StorefrontEndpoints
                 return Results.BadRequest(new { message = "Payment verification failed." });
             }
 
+            if (transaction.OrderId is not null && !string.IsNullOrWhiteSpace(request.OrderCode))
+            {
+                var legacyOrder = await db.Orders
+                    .FirstOrDefaultAsync(order => order.OrderCode == request.OrderCode, cancellationToken);
+                if (legacyOrder is null || transaction.OrderId != legacyOrder.Id)
+                {
+                    return Results.BadRequest(new { message = "Order does not match this Razorpay payment." });
+                }
+            }
+
+            if (transaction.OrderId is not null)
+            {
+                transaction.ProviderPaymentId = request.RazorpayPaymentId;
+                transaction.Status = PaymentStatuses.Paid;
+                transaction.RawPayloadJson = JsonSerializer.Serialize(request);
+                transaction.UpdatedAtUtc = DateTime.UtcNow;
+
+                var orderRow = await db.Orders.FirstAsync(order => order.Id == transaction.OrderId, cancellationToken);
+                orderRow.PaymentStatus = PaymentStatuses.Paid;
+                orderRow.Status = OrderStatuses.Printing;
+                orderRow.UpdatedAtUtc = DateTime.UtcNow;
+
+                await db.SaveChangesAsync(cancellationToken);
+
+                return Results.Ok(new
+                {
+                    orderCode = orderRow.OrderCode,
+                    orderRow.Status,
+                    orderRow.PaymentStatus
+                });
+            }
+
+            if (string.IsNullOrWhiteSpace(transaction.PendingCheckoutJson))
+            {
+                return Results.Problem(
+                    statusCode: 500,
+                    title: "Checkout data missing",
+                    detail: "Cannot create order: pending checkout payload was not stored.");
+            }
+
+            var snapshot = JsonSerializer.Deserialize<PendingRazorpayCheckoutSnapshot>(
+                transaction.PendingCheckoutJson,
+                WebJson);
+            if (snapshot is null)
+            {
+                return Results.Problem(statusCode: 500, detail: "Invalid pending checkout payload.");
+            }
+
+            var materialized = await TryMaterializePaidOrderFromSnapshotAsync(
+                db,
+                transaction,
+                snapshot,
+                httpContext,
+                cancellationToken);
+            if (materialized.Error is not null)
+            {
+                transaction.ProviderPaymentId = request.RazorpayPaymentId;
+                transaction.FailureReason = "Razorpay payment verified but order could not be created.";
+                transaction.UpdatedAtUtc = DateTime.UtcNow;
+                await db.SaveChangesAsync(cancellationToken);
+                return materialized.Error;
+            }
+
+            var paidOrder = materialized.Order!;
+            transaction.OrderId = paidOrder.Id;
             transaction.ProviderPaymentId = request.RazorpayPaymentId;
             transaction.Status = PaymentStatuses.Paid;
+            transaction.PendingCheckoutJson = null;
             transaction.RawPayloadJson = JsonSerializer.Serialize(request);
             transaction.UpdatedAtUtc = DateTime.UtcNow;
-
-            order.PaymentStatus = PaymentStatuses.Paid;
-            order.Status = OrderStatuses.Printing;
-            order.UpdatedAtUtc = DateTime.UtcNow;
 
             await db.SaveChangesAsync(cancellationToken);
 
             return Results.Ok(new
             {
-                order.OrderCode,
-                order.Status,
-                order.PaymentStatus
+                orderCode = paidOrder.OrderCode,
+                paidOrder.Status,
+                paidOrder.PaymentStatus
             });
         });
 
+        group.MapGet("/guest-orders", async (
+            string? guestId,
+            AppDbContext db,
+            IConfiguration configuration) =>
+        {
+            if (string.IsNullOrWhiteSpace(guestId) || !Guid.TryParse(guestId.Trim(), out _))
+            {
+                return Results.BadRequest(new { message = "guestId must be a valid UUID." });
+            }
+
+            var normalized = guestId.Trim();
+            var orders = await db.Orders
+                .AsNoTracking()
+                .Include(o => o.Items)
+                .Where(o => o.GuestId == normalized && o.UserId == null)
+                .OrderByDescending(o => o.CreatedAtUtc)
+                .ToListAsync();
+
+            return Results.Ok(orders.Select(order => MapGuestStandardOrder(order, configuration)));
+        }).AllowAnonymous();
+
         return routes;
     }
+
+    public static IEndpointRouteBuilder MapGuestOrderMergeEndpoint(this IEndpointRouteBuilder routes)
+    {
+        routes.MapPost("/api/store/orders/merge-guest", async (
+            HttpContext context,
+            MergeGuestOrdersRequest request,
+            AppDbContext db) =>
+        {
+            var userId = context.User.GetUserId();
+            if (userId is null)
+            {
+                return Results.Unauthorized();
+            }
+
+            if (string.IsNullOrWhiteSpace(request.GuestId) || !Guid.TryParse(request.GuestId.Trim(), out _))
+            {
+                return Results.BadRequest(new { message = "guestId must be a valid UUID." });
+            }
+
+            var guestKey = request.GuestId.Trim();
+            var user = await db.Users.AsNoTracking().FirstOrDefaultAsync(u => u.Id == userId.Value);
+            if (user is null)
+            {
+                return Results.NotFound(new { message = "User not found." });
+            }
+
+            var normalizedUserEmail = user.Email.Trim().ToLowerInvariant();
+            var candidates = await db.Orders
+                .Where(o => o.GuestId == guestKey && o.UserId == null)
+                .ToListAsync();
+
+            if (candidates.Count == 0)
+            {
+                return Results.Ok(new { merged = 0, message = "No guest orders to merge." });
+            }
+
+            foreach (var order in candidates)
+            {
+                if (!string.Equals(order.Email.Trim().ToLowerInvariant(), normalizedUserEmail, StringComparison.Ordinal))
+                {
+                    return Results.BadRequest(new
+                    {
+                        message =
+                            "One or more guest orders use a different email than this account. Use the same email or contact support."
+                    });
+                }
+            }
+
+            foreach (var order in candidates)
+            {
+                order.UserId = userId.Value;
+                order.GuestId = null;
+                order.UpdatedAtUtc = DateTime.UtcNow;
+            }
+
+            await db.SaveChangesAsync();
+            return Results.Ok(new { merged = candidates.Count });
+        }).RequireAuthorization();
+
+        return routes;
+    }
+
+    private sealed record CheckoutCartState(
+        int? UserId,
+        string? GuestId,
+        string CustomerName,
+        string Email,
+        string Phone,
+        string Line1,
+        string? Line2,
+        string City,
+        string State,
+        string Country,
+        string Pincode,
+        string? Notes,
+        List<(Product Product, int Quantity)> Lines);
+
+    private static async Task<(CheckoutCartState? State, IResult? Error)> TryValidateCheckoutAsync(
+        HttpContext context,
+        CreateOrderRequest request,
+        AppDbContext db)
+    {
+        if (request.Items.Count == 0)
+        {
+            return (null, Results.BadRequest(new { message = "At least one cart item is required." }));
+        }
+
+        if (string.IsNullOrWhiteSpace(request.CustomerName) ||
+            string.IsNullOrWhiteSpace(request.Email) ||
+            string.IsNullOrWhiteSpace(request.Phone) ||
+            string.IsNullOrWhiteSpace(request.Line1) ||
+            string.IsNullOrWhiteSpace(request.City) ||
+            string.IsNullOrWhiteSpace(request.State) ||
+            string.IsNullOrWhiteSpace(request.Pincode))
+        {
+            return (null, Results.BadRequest(new { message = "Shipping details are incomplete." }));
+        }
+
+        var productIds = request.Items.Select(item => item.ProductId).Distinct().ToList();
+        var products = await db.Products
+            .Where(product => product.IsPublished && productIds.Contains(product.Id))
+            .ToListAsync();
+
+        if (products.Count != productIds.Count)
+        {
+            return (null, Results.BadRequest(new { message = "One or more cart items are invalid." }));
+        }
+
+        var lines = new List<(Product Product, int Quantity)>();
+        foreach (var item in request.Items)
+        {
+            var product = products.First(p => p.Id == item.ProductId);
+            if (product.StockQuantity < item.Quantity)
+            {
+                return (null, Results.BadRequest(new { message = $"{product.Name} does not have enough stock." }));
+            }
+
+            lines.Add((product, Math.Max(1, item.Quantity)));
+        }
+
+        var userId = context.User.GetUserId();
+        string? guestId = null;
+        if (userId is null)
+        {
+            if (string.IsNullOrWhiteSpace(request.GuestId) || !Guid.TryParse(request.GuestId.Trim(), out _))
+            {
+                return (null, Results.BadRequest(new { message = "guestId (UUID) is required for guest checkout." }));
+            }
+
+            guestId = request.GuestId.Trim();
+        }
+
+        var state = new CheckoutCartState(
+            userId,
+            guestId,
+            request.CustomerName.Trim(),
+            request.Email.Trim().ToLowerInvariant(),
+            request.Phone.Trim(),
+            request.Line1.Trim(),
+            request.Line2?.Trim(),
+            request.City.Trim(),
+            request.State.Trim(),
+            string.IsNullOrWhiteSpace(request.Country) ? "India" : request.Country.Trim(),
+            request.Pincode.Trim(),
+            request.Notes?.Trim(),
+            lines);
+
+        return (state, null);
+    }
+
+    private static async Task<Order> PersistCodOrderAsync(
+        AppDbContext db,
+        CheckoutCartState state,
+        HttpContext context,
+        string paymentMethod)
+    {
+        var order = new Order
+        {
+            UserId = state.UserId,
+            GuestId = state.UserId is null ? state.GuestId : null,
+            OrderCode = $"LGL-ORD-{Random.Shared.Next(10000, 99999)}",
+            CustomerName = state.CustomerName,
+            Email = state.Email,
+            Phone = state.Phone,
+            Line1 = state.Line1,
+            Line2 = state.Line2,
+            City = state.City,
+            State = state.State,
+            Country = state.Country,
+            Pincode = state.Pincode,
+            PaymentMethod = paymentMethod,
+            PaymentStatus = PaymentStatuses.Pending,
+            Status = OrderStatuses.Pending,
+            Notes = state.Notes
+        };
+
+        foreach (var (product, quantity) in state.Lines)
+        {
+            product.StockQuantity -= quantity;
+            product.UpdatedAtUtc = DateTime.UtcNow;
+
+            order.Items.Add(new OrderItem
+            {
+                ProductId = product.Id,
+                ProductName = product.Name,
+                ProductSlug = product.Slug,
+                Quantity = quantity,
+                UnitPriceInr = product.PriceInr,
+                TotalPriceInr = product.PriceInr * quantity
+            });
+
+            db.InventoryAdjustments.Add(new InventoryAdjustment
+            {
+                ProductId = product.Id,
+                UpdatedByUserId = context.User.GetUserId(),
+                QuantityChange = -quantity,
+                Reason = "Order placed",
+                Notes = order.OrderCode
+            });
+        }
+
+        order.SubtotalInr = order.Items.Sum(item => item.TotalPriceInr);
+        order.ShippingFeeInr = order.SubtotalInr >= 499 ? 0 : 60;
+        order.TotalPriceInr = order.SubtotalInr + order.ShippingFeeInr;
+
+        db.Orders.Add(order);
+        await db.SaveChangesAsync();
+        return order;
+    }
+
+    private static async Task<(Order? Order, IResult? Error)> TryMaterializePaidOrderFromSnapshotAsync(
+        AppDbContext db,
+        PaymentTransaction transaction,
+        PendingRazorpayCheckoutSnapshot snapshot,
+        HttpContext context,
+        CancellationToken cancellationToken)
+    {
+        var subtotal = snapshot.Lines.Sum(line => line.UnitPriceInr * line.Quantity);
+        var shippingFee = subtotal >= 499 ? 0 : 60;
+        var expectedTotal = subtotal + shippingFee;
+        if (expectedTotal != transaction.AmountInr)
+        {
+            return (null, Results.BadRequest(new { message = "Checkout amount does not match payment record." }));
+        }
+
+        if (snapshot.UserId is null &&
+            (string.IsNullOrWhiteSpace(snapshot.GuestId) || !Guid.TryParse(snapshot.GuestId.Trim(), out _)))
+        {
+            return (null, Results.BadRequest(new { message = "Invalid guest checkout data." }));
+        }
+
+        var productIds = snapshot.Lines.Select(line => line.ProductId).Distinct().ToList();
+        var products = await db.Products
+            .Where(product => productIds.Contains(product.Id))
+            .ToListAsync(cancellationToken);
+
+        if (products.Count != productIds.Count)
+        {
+            return (null, Results.BadRequest(new { message = "One or more products are no longer available." }));
+        }
+
+        foreach (var line in snapshot.Lines)
+        {
+            var product = products.First(p => p.Id == line.ProductId);
+            if (!product.IsPublished)
+            {
+                return (null, Results.BadRequest(new { message = $"{product.Name} is no longer available." }));
+            }
+
+            if (product.StockQuantity < line.Quantity)
+            {
+                return (null, Results.Conflict(new
+                {
+                    message =
+                        $"{product.Name} does not have enough stock. If money was debited, contact support with Razorpay order id {transaction.ProviderOrderId}."
+                }));
+            }
+        }
+
+        var order = new Order
+        {
+            UserId = snapshot.UserId,
+            GuestId = snapshot.UserId is null ? snapshot.GuestId?.Trim() : null,
+            OrderCode = $"LGL-ORD-{Random.Shared.Next(10000, 99999)}",
+            CustomerName = snapshot.CustomerName.Trim(),
+            Email = snapshot.Email.Trim().ToLowerInvariant(),
+            Phone = snapshot.Phone.Trim(),
+            Line1 = snapshot.Line1.Trim(),
+            Line2 = snapshot.Line2?.Trim(),
+            City = snapshot.City.Trim(),
+            State = snapshot.State.Trim(),
+            Country = string.IsNullOrWhiteSpace(snapshot.Country) ? "India" : snapshot.Country.Trim(),
+            Pincode = snapshot.Pincode.Trim(),
+            PaymentMethod = "Razorpay",
+            PaymentStatus = PaymentStatuses.Paid,
+            Status = OrderStatuses.Printing,
+            Notes = snapshot.Notes?.Trim()
+        };
+
+        foreach (var line in snapshot.Lines)
+        {
+            var product = products.First(p => p.Id == line.ProductId);
+            var quantity = Math.Max(1, line.Quantity);
+
+            product.StockQuantity -= quantity;
+            product.UpdatedAtUtc = DateTime.UtcNow;
+
+            order.Items.Add(new OrderItem
+            {
+                ProductId = product.Id,
+                ProductName = product.Name,
+                ProductSlug = product.Slug,
+                Quantity = quantity,
+                UnitPriceInr = line.UnitPriceInr,
+                TotalPriceInr = line.UnitPriceInr * quantity
+            });
+
+            db.InventoryAdjustments.Add(new InventoryAdjustment
+            {
+                ProductId = product.Id,
+                UpdatedByUserId = context.User.GetUserId(),
+                QuantityChange = -quantity,
+                Reason = "Razorpay order paid",
+                Notes = order.OrderCode
+            });
+        }
+
+        order.SubtotalInr = order.Items.Sum(item => item.TotalPriceInr);
+        order.ShippingFeeInr = order.SubtotalInr >= 499 ? 0 : 60;
+        order.TotalPriceInr = order.SubtotalInr + order.ShippingFeeInr;
+
+        if (order.TotalPriceInr != transaction.AmountInr)
+        {
+            return (null, Results.BadRequest(new { message = "Order total does not match payment amount." }));
+        }
+
+        db.Orders.Add(order);
+        await db.SaveChangesAsync(cancellationToken);
+        return (order, null);
+    }
+
+    private static object MapGuestStandardOrder(Order order, IConfiguration configuration) => new
+    {
+        order.Id,
+        orderType = "standard",
+        order.OrderCode,
+        order.CustomerName,
+        order.Email,
+        order.Phone,
+        order.Status,
+        order.PaymentStatus,
+        order.PaymentMethod,
+        order.SubtotalInr,
+        order.ShippingFeeInr,
+        order.TotalPriceInr,
+        order.Notes,
+        order.CreatedAtUtc,
+        order.TrackingNumber,
+        order.RefundStatus,
+        order.CancellationReason,
+        order.CancelledAtUtc,
+        order.ShippedAtUtc,
+        order.DeliveredAtUtc,
+        cancellationEligible = IsGuestListCancellationAllowed(order.Status, configuration),
+        shippingAddress = new
+        {
+            order.CustomerName,
+            order.Email,
+            order.Phone,
+            order.Line1,
+            order.Line2,
+            order.City,
+            order.State,
+            order.Country,
+            order.Pincode
+        },
+        items = order.Items.Select(item => new
+        {
+            item.ProductName,
+            item.Quantity,
+            item.TotalPriceInr
+        })
+    };
+
+    private static bool IsGuestListCancellationAllowed(string status, IConfiguration configuration)
+    {
+        if (status == OrderStatuses.Cancelled || status == OrderStatuses.Delivered)
+        {
+            return false;
+        }
+
+        var allowAfterShipment = configuration.GetValue("Orders:AllowCancellationAfterShipment", false);
+        return allowAfterShipment || status is not OrderStatuses.Shipped;
+    }
+
+    public sealed record MergeGuestOrdersRequest(string GuestId);
 
     public sealed record CreateCustomOrderRequest(
         string Name,
@@ -716,13 +1147,31 @@ public static class StorefrontEndpoints
         string Pincode,
         string PaymentMethod,
         string? Notes,
+        string? GuestId,
         List<CreateOrderItemRequest> Items);
 
     public sealed record CreateOrderItemRequest(int ProductId, int Quantity);
     public sealed record CancelTrackedOrderRequest(string Phone, string? Reason);
-    public sealed record CreateRazorpayOrderRequest(string OrderCode);
+
+    public sealed record PendingRazorpayLineSnapshot(int ProductId, int Quantity, decimal UnitPriceInr);
+
+    public sealed record PendingRazorpayCheckoutSnapshot(
+        int? UserId,
+        string? GuestId,
+        string CustomerName,
+        string Email,
+        string Phone,
+        string Line1,
+        string? Line2,
+        string City,
+        string State,
+        string Country,
+        string Pincode,
+        string? Notes,
+        List<PendingRazorpayLineSnapshot> Lines);
+
     public sealed record VerifyRazorpayPaymentRequest(
-        string OrderCode,
+        string? OrderCode,
         string ServerOrderId,
         string RazorpayOrderId,
         string RazorpayPaymentId,

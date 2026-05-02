@@ -26,6 +26,7 @@ public sealed class AppDbContext(DbContextOptions<AppDbContext> options) : DbCon
         modelBuilder.Entity<ProductImage>().HasIndex(image => image.ProductId);
         modelBuilder.Entity<ProductImage>().HasIndex(image => new { image.ProductId, image.SortOrder });
         modelBuilder.Entity<Order>().HasIndex(order => order.OrderCode).IsUnique();
+        modelBuilder.Entity<Order>().HasIndex(order => order.GuestId);
         modelBuilder.Entity<CustomOrderRequest>().HasIndex(order => order.ReferenceCode).IsUnique();
         modelBuilder.Entity<ProductReview>().HasIndex(review => review.OrderId);
         modelBuilder.Entity<ProductReview>().HasIndex(review => review.UserId);
@@ -77,6 +78,7 @@ public sealed class AppDbContext(DbContextOptions<AppDbContext> options) : DbCon
             .HasMany(order => order.Payments)
             .WithOne(payment => payment.Order)
             .HasForeignKey(payment => payment.OrderId)
+            .IsRequired(false)
             .OnDelete(DeleteBehavior.Cascade);
 
         modelBuilder.Entity<CustomOrderRequest>()

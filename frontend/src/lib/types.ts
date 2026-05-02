@@ -223,7 +223,8 @@ export type TrackOrderResponse = {
 export type RazorpayOrderResponse = {
   publicKey: string;
   callbackUrl: string;
-  orderCode: string;
+  /** Pay-first checkout: Razorpay receipt id (order is created only after payment). */
+  checkoutReceipt: string;
   customer: {
     customerName: string;
     email: string;

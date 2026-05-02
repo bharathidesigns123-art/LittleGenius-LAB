@@ -163,6 +163,7 @@ export const browserApi = {
       pincode: string;
       paymentMethod: string;
       notes?: string;
+      guestId?: string | null;
       items: Array<{ productId: number; quantity: number }>;
     },
   ) =>
@@ -178,14 +179,42 @@ export const browserApi = {
       body: payload,
     }),
 
-  createRazorpayOrder: (orderCode: string) =>
-    apiRequest<RazorpayOrderResponse>("/api/store/payments/razorpay/order", {
+  getGuestOrders: (guestId: string) =>
+    apiRequest<OrderSummary[]>(`/api/store/guest-orders?guestId=${encodeURIComponent(guestId)}`),
+
+  mergeGuestOrders: (token: string, guestId: string) =>
+    apiRequest<{ merged: number; message?: string }>("/api/store/orders/merge-guest", {
       method: "POST",
-      body: { orderCode },
+      token,
+      body: { guestId },
+    }),
+
+  prepareRazorpayCheckout: (
+    token: string | null,
+    payload: {
+      customerName: string;
+      email: string;
+      phone: string;
+      line1: string;
+      line2?: string;
+      city: string;
+      state: string;
+      country: string;
+      pincode: string;
+      paymentMethod: string;
+      notes?: string;
+      guestId?: string | null;
+      items: Array<{ productId: number; quantity: number }>;
+    },
+  ) =>
+    apiRequest<RazorpayOrderResponse>("/api/store/payments/razorpay/prepare", {
+      method: "POST",
+      token,
+      body: payload,
     }),
 
   verifyRazorpayPayment: (payload: {
-    orderCode: string;
+    orderCode?: string | null;
     serverOrderId: string;
     razorpayOrderId: string;
     razorpayPaymentId: string;

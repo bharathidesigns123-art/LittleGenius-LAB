@@ -138,6 +138,9 @@ export default function AccountPage() {
               <h1 className="display-font mt-2 text-3xl font-semibold text-[var(--color-blue)]">
                 Your account
               </h1>
+              <Link href="/orders" className="mt-3 inline-block text-sm font-bold text-[var(--color-blue)] underline">
+                Orders overview
+              </Link>
               <form onSubmit={handleSave} className="mt-6 space-y-4">
                 <input
                   value={form.fullName}

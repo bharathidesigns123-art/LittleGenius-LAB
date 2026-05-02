@@ -199,6 +199,7 @@ app.MapControllers();
 
 app.MapAuthEndpoints();
 app.MapStorefrontEndpoints();
+app.MapGuestOrderMergeEndpoint();
 app.MapAccountEndpoints();
 app.MapReviewEndpoints();
 app.MapAdminEndpoints();

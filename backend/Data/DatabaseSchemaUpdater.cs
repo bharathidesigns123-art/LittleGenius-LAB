@@ -27,6 +27,7 @@ public static class DatabaseSchemaUpdater
             await ApplySqlServerReviewUpgradeAsync(db, cancellationToken);
             await ApplySqlServerOrderFulfillmentUpgradeAsync(db, cancellationToken);
             await ApplySqlServerCustomOrderFulfillmentUpgradeAsync(db, cancellationToken);
+            await ApplySqlServerPaymentTransactionPayFirstUpgradeAsync(db, cancellationToken);
         }
     }
 
@@ -191,6 +192,7 @@ public static class DatabaseSchemaUpdater
 
         var statements = new Dictionary<string, string>(StringComparer.OrdinalIgnoreCase)
         {
+            ["GuestId"] = "ALTER TABLE \"Orders\" ADD COLUMN \"GuestId\" TEXT NULL;",
             ["PackageWeightKg"] = "ALTER TABLE \"Orders\" ADD COLUMN \"PackageWeightKg\" TEXT NULL;",
             ["PackageDimensionsCm"] = "ALTER TABLE \"Orders\" ADD COLUMN \"PackageDimensionsCm\" TEXT NULL;",
             ["CourierPartner"] = "ALTER TABLE \"Orders\" ADD COLUMN \"CourierPartner\" TEXT NULL;",
@@ -220,6 +222,7 @@ public static class DatabaseSchemaUpdater
 
         var statements = new Dictionary<string, string>(StringComparer.OrdinalIgnoreCase)
         {
+            ["GuestId"] = "ALTER TABLE [Orders] ADD [GuestId] nvarchar(64) NULL;",
             ["PackageWeightKg"] = "ALTER TABLE [Orders] ADD [PackageWeightKg] decimal(18,2) NULL;",
             ["PackageDimensionsCm"] = "ALTER TABLE [Orders] ADD [PackageDimensionsCm] nvarchar(80) NULL;",
             ["CourierPartner"] = "ALTER TABLE [Orders] ADD [CourierPartner] nvarchar(120) NULL;",
@@ -267,6 +270,35 @@ public static class DatabaseSchemaUpdater
                 await db.Database.ExecuteSqlRawAsync(statement.Value, cancellationToken);
             }
         }
+    }
+
+    private static async Task ApplySqlServerPaymentTransactionPayFirstUpgradeAsync(
+        AppDbContext db,
+        CancellationToken cancellationToken)
+    {
+        var columns = await GetSqlServerColumnsAsync(db, "PaymentTransactions", cancellationToken);
+        if (columns.Count == 0)
+        {
+            return;
+        }
+
+        if (!columns.Contains("PendingCheckoutJson"))
+        {
+            await db.Database.ExecuteSqlRawAsync(
+                "ALTER TABLE [PaymentTransactions] ADD [PendingCheckoutJson] nvarchar(max) NULL;",
+                cancellationToken);
+        }
+
+        await db.Database.ExecuteSqlRawAsync(
+            """
+            IF EXISTS (
+                SELECT 1 FROM INFORMATION_SCHEMA.COLUMNS
+                WHERE TABLE_NAME = 'PaymentTransactions' AND COLUMN_NAME = 'OrderId' AND IS_NULLABLE = 'NO')
+            BEGIN
+                ALTER TABLE [PaymentTransactions] ALTER COLUMN [OrderId] int NULL;
+            END
+            """,
+            cancellationToken);
     }
 
     private static async Task ApplySqlServerCustomOrderFulfillmentUpgradeAsync(AppDbContext db, CancellationToken cancellationToken)

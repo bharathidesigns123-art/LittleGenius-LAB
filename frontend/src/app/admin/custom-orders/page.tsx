@@ -318,6 +318,15 @@ export default function AdminCustomOrdersPage() {
                     <p className="text-sm font-bold uppercase tracking-[0.18em] text-[var(--color-orange)]">
                       {request.referenceCode}
                     </p>
+                    <span className="text-xs font-semibold text-[var(--color-ink-soft)]">
+                      {new Date(request.createdAtUtc).toLocaleString("en-IN", {
+                        day: "2-digit",
+                        month: "short",
+                        year: "numeric",
+                        hour: "2-digit",
+                        minute: "2-digit",
+                      })}
+                    </span>
                     <span className={statusClass(request.status)}>{request.status}</span>
                     <span className="status-pill status-pill-blue">{request.refundStatus ?? "NotRequested"}</span>
                   </div>
