@@ -91,7 +91,7 @@ async function uploadBlobFile(file: File, token?: string | null): Promise<string
 
   // Return the clean blobUrl (without SAS token) so it can be stored permanently in the DB.
   // The frontend asset-url helper will append a fresh SAS token for viewing.
-  return sasResp.blobUrl || sasResp.readUrl.split("?")[0];
+  return sasResp.blobUrl || sasResp.readUrl?.split("?")[0] || uploadUrl.split("?")[0];
 }
 
 export const browserApi = {
