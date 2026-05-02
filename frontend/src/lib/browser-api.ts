@@ -89,7 +89,9 @@ async function uploadBlobFile(file: File, token?: string | null): Promise<string
     throw new Error(`Upload failed: ${uploadRes.status} ${text || uploadRes.statusText}`);
   }
 
-  return sasResp.readUrl || sasResp.blobUrl || uploadUrl;
+  // Return the clean blobUrl (without SAS token) so it can be stored permanently in the DB.
+  // The frontend asset-url helper will append a fresh SAS token for viewing.
+  return sasResp.blobUrl || sasResp.readUrl.split("?")[0];
 }
 
 export const browserApi = {
