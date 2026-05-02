@@ -3,6 +3,8 @@ import type {
   AdminCategory,
   AdminCustomOrder,
   AdminProduct,
+  AdminUserListResponse,
+  AdminUserRow,
   AuthResponse,
   DashboardMetrics,
   OrderSummary,
@@ -16,7 +18,7 @@ const API_BASE_URL =
   process.env.NEXT_PUBLIC_API_BASE_URL ?? process.env.API_BASE_URL ?? "http://localhost:5252";
 
 type RequestOptions = {
-  method?: "GET" | "POST" | "PUT" | "DELETE";
+  method?: "GET" | "POST" | "PUT" | "PATCH" | "DELETE";
   token?: string | null;
   body?: unknown;
   isFormData?: boolean;
@@ -89,7 +91,9 @@ async function uploadBlobFile(file: File, token?: string | null): Promise<string
     throw new Error(`Upload failed: ${uploadRes.status} ${text || uploadRes.statusText}`);
   }
 
-  return sasResp.readUrl || sasResp.blobUrl || uploadUrl;
+  // Return the clean blobUrl (without SAS token) so it can be stored permanently in the DB.
+  // The frontend asset-url helper will append a fresh SAS token for viewing.
+  return sasResp.blobUrl || sasResp.readUrl?.split("?")[0] || uploadUrl.split("?")[0];
 }
 
 export const browserApi = {
@@ -161,6 +165,7 @@ export const browserApi = {
       pincode: string;
       paymentMethod: string;
       notes?: string;
+      guestId?: string | null;
       items: Array<{ productId: number; quantity: number }>;
     },
   ) =>
@@ -176,14 +181,42 @@ export const browserApi = {
       body: payload,
     }),
 
-  createRazorpayOrder: (orderCode: string) =>
-    apiRequest<RazorpayOrderResponse>("/api/store/payments/razorpay/order", {
+  getGuestOrders: (guestId: string) =>
+    apiRequest<OrderSummary[]>(`/api/store/guest-orders?guestId=${encodeURIComponent(guestId)}`),
+
+  mergeGuestOrders: (token: string, guestId: string) =>
+    apiRequest<{ merged: number; message?: string }>("/api/store/orders/merge-guest", {
       method: "POST",
-      body: { orderCode },
+      token,
+      body: { guestId },
+    }),
+
+  prepareRazorpayCheckout: (
+    token: string | null,
+    payload: {
+      customerName: string;
+      email: string;
+      phone: string;
+      line1: string;
+      line2?: string;
+      city: string;
+      state: string;
+      country: string;
+      pincode: string;
+      paymentMethod: string;
+      notes?: string;
+      guestId?: string | null;
+      items: Array<{ productId: number; quantity: number }>;
+    },
+  ) =>
+    apiRequest<RazorpayOrderResponse>("/api/store/payments/razorpay/prepare", {
+      method: "POST",
+      token,
+      body: payload,
     }),
 
   verifyRazorpayPayment: (payload: {
-    orderCode: string;
+    orderCode?: string | null;
     serverOrderId: string;
     razorpayOrderId: string;
     razorpayPaymentId: string;
@@ -430,16 +463,71 @@ export const browserApi = {
       body: payload,
     }),
 
-  getAdminUsers: (token: string) =>
-    apiRequest<
-      Array<{
-        id: number;
-        fullName: string;
-        email: string;
-        phone: string;
-        role: string;
-        isActive: boolean;
-        createdAtUtc: string;
-      }>
-    >("/api/admin/users", { token }),
+  getAdminUsers: (
+    token: string,
+    params?: { q?: string; page?: number; pageSize?: number; sort?: string },
+  ) => {
+    const search = new URLSearchParams();
+    if (params?.q) search.set("q", params.q);
+    if (params?.page != null) search.set("page", String(params.page));
+    if (params?.pageSize != null) search.set("pageSize", String(params.pageSize));
+    if (params?.sort) search.set("sort", params.sort);
+    const qs = search.size ? `?${search}` : "";
+    return apiRequest<AdminUserListResponse>(`/api/admin/users${qs}`, { token });
+  },
+
+  createAdminUser: (
+    token: string,
+    payload: {
+      fullName: string;
+      email: string;
+      phone?: string;
+      password: string;
+      role?: string;
+      isActive?: boolean;
+    },
+  ) =>
+    apiRequest<AdminUserRow>("/api/admin/users", {
+      method: "POST",
+      token,
+      body: payload,
+    }),
+
+  updateAdminUser: (
+    token: string,
+    id: number,
+    payload: {
+      fullName: string;
+      email: string;
+      phone?: string;
+      role: string;
+      isActive: boolean;
+      newPassword?: string | null;
+    },
+  ) =>
+    apiRequest<AdminUserRow>(`/api/admin/users/${id}`, {
+      method: "PUT",
+      token,
+      body: payload,
+    }),
+
+  patchAdminUserStatus: (token: string, id: number, isActive: boolean) =>
+    apiRequest<AdminUserRow>(`/api/admin/users/${id}/status`, {
+      method: "PATCH",
+      token,
+      body: { isActive },
+    }),
+
+  patchAdminUserRole: (token: string, id: number, role: string) =>
+    apiRequest<AdminUserRow>(`/api/admin/users/${id}/role`, {
+      method: "PATCH",
+      token,
+      body: { role },
+    }),
+
+  deleteAdminUser: (token: string, id: number) =>
+    apiRequest<{ message: string }>(`/api/admin/users/${id}`, {
+      method: "DELETE",
+      token,
+    }),
 };

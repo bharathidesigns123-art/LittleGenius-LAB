@@ -40,6 +40,12 @@ public static class ReviewEndpoints
                 return Results.Unauthorized();
             }
 
+            var blocked = await UserLifecycleGuard.RejectIfCustomerDisabledAsync(db, userId);
+            if (blocked is not null)
+            {
+                return blocked;
+            }
+
             var productExists = await db.Products
                 .AsNoTracking()
                 .AnyAsync(product => product.Id == productId && product.IsPublished);
@@ -122,6 +128,12 @@ public static class ReviewEndpoints
             if (userId is null)
             {
                 return Results.Unauthorized();
+            }
+
+            var blocked = await UserLifecycleGuard.RejectIfCustomerDisabledAsync(db, userId);
+            if (blocked is not null)
+            {
+                return blocked;
             }
 
             if (request.Rating is < 1 or > 5)

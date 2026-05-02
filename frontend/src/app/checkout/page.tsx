@@ -2,14 +2,17 @@
 
 import Link from "next/link";
 import Script from "next/script";
-import { useMemo, useState } from "react";
+import { useRouter } from "next/navigation";
+import { useEffect, useMemo, useState } from "react";
 import { useAuth } from "@/components/providers/auth-provider";
 import { useCart } from "@/components/providers/cart-provider";
 import { StorefrontShell } from "@/components/site/storefront-shell";
 import { EmptyState } from "@/components/ui/empty-state";
 import { browserApi } from "@/lib/browser-api";
+import { getCurrentUserIdentifier } from "@/lib/user-identifier";
 
 export default function CheckoutPage() {
+  const router = useRouter();
   const { token, user } = useAuth();
   const { items, subtotal, clearCart } = useCart();
   const shippingFee = subtotal >= 499 ? 0 : 60;
@@ -32,6 +35,13 @@ export default function CheckoutPage() {
   const [error, setError] = useState("");
   const [fieldErrors, setFieldErrors] = useState<Record<string, string>>({});
   const [successOrderCode, setSuccessOrderCode] = useState("");
+
+  useEffect(() => {
+    if (!successOrderCode) {
+      return;
+    }
+    router.replace(`/orders?placed=${encodeURIComponent(successOrderCode)}`);
+  }, [successOrderCode, router]);
 
   const orderItems = useMemo(
     () => items.map((item) => ({ productId: item.productId, quantity: item.quantity })),
@@ -59,28 +69,30 @@ export default function CheckoutPage() {
     setError("");
 
     try {
-      const order = await browserApi.createOrder(token, {
-        ...form,
-        items: orderItems,
-      });
+      const id = getCurrentUserIdentifier(user);
 
       if (form.paymentMethod === "Razorpay") {
-        const payment = await browserApi.createRazorpayOrder(order.orderCode);
-        
+        const payment = await browserApi.prepareRazorpayCheckout(token, {
+          ...form,
+          guestId: id.mode === "guest" ? id.guestId : null,
+          items: orderItems,
+        });
+
         if (typeof window === "undefined") {
-            throw new Error("Payment can only be processed in a browser environment.");
+          throw new Error("Payment can only be processed in a browser environment.");
         }
 
-        if (!(window as any).Razorpay || !payment.publicKey) {
+        const Razorpay = window.Razorpay;
+        if (!Razorpay || !payment.publicKey) {
           throw new Error("Razorpay checkout is unavailable. Please try again in a moment.");
         }
 
-        const razorpay = new (window as any).Razorpay({
+        const razorpay = new Razorpay({
           key: payment.publicKey,
           amount: payment.razorpayOrder.amount,
           currency: payment.razorpayOrder.currency,
           name: "LittleGenius LAB",
-          description: `Order ${payment.orderCode}`,
+          description: `Checkout ${payment.checkoutReceipt}`,
           order_id: payment.razorpayOrder.id,
           prefill: {
             name: payment.customer.customerName,
@@ -95,25 +107,39 @@ export default function CheckoutPage() {
             razorpay_order_id: string;
             razorpay_signature: string;
           }) => {
-            await browserApi.verifyRazorpayPayment({
-              orderCode: order.orderCode,
-              serverOrderId: payment.razorpayOrder.id,
-              razorpayOrderId: response.razorpay_order_id,
-              razorpayPaymentId: response.razorpay_payment_id,
-              razorpaySignature: response.razorpay_signature,
-            });
-            clearCart();
-            setSuccessOrderCode(order.orderCode);
-            setSubmitting(false);
+            try {
+              const verified = await browserApi.verifyRazorpayPayment({
+                serverOrderId: payment.razorpayOrder.id,
+                razorpayOrderId: response.razorpay_order_id,
+                razorpayPaymentId: response.razorpay_payment_id,
+                razorpaySignature: response.razorpay_signature,
+              });
+              clearCart();
+              setSubmitting(false);
+              router.replace(`/orders?placed=${encodeURIComponent(verified.orderCode)}`);
+            } catch (verifyError) {
+              setSubmitting(false);
+              setError(
+                verifyError instanceof Error
+                  ? verifyError.message
+                  : "Payment may have succeeded but we could not confirm your order. Please check your orders or contact support.",
+              );
+            }
           },
           modal: {
             ondismiss: () => setSubmitting(false),
           },
-        });
+        } as Record<string, unknown>);
 
         razorpay.open();
         return;
       }
+
+      const order = await browserApi.createOrder(token, {
+        ...form,
+        guestId: id.mode === "guest" ? id.guestId : null,
+        items: orderItems,
+      });
 
       clearCart();
       setSuccessOrderCode(order.orderCode);
@@ -139,20 +165,9 @@ export default function CheckoutPage() {
             }
           />
         ) : successOrderCode ? (
-          <EmptyState
-            title="Order placed"
-            description={`Your order ${successOrderCode} has been created successfully. Track it from your account or through the guest tracking page.`}
-            action={
-              <div className="flex flex-col justify-center gap-3 sm:flex-row">
-                <Link href="/account" className="site-button site-button-primary">
-                  View account
-                </Link>
-                <Link href="/track-order" className="site-button site-button-secondary">
-                  Track order
-                </Link>
-              </div>
-            }
-          />
+          <div className="surface-card card-shadow mx-auto max-w-md rounded-[1.5rem] p-8 text-center">
+            <p className="text-sm font-semibold text-[var(--color-ink-soft)]">Redirecting to your orders…</p>
+          </div>
         ) : (
           <div className="grid gap-8 md:grid-cols-[1fr_360px]">
             <form id="checkout-form" onSubmit={handleSubmit} className="surface-card card-shadow rounded-[2.5rem] p-8">

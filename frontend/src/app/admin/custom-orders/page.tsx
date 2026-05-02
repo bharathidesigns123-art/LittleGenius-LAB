@@ -318,6 +318,15 @@ export default function AdminCustomOrdersPage() {
                     <p className="text-sm font-bold uppercase tracking-[0.18em] text-[var(--color-orange)]">
                       {request.referenceCode}
                     </p>
+                    <span className="text-xs font-semibold text-[var(--color-ink-soft)]">
+                      {new Date(request.createdAtUtc).toLocaleString("en-IN", {
+                        day: "2-digit",
+                        month: "short",
+                        year: "numeric",
+                        hour: "2-digit",
+                        minute: "2-digit",
+                      })}
+                    </span>
                     <span className={statusClass(request.status)}>{request.status}</span>
                     <span className="status-pill status-pill-blue">{request.refundStatus ?? "NotRequested"}</span>
                   </div>
@@ -387,7 +396,7 @@ export default function AdminCustomOrdersPage() {
                     <input
                       value={draft.packageWeightKg}
                       onChange={(event) => updateDraft(request, { packageWeightKg: event.target.value })}
-                      placeholder="Weight kg"
+                      placeholder="Weight (kg) e.g. 0.2"
                       className="rounded-[0.9rem] border border-[var(--color-border)] px-3 py-2 outline-none"
                     />
                     <input

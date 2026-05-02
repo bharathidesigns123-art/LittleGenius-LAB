@@ -223,7 +223,8 @@ export type TrackOrderResponse = {
 export type RazorpayOrderResponse = {
   publicKey: string;
   callbackUrl: string;
-  orderCode: string;
+  /** Pay-first checkout: Razorpay receipt id (order is created only after payment). */
+  checkoutReceipt: string;
   customer: {
     customerName: string;
     email: string;
@@ -241,6 +242,25 @@ export type DashboardMetrics = {
   revenue: number;
   pendingOrders: number;
   lowStockProducts: number;
+};
+
+export type AdminUserRow = {
+  id: number;
+  fullName: string;
+  email: string;
+  phone: string;
+  role: string;
+  status: string;
+  isActive: boolean;
+  createdAtUtc: string;
+  updatedAtUtc: string;
+};
+
+export type AdminUserListResponse = {
+  items: AdminUserRow[];
+  total: number;
+  page: number;
+  pageSize: number;
 };
 
 export type ProductReviewEntry = {

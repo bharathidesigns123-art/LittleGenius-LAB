@@ -9,6 +9,7 @@ import {
 } from "react";
 import type { Dispatch, ReactNode, SetStateAction } from "react";
 import { browserApi } from "@/lib/browser-api";
+import { mergeGuestOrdersAfterAuth } from "@/lib/merge-guest-orders";
 import type { AccountProfile, AuthResponse, AuthUser } from "@/lib/types";
 
 type AuthContextValue = {
@@ -98,6 +99,7 @@ async function syncSessionState({
     setProfile(result);
     setUser(result.user);
     persistStoredSession(sessionToken, result.user);
+    await mergeGuestOrdersAfterAuth(sessionToken);
     return result;
   } catch (error) {
     clearStoredSession();

@@ -4,6 +4,8 @@ public sealed class Order
 {
     public int Id { get; set; }
     public int? UserId { get; set; }
+    /// <summary>Stable browser identifier for guest checkout; cleared after merge to a user account.</summary>
+    public string? GuestId { get; set; }
     public string OrderCode { get; set; } = string.Empty;
     public string CustomerName { get; set; } = string.Empty;
     public string Email { get; set; } = string.Empty;

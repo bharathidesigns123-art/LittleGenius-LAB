@@ -1,6 +1,7 @@
 import type { Metadata } from "next";
 import { DM_Sans, Fraunces } from "next/font/google";
 import { SpeedInsights } from "@vercel/speed-insights/next";
+import { Analytics } from "@vercel/analytics/next";
 import { AppProviders } from "@/components/providers/app-providers";
 import "./globals.css";
 
@@ -15,9 +16,13 @@ const displayFont = Fraunces({
 });
 
 export const metadata: Metadata = {
+  metadataBase: new URL("https://littlegeniuslab.in"),
   title: {
     default: "LittleGenius LAB",
     template: "%s | LittleGenius LAB",
+  },
+  alternates: {
+    canonical: "/",
   },
   description:
     "Full-stack toy commerce platform for LittleGenius LAB, an India-based 3D printed toy brand.",
@@ -30,9 +35,10 @@ export default function RootLayout({
 }>) {
   return (
     <html lang="en" className={`${bodyFont.variable} ${displayFont.variable}`}>
-      <body>
+      <body suppressHydrationWarning>
         <AppProviders>{children}</AppProviders>
         <SpeedInsights />
+        <Analytics />
       </body>
     </html>
   );
