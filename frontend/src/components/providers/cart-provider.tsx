@@ -70,7 +70,7 @@ export function CartProvider({ children }: { children: React.ReactNode }) {
           current
             .map((item) =>
               item.productId === productId
-                ? { ...item, quantity: Math.max(1, quantity) }
+                ? { ...item, quantity: Math.max(0, quantity) }
                 : item,
             )
             .filter((item) => item.quantity > 0),
