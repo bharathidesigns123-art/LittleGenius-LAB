@@ -3,6 +3,7 @@
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useState } from "react";
+import { Eye, EyeOff } from "lucide-react";
 import { StorefrontShell } from "@/components/site/storefront-shell";
 import { useAuth } from "@/components/providers/auth-provider";
 
@@ -16,6 +17,7 @@ export default function SignupPage() {
     password: "",
   });
   const [error, setError] = useState("");
+  const [showPassword, setShowPassword] = useState(false);
   const [loading, setLoading] = useState(false);
 
   const handleSubmit = async (event: React.FormEvent<HTMLFormElement>) => {
@@ -63,13 +65,23 @@ export default function SignupPage() {
               className="w-full rounded-[1.4rem] border border-[var(--color-border)] px-4 py-3 outline-none"
               placeholder="Phone number"
             />
-            <input
-              type="password"
-              value={form.password}
-              onChange={(event) => setForm((current) => ({ ...current, password: event.target.value }))}
-              className="w-full rounded-[1.4rem] border border-[var(--color-border)] px-4 py-3 outline-none"
-              placeholder="Password"
-            />
+            <div className="relative">
+              <input
+                type={showPassword ? "text" : "password"}
+                value={form.password}
+                onChange={(event) => setForm((current) => ({ ...current, password: event.target.value }))}
+                className="w-full rounded-[1.4rem] border border-[var(--color-border)] px-4 py-3 pr-12 outline-none"
+                placeholder="Password"
+              />
+              <button
+                type="button"
+                onClick={() => setShowPassword(!showPassword)}
+                className="absolute right-4 top-1/2 -translate-y-1/2 text-[var(--color-ink-soft)] transition-colors hover:text-[var(--color-blue)]"
+                aria-label={showPassword ? "Hide password" : "Show password"}
+              >
+                {showPassword ? <EyeOff className="h-5 w-5" /> : <Eye className="h-5 w-5" />}
+              </button>
+            </div>
             {error ? (
               <div className="rounded-[1.4rem] bg-red-50 px-4 py-3 text-sm text-red-700">{error}</div>
             ) : null}
