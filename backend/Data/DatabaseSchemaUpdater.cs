@@ -22,6 +22,11 @@ public static class DatabaseSchemaUpdater
             await ApplySqlServerPaymentTransactionPayFirstUpgradeAsync(db, cancellationToken);
             await ApplySqlServerUsersManagementUpgradeAsync(db, cancellationToken);
         }
+
+        if (db.Database.IsSqlite())
+        {
+            await ApplySqlitePaymentTransactionUpgradeAsync(db, cancellationToken);
+        }
     }
 
     private static async Task EnsureSqlServerNotificationLogsTableAsync(AppDbContext db, CancellationToken cancellationToken)
@@ -161,6 +166,154 @@ public static class DatabaseSchemaUpdater
         }
     }
 
+    private sealed record SqliteColumnDetail(int Cid, string Name, string DeclaredType, int NotNull, int Pk);
+
+    private static async Task ApplySqlitePaymentTransactionUpgradeAsync(
+        AppDbContext db,
+        CancellationToken cancellationToken)
+    {
+        var columns = await GetSqliteColumnsAsync(db, "PaymentTransactions", cancellationToken);
+        if (columns.Count == 0)
+        {
+            return;
+        }
+
+        if (!columns.Contains("PendingCheckoutJson"))
+        {
+            await db.Database.ExecuteSqlRawAsync(
+                "ALTER TABLE PaymentTransactions ADD COLUMN PendingCheckoutJson TEXT NULL;",
+                cancellationToken);
+        }
+
+        await EnsureSqlitePaymentTransactionsNullableOrderIdAsync(db, cancellationToken);
+    }
+
+    /// <summary>
+    /// SQLite cannot widen columns with ALTER COLUMN; older dev DBs may still have NOT NULL OrderId.
+    /// Razorpay pay-first inserts rows before an order exists (OrderId null).
+    /// </summary>
+    private static async Task EnsureSqlitePaymentTransactionsNullableOrderIdAsync(
+        AppDbContext db,
+        CancellationToken cancellationToken)
+    {
+        var infos = await GetSqlitePragmaTableInfoAsync(db, "PaymentTransactions", cancellationToken);
+        var orderId = infos.FirstOrDefault(column =>
+            column.Name.Equals("OrderId", StringComparison.OrdinalIgnoreCase));
+        if (orderId is null || orderId.NotNull == 0)
+        {
+            return;
+        }
+
+        var quotedCols = infos
+            .OrderBy(column => column.Cid)
+            .Select(column => $"\"{column.Name.Replace("\"", "\"\"", StringComparison.Ordinal)}\"")
+            .ToArray();
+
+        var columnDefinitions = infos
+            .OrderBy(column => column.Cid)
+            .Select(BuildSqlitePaymentTransactionColumnDefinition)
+            .ToArray();
+
+        const string tempName = "PaymentTransactions__lg_null_order";
+
+        var createSql =
+            $"""
+            CREATE TABLE "{tempName}" (
+                {string.Join("," + Environment.NewLine + "    ", columnDefinitions)}
+            )
+            """;
+
+        var insertSql =
+            $"""
+            INSERT INTO "{tempName}" ({string.Join(", ", quotedCols)})
+            SELECT {string.Join(", ", quotedCols)} FROM "PaymentTransactions"
+            """;
+
+        await db.Database.ExecuteSqlRawAsync("PRAGMA foreign_keys = OFF;", cancellationToken);
+        try
+        {
+            await db.Database.ExecuteSqlRawAsync("BEGIN TRANSACTION;", cancellationToken);
+            try
+            {
+                await db.Database.ExecuteSqlRawAsync(createSql, cancellationToken);
+                await db.Database.ExecuteSqlRawAsync(insertSql, cancellationToken);
+                await db.Database.ExecuteSqlRawAsync(
+                    """DROP TABLE "PaymentTransactions";""",
+                    cancellationToken);
+                await db.Database.ExecuteSqlRawAsync(
+                    $"""ALTER TABLE "{tempName}" RENAME TO "PaymentTransactions";""",
+                    cancellationToken);
+                await db.Database.ExecuteSqlRawAsync("COMMIT;", cancellationToken);
+            }
+            catch
+            {
+                await db.Database.ExecuteSqlRawAsync("ROLLBACK;", cancellationToken);
+                throw;
+            }
+        }
+        finally
+        {
+            await db.Database.ExecuteSqlRawAsync("PRAGMA foreign_keys = ON;", cancellationToken);
+        }
+    }
+
+    private static string BuildSqlitePaymentTransactionColumnDefinition(SqliteColumnDetail column)
+    {
+        if (column.Name.Equals("OrderId", StringComparison.OrdinalIgnoreCase))
+        {
+            return "\"OrderId\" INTEGER NULL";
+        }
+
+        var type = string.IsNullOrWhiteSpace(column.DeclaredType)
+            ? "TEXT"
+            : column.DeclaredType;
+
+        if (column.Name.Equals("Id", StringComparison.OrdinalIgnoreCase) && column.Pk == 1)
+        {
+            return "\"Id\" INTEGER NOT NULL PRIMARY KEY AUTOINCREMENT";
+        }
+
+        var notNull = column.NotNull == 1 ? " NOT NULL" : "";
+        return $"\"{column.Name.Replace("\"", "\"\"", StringComparison.Ordinal)}\" {type}{notNull}";
+    }
+
+    private static async Task<List<SqliteColumnDetail>> GetSqlitePragmaTableInfoAsync(
+        AppDbContext db,
+        string tableName,
+        CancellationToken cancellationToken)
+    {
+        if (string.IsNullOrEmpty(tableName) ||
+            !tableName.All(static ch => char.IsAsciiLetterOrDigit(ch) || ch == '_'))
+        {
+            throw new ArgumentException("Invalid table name.", nameof(tableName));
+        }
+
+        var rows = new List<SqliteColumnDetail>();
+        var connection = db.Database.GetDbConnection();
+
+        if (connection.State != ConnectionState.Open)
+        {
+            await connection.OpenAsync(cancellationToken);
+        }
+
+        await using var command = connection.CreateCommand();
+        command.CommandText =
+            $"SELECT cid, name, type, \"notnull\", pk FROM pragma_table_info('{tableName}') ORDER BY cid";
+
+        await using var reader = await command.ExecuteReaderAsync(cancellationToken);
+        while (await reader.ReadAsync(cancellationToken))
+        {
+            rows.Add(new SqliteColumnDetail(
+                reader.GetInt32(0),
+                reader.GetString(1),
+                reader.IsDBNull(2) ? "" : reader.GetString(2),
+                reader.GetInt32(3),
+                reader.GetInt32(4)));
+        }
+
+        return rows;
+    }
+
     private static async Task ApplySqlServerPaymentTransactionPayFirstUpgradeAsync(
         AppDbContext db,
         CancellationToken cancellationToken)
@@ -247,6 +400,37 @@ public static class DatabaseSchemaUpdater
                 await db.Database.ExecuteSqlRawAsync(statement.Value, cancellationToken);
             }
         }
+    }
+
+    private static async Task<HashSet<string>> GetSqliteColumnsAsync(
+        AppDbContext db,
+        string tableName,
+        CancellationToken cancellationToken)
+    {
+        if (string.IsNullOrEmpty(tableName) ||
+            !tableName.All(static ch => char.IsAsciiLetterOrDigit(ch) || ch == '_'))
+        {
+            throw new ArgumentException("Invalid table name.", nameof(tableName));
+        }
+
+        var columns = new HashSet<string>(StringComparer.OrdinalIgnoreCase);
+        var connection = db.Database.GetDbConnection();
+
+        if (connection.State != ConnectionState.Open)
+        {
+            await connection.OpenAsync(cancellationToken);
+        }
+
+        await using var command = connection.CreateCommand();
+        command.CommandText = $"SELECT name FROM pragma_table_info('{tableName}')";
+
+        await using var reader = await command.ExecuteReaderAsync(cancellationToken);
+        while (await reader.ReadAsync(cancellationToken))
+        {
+            columns.Add(reader.GetString(0));
+        }
+
+        return columns;
     }
 
     private static async Task<HashSet<string>> GetSqlServerColumnsAsync(
