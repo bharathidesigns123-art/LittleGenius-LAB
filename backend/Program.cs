@@ -67,44 +67,50 @@ builder.Services.AddCors(options =>
 {
     options.AddPolicy("frontend", policy =>
     {
-        var frontendUrl = builder.Configuration["FRONTEND_URL"];
-        var origins = new List<string>
-        {
-            "http://localhost:3000",
-            "http://127.0.0.1:3000",
-            "https://localhost:3000",
-            "https://little-genius-lab.vercel.app",
-            "https://littlegeniuslab.in",
-            "https://www.littlegeniuslab.in"
-        };
+        var frontendUrl = builder.Configuration["FRONTEND_URL"]?.Trim().TrimEnd('/');
 
-        if (!string.IsNullOrWhiteSpace(frontendUrl))
-        {
-            origins.Add(frontendUrl);
-        }
-
+        // Use SetIsOriginAllowed only — combining WithOrigins + SetIsOriginAllowed can reject valid origins in some hosts.
         policy
-            .WithOrigins(origins.ToArray())
-            .SetIsOriginAllowed(origin => 
+            .SetIsOriginAllowed(origin =>
             {
-                if (string.IsNullOrWhiteSpace(origin)) return false;
-                
-                // Normalise origin by removing trailing slash for comparison
+                if (string.IsNullOrWhiteSpace(origin))
+                {
+                    return false;
+                }
+
                 var normalizedOrigin = origin.TrimEnd('/');
 
-                // Allow localhost
-                if (normalizedOrigin.Contains("localhost") || normalizedOrigin.Contains("127.0.0.1")) return true;
-                
-                // Allow production domain
-                if (normalizedOrigin.Equals("https://little-genius-lab.vercel.app", StringComparison.OrdinalIgnoreCase)) return true;
-                if (normalizedOrigin.Equals("https://littlegeniuslab.in", StringComparison.OrdinalIgnoreCase)) return true;
-                if (normalizedOrigin.Equals("https://www.littlegeniuslab.in", StringComparison.OrdinalIgnoreCase)) return true;
-                
-                // Allow Vercel preview URLs
-                if (normalizedOrigin.EndsWith(".vercel.app", StringComparison.OrdinalIgnoreCase)) return true;
+                if (normalizedOrigin.Contains("localhost", StringComparison.OrdinalIgnoreCase) ||
+                    normalizedOrigin.Contains("127.0.0.1", StringComparison.OrdinalIgnoreCase))
+                {
+                    return true;
+                }
 
-                // Allow configured URL
-                if (!string.IsNullOrWhiteSpace(frontendUrl) && normalizedOrigin.Equals(frontendUrl.TrimEnd('/'), StringComparison.OrdinalIgnoreCase)) return true;
+                if (normalizedOrigin.Equals("https://little-genius-lab.vercel.app", StringComparison.OrdinalIgnoreCase))
+                {
+                    return true;
+                }
+
+                if (normalizedOrigin.Equals("https://littlegeniuslab.in", StringComparison.OrdinalIgnoreCase))
+                {
+                    return true;
+                }
+
+                if (normalizedOrigin.Equals("https://www.littlegeniuslab.in", StringComparison.OrdinalIgnoreCase))
+                {
+                    return true;
+                }
+
+                if (normalizedOrigin.EndsWith(".vercel.app", StringComparison.OrdinalIgnoreCase))
+                {
+                    return true;
+                }
+
+                if (!string.IsNullOrEmpty(frontendUrl) &&
+                    normalizedOrigin.Equals(frontendUrl, StringComparison.OrdinalIgnoreCase))
+                {
+                    return true;
+                }
 
                 return false;
             })
@@ -205,6 +211,7 @@ using (var scope = app.Services.CreateScope())
 app.UseSwagger();
 app.UseSwaggerUI();
 
+app.UseRouting();
 app.UseCors("frontend");
 app.UseAuthentication();
 app.UseAuthorization();
