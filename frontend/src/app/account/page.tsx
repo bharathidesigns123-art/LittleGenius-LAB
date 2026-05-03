@@ -1,6 +1,7 @@
 "use client";
 
 import Link from "next/link";
+import { useRouter } from "next/navigation";
 import { useEffect, useState } from "react";
 import { useAuth } from "@/components/providers/auth-provider";
 import { StorefrontShell } from "@/components/site/storefront-shell";
@@ -42,7 +43,8 @@ function OrderProgress({ status, orderType }: { status: string; orderType?: stri
 }
 
 export default function AccountPage() {
-  const { token, user, isAuthenticated, loading, refreshProfile } = useAuth();
+  const { token, user, isAuthenticated, loading, refreshProfile, logout } = useAuth();
+  const router = useRouter();
   const [orders, setOrders] = useState<OrderSummary[]>([]);
   const [form, setForm] = useState({
     fullName: user?.fullName ?? "",
@@ -98,6 +100,11 @@ export default function AccountPage() {
     } finally {
       setSaving(false);
     }
+  };
+
+  const handleLogout = () => {
+    logout();
+    router.push("/");
   };
 
   const cancelOrder = async (order: OrderSummary) => {
@@ -160,6 +167,13 @@ export default function AccountPage() {
                 {message ? <p className="text-sm font-semibold text-[var(--color-orange)]">{message}</p> : null}
                 <button disabled={saving} className="site-button site-button-primary w-full">
                   {saving ? "Saving..." : "Save profile"}
+                </button>
+                <button
+                  type="button"
+                  onClick={handleLogout}
+                  className="site-button site-button-secondary mt-2 w-full"
+                >
+                  Logout
                 </button>
               </form>
             </div>
