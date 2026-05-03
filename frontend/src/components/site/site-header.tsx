@@ -43,17 +43,36 @@ export function SiteHeader() {
             </Link>
           </div>
 
-          <nav className="hidden flex-wrap items-center gap-3 text-sm font-semibold text-ink-soft md:flex">
-            {navItems.map((item) => (
+          <nav className="hidden flex-wrap items-center gap-1 text-sm font-semibold md:flex">
+            {navItems.map((item) => {
+              const isActive =
+                item.href === "/" ? pathname === "/" : pathname.startsWith(item.href);
+              return (
+                <Link
+                  key={item.href}
+                  href={item.href}
+                  className={`rounded-full px-4 py-2 transition-all ${
+                    isActive
+                      ? "bg-primary text-white shadow-sm"
+                      : "text-ink-soft hover:bg-border/30 hover:text-primary"
+                  }`}
+                >
+                  {item.label}
+                </Link>
+              );
+            })}
+            {isClient && !loading && isAdmin ? (
               <Link
-                key={item.href}
-                href={item.href}
-                className={pathname === item.href ? "text-primary" : "text-ink-soft"}
+                href="/admin"
+                className={`rounded-full px-4 py-2 transition-all ${
+                  pathname.startsWith("/admin")
+                    ? "bg-primary text-white shadow-sm"
+                    : "text-ink-soft hover:bg-border/30 hover:text-primary"
+                }`}
               >
-                {item.label}
+                Admin
               </Link>
-            ))}
-            {isClient && !loading && isAdmin ? <Link href="/admin">Admin</Link> : null}
+            ) : null}
           </nav>
 
           <div className="hidden flex-wrap items-center gap-3 md:flex">
