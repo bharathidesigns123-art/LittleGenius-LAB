@@ -3,6 +3,7 @@
 import Image from "next/image";
 import Link from "next/link";
 import { AddToCartButton } from "@/components/store/add-to-cart-button";
+import { BuyNowButton } from "@/components/store/buy-now-button";
 import { resolveAssetUrl } from "@/lib/asset-url";
 import type { ProductSummary } from "@/lib/types";
 
@@ -82,13 +83,17 @@ export function ProductCard({ product }: { product: ProductSummary }) {
             disabled={product.stockQuantity <= 0}
           />
         </div>
-        <Link
-          href={`/products/${product.slug}`}
+        <BuyNowButton
+          product={{
+            id: product.id,
+            slug: product.slug,
+            name: product.name,
+            heroImageUrl: product.heroImageUrl,
+            priceInr: product.priceInr,
+          }}
           className="site-button site-button-secondary mt-3 w-full"
-          aria-label={`Buy now ${product.name}`}
-        >
-          Buy Now
-        </Link>
+          disabled={product.stockQuantity <= 0}
+        />
       </div>
     </div>
   );

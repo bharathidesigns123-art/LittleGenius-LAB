@@ -1,7 +1,7 @@
 "use client";
 
-import { useState } from "react";
 import { useCart } from "@/components/providers/cart-provider";
+import { QuantityStepper } from "@/components/store/quantity-stepper";
 
 export function AddToCartButton({
   product,
@@ -18,8 +18,12 @@ export function AddToCartButton({
   className?: string;
   disabled?: boolean;
 }) {
-  const { addItem } = useCart();
-  const [added, setAdded] = useState(false);
+  const { items, addItem } = useCart();
+  const isInCart = items.some((item) => item.productId === product.id);
+
+  if (isInCart) {
+    return <QuantityStepper productId={product.id} className={className} disabled={disabled} />;
+  }
 
   return (
     <button
@@ -35,12 +39,10 @@ export function AddToCartButton({
           imageUrl: product.heroImageUrl,
           priceInr: product.priceInr,
         });
-        setAdded(true);
-        window.setTimeout(() => setAdded(false), 1400);
       }}
       className={`${className ?? "site-button site-button-primary"} ${disabled ? "cursor-not-allowed opacity-60" : ""}`}
     >
-      {disabled ? "Out of Stock" : added ? "Added to cart" : `Add to Cart - Rs. ${product.priceInr}`}
+      {disabled ? "Out of Stock" : `Add to Cart - Rs. ${product.priceInr}`}
     </button>
   );
 }
