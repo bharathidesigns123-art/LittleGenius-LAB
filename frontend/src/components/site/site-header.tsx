@@ -2,7 +2,7 @@
 
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { useSyncExternalStore, useState } from "react";
+import { useSyncExternalStore } from "react";
 import { useAuth } from "@/components/providers/auth-provider";
 import { useCart } from "@/components/providers/cart-provider";
 
@@ -21,7 +21,6 @@ export function SiteHeader() {
   const pathname = usePathname();
   const { itemCount } = useCart();
   const { user, isAdmin, logout, loading } = useAuth();
-  const [showCategories, setShowCategories] = useState(false);
 
   return (
     <>
@@ -45,13 +44,6 @@ export function SiteHeader() {
           </div>
 
           <nav className="hidden flex-wrap items-center gap-3 text-sm font-semibold text-ink-soft md:flex">
-            <button
-              onClick={() => setShowCategories((current) => !current)}
-              className="rounded-full border border-border bg-white px-4 py-2 text-sm font-bold text-primary"
-              type="button"
-            >
-              Categories
-            </button>
             {navItems.map((item) => (
               <Link
                 key={item.href}
@@ -106,16 +98,6 @@ export function SiteHeader() {
             )}
           </div>
         </div>
-        {showCategories ? (
-          <div className="page-shell pb-4">
-            <div className="grid gap-3 rounded-3xl border border-[var(--color-border)] bg-white p-4 text-sm font-semibold text-[var(--color-blue)] sm:grid-cols-2 md:grid-cols-4">
-              <Link href="/shop/animals">Animals</Link>
-              <Link href="/shop/superheroes">Superheroes</Link>
-              <Link href="/shop/vehicles">Vehicles</Link>
-              <Link href="/custom-order">Custom Toys</Link>
-            </div>
-          </div>
-        ) : null}
       </header>
 
       <nav className="fixed inset-x-3 bottom-3 z-40 rounded-2xl border border-[var(--color-border)] bg-white/95 p-2 shadow-lg backdrop-blur md:hidden">
