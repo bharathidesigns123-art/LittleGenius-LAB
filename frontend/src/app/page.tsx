@@ -6,6 +6,8 @@ import { SectionHeading } from "@/components/ui/section-heading";
 import { getHomeData } from "@/lib/api";
 import { resolveAssetUrl } from "@/lib/asset-url";
 
+export const dynamic = "force-dynamic";
+
 export default async function HomePage() {
   const data = await getHomeData();
 

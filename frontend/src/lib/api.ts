@@ -6,16 +6,33 @@ import type {
   ProductSummary,
 } from "@/lib/types";
 
-const API_BASE_URL =
-  process.env.API_BASE_URL ?? process.env.NEXT_PUBLIC_API_BASE_URL ?? "http://localhost:5252";
+/** Same resolution order as the browser client; required for Server Components on Vercel. */
+function resolveApiBaseUrl(): string {
+  const raw =
+    process.env.NEXT_PUBLIC_API_BASE_URL?.trim() ||
+    process.env.API_BASE_URL?.trim() ||
+    "";
+  if (raw) {
+    return raw.replace(/\/$/, "");
+  }
+
+  if (process.env.NODE_ENV !== "production") {
+    return "http://localhost:5252";
+  }
+
+  throw new Error(
+    "Missing NEXT_PUBLIC_API_BASE_URL (or API_BASE_URL). Server Components cannot reach the backend on Vercel without it.",
+  );
+}
 
 async function fetchStoreJson<T>(path: string): Promise<T> {
-  const response = await fetch(`${API_BASE_URL}${path}`, {
+  const base = resolveApiBaseUrl();
+  const response = await fetch(`${base}${path}`, {
     cache: "no-store",
   });
 
   if (!response.ok) {
-    throw new Error(`Request failed: ${path}`);
+    throw new Error(`Store API error ${response.status}: ${path}`);
   }
 
   return (await response.json()) as T;
@@ -35,7 +52,8 @@ export async function getProducts(category?: string): Promise<ProductSummary[]> 
 }
 
 export async function getProductDetail(slug: string): Promise<ProductDetail | null> {
-  const response = await fetch(`${API_BASE_URL}/api/store/products/${slug}`, {
+  const base = resolveApiBaseUrl();
+  const response = await fetch(`${base}/api/store/products/${slug}`, {
     cache: "no-store",
   });
 
@@ -51,7 +69,8 @@ export async function getProductDetail(slug: string): Promise<ProductDetail | nu
 }
 
 export async function getProductReviews(slug: string): Promise<ProductReviewSummary | null> {
-  const response = await fetch(`${API_BASE_URL}/api/store/products/${slug}/reviews`, {
+  const base = resolveApiBaseUrl();
+  const response = await fetch(`${base}/api/store/products/${slug}/reviews`, {
     cache: "no-store",
   });
 

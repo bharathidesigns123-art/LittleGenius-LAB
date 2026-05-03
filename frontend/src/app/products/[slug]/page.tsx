@@ -8,6 +8,8 @@ import { EmptyState } from "@/components/ui/empty-state";
 import { getProductDetail, getProductReviews } from "@/lib/api";
 import { resolveAssetUrl } from "@/lib/asset-url";
 
+export const dynamic = "force-dynamic";
+
 type ProductPageProps = {
   params: Promise<{ slug: string }>;
 };

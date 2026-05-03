@@ -3,6 +3,8 @@ import { StorefrontShell } from "@/components/site/storefront-shell";
 import { SectionHeading } from "@/components/ui/section-heading";
 import { getProducts } from "@/lib/api";
 
+export const dynamic = "force-dynamic";
+
 export default async function ShopPage() {
   const products = await getProducts();
 
