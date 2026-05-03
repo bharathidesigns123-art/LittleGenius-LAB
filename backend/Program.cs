@@ -114,16 +114,28 @@ builder.Services.AddCors(options =>
     });
 });
 
-var sqlServerConnection = builder.Configuration.GetConnectionString("SqlServer");
-
-builder.Services.AddDbContext<AppDbContext>(options =>
+if (builder.Environment.IsDevelopment())
 {
+    var sqliteConnection = builder.Configuration.GetConnectionString("Sqlite");
+    if (string.IsNullOrWhiteSpace(sqliteConnection))
+    {
+        throw new InvalidOperationException(
+            "Connection string 'Sqlite' not found. Set it in appsettings.Development.json (local file DB).");
+    }
+
+    builder.Services.AddDbContext<AppDbContext>(options => options.UseSqlite(sqliteConnection));
+}
+else
+{
+    var sqlServerConnection = builder.Configuration.GetConnectionString("SqlServer");
     if (string.IsNullOrWhiteSpace(sqlServerConnection))
     {
-        throw new InvalidOperationException("Connection string 'SqlServer' not found.");
+        throw new InvalidOperationException(
+            "Connection string 'SqlServer' not found. Configure Azure SQL in appsettings.Production.json or environment variables.");
     }
-    options.UseSqlServer(sqlServerConnection);
-});
+
+    builder.Services.AddDbContext<AppDbContext>(options => options.UseSqlServer(sqlServerConnection));
+}
 
 var jwtOptions = builder.Configuration
     .GetSection(JwtOptions.SectionName)
@@ -169,15 +181,23 @@ var app = builder.Build();
 using (var scope = app.Services.CreateScope())
 {
     var db = scope.ServiceProvider.GetRequiredService<AppDbContext>();
-    // Use Migrate() for production-ready schema management instead of EnsureCreated()
     if (db.Database.IsRelational())
     {
-        await db.Database.MigrateAsync();
+        // Local SQLite: file DB uses the current model (no shared migration history with Azure SQL).
+        if (app.Environment.IsDevelopment() && db.Database.IsSqlite())
+        {
+            await db.Database.EnsureCreatedAsync();
+        }
+        else
+        {
+            await db.Database.MigrateAsync();
+        }
     }
     else
     {
         db.Database.EnsureCreated();
     }
+
     await DatabaseSchemaUpdater.ApplyAsync(db);
     await SeedData.InitializeAsync(db);
 }

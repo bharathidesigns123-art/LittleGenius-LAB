@@ -4,6 +4,7 @@ on:
   push:
     branches:
       - main
+      - development
   workflow_dispatch:
 
 jobs:
@@ -39,6 +40,7 @@ jobs:
   deploy:
     runs-on: windows-latest
     needs: build
+    if: github.ref == 'refs/heads/main' && (github.event_name == 'push' || github.event_name == 'workflow_dispatch')
     permissions:
       id-token: write
       contents: read
