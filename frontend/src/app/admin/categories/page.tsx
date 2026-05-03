@@ -2,6 +2,19 @@
 
 import Image from "next/image";
 import { ChangeEvent, FormEvent, useEffect, useRef, useState } from "react";
+import { 
+  Tags, 
+  Plus, 
+  Trash2, 
+  Edit3, 
+  Image as ImageIcon, 
+  UploadCloud, 
+  Save, 
+  X, 
+  CheckCircle2,
+  ChevronRight,
+  Globe
+} from "lucide-react";
 import { AdminShell } from "@/components/admin/admin-shell";
 import { useAuth } from "@/components/providers/auth-provider";
 import { resolveAssetUrl } from "@/lib/asset-url";
@@ -79,76 +92,38 @@ export default function AdminCategoriesPage() {
   };
 
   const loadCategories = async () => {
-    if (!token) {
-      return;
-    }
-
+    if (!token) return;
     try {
       const result = await browserApi.getAdminCategories(token);
       setCategories(result);
-      setError("");
-    } catch (loadError) {
-      setError(getErrorMessage(loadError));
+    } catch (err) {
+      setError(getErrorMessage(err));
     }
   };
 
   useEffect(() => {
-    if (!token) {
-      return;
-    }
-
-    let isActive = true;
-    const hydrate = async () => {
-      try {
-        const result = await browserApi.getAdminCategories(token);
-        if (isActive) {
-          setCategories(result);
-          setError("");
-        }
-      } catch (loadError) {
-        if (isActive) {
-          setError(getErrorMessage(loadError));
-        }
-      }
-    };
-    void hydrate();
-
-    return () => {
-      isActive = false;
-    };
+    if (token) loadCategories();
   }, [token]);
 
   const handleCategoryImageSelection = (event: ChangeEvent<HTMLInputElement>) => {
     const file = event.target.files?.[0] ?? null;
-    event.target.value = "";
+    if (!file) return;
 
-    if (!file) {
-      return;
-    }
-
-    if (!isSupportedImage(file)) {
-      setError("Only JPG, PNG, and WEBP images are supported.");
-      return;
-    }
-
-    if (file.size > maximumImageBytes) {
-      setError("Category image must be 8 MB or smaller.");
+    if (!isSupportedImage(file) || file.size > maximumImageBytes) {
+      setError("Invalid image file.");
       return;
     }
 
     setCategoryImageFile(file);
     setError("");
-    setSuccessMessage("Category image selected.");
   };
 
   const saveCategory = async (event: FormEvent<HTMLFormElement>) => {
     event.preventDefault();
-    if (!token) {
-      return;
-    }
+    if (!token) return;
 
     if (!form.id && !pendingImage) {
-      setError("Upload a category image before creating the category.");
+      setError("Please upload an image.");
       return;
     }
 
@@ -166,191 +141,206 @@ export default function AdminCategoriesPage() {
         imageUrl,
         sortOrder: Number(form.sortOrder),
       });
-      const wasEditing = Boolean(form.id);
       resetForm();
       await loadCategories();
-      setSuccessMessage(wasEditing ? "Category updated." : "Category created.");
-    } catch (saveError) {
-      setError(getErrorMessage(saveError));
+      setSuccessMessage("Category committed.");
+    } catch (err) {
+      setError(getErrorMessage(err));
     } finally {
       setIsSaving(false);
     }
   };
 
   return (
-    <AdminShell title="Category management">
-      <div className="grid gap-6 lg:grid-cols-[380px_1fr]">
-        <form onSubmit={saveCategory} className="surface-card rounded-[2rem] p-6">
-          <h2 className="text-xl font-semibold text-[var(--color-blue)]">
-            {form.id ? "Edit category" : "Add category"}
-          </h2>
-
-          {error ? (
-            <div className="mt-4 rounded-[1.4rem] bg-red-50 px-4 py-3 text-sm text-red-700">{error}</div>
-          ) : null}
-          {successMessage ? (
-            <div className="mt-4 rounded-[1.4rem] bg-emerald-50 px-4 py-3 text-sm text-emerald-700">
-              {successMessage}
-            </div>
-          ) : null}
-
-          <div className="mt-5 space-y-3">
-            {[
-              ["name", "Name"],
-              ["slug", "Slug"],
-              ["priceRange", "Price range"],
-              ["themeColor", "Theme color"],
-            ].map(([key, label]) => (
-              <input
-                key={key}
-                value={String(form[key as keyof typeof form] ?? "")}
-                onChange={(event) =>
-                  setForm((current) => ({ ...current, [key]: event.target.value }))
-                }
-                placeholder={label}
-                className="w-full rounded-[1.4rem] border border-[var(--color-border)] px-4 py-3 outline-none"
-              />
-            ))}
-            <textarea
-              value={form.description}
-              onChange={(event) => setForm((current) => ({ ...current, description: event.target.value }))}
-              placeholder="Description"
-              className="min-h-28 w-full rounded-[1.4rem] border border-[var(--color-border)] px-4 py-3 outline-none"
-            />
-
-            <div className="rounded-[1.8rem] border border-[var(--color-border)] bg-[var(--color-surface)] p-4">
-              <div className="flex items-start justify-between gap-3">
-                <div>
-                  <h3 className="text-lg font-semibold text-[var(--color-blue)]">Category image</h3>
-                  <p className="mt-1 text-sm leading-7 text-[var(--color-ink-soft)]">
-                    Upload a JPG, PNG, or WEBP image through Blob Storage.
-                  </p>
-                </div>
-                <label className="site-button site-button-secondary cursor-pointer text-center">
-                  Choose image
-                  <input
-                    type="file"
-                    accept="image/jpeg,image/png,image/webp"
-                    onChange={handleCategoryImageSelection}
-                    className="hidden"
-                  />
-                </label>
+    <AdminShell title="Category Hierarchy">
+      <div className="flex flex-col gap-8 lg:flex-row">
+        {/* Sidebar Form */}
+        <div className="w-full lg:w-[420px] lg:flex-shrink-0">
+           <form onSubmit={saveCategory} className="surface-card card-shadow sticky top-8 rounded-[2.5rem] p-8 border border-slate-100">
+              <div className="flex items-center justify-between mb-8 text-left w-full">
+                 <div className="flex h-12 w-12 items-center justify-center rounded-2xl bg-[var(--color-blue)]/10 text-[var(--color-blue)]">
+                    {form.id ? <Edit3 size={24} /> : <Plus size={24} />}
+                 </div>
+                 <div className="text-right">
+                    <h2 className="text-xl font-black text-[var(--color-blue)] uppercase tracking-tight">
+                       {form.id ? "Modify Category" : "Add Category"}
+                    </h2>
+                    <p className="text-[10px] font-bold uppercase tracking-[0.2em] text-slate-400 mt-1">Store Architecture</p>
+                 </div>
               </div>
 
-              {pendingImage || form.imageUrl ? (
-                <div className="mt-4 max-w-xs rounded-[1.4rem] border border-[var(--color-border)] bg-white p-3">
-                  <Image
-                    src={pendingImage?.previewUrl ?? resolveAssetUrl(form.imageUrl)}
-                    alt={`${form.name || "Category"} image preview`}
-                    width={320}
-                    height={220}
-                    unoptimized
-                    className="h-36 w-full rounded-[1rem] object-cover"
-                  />
-                  <p className="mt-2 text-xs font-semibold uppercase tracking-[0.14em] text-[var(--color-blue)]">
-                    {pendingImage ? "Ready to upload" : "Current image"}
-                  </p>
+              {error && (
+                <div className="mb-6 flex items-center gap-2 rounded-xl bg-red-50 px-4 py-3 text-xs font-bold text-red-700 border border-red-100">
+                  <X size={14} /> {error}
                 </div>
-              ) : null}
-            </div>
+              )}
+              {successMessage && (
+                <div className="mb-6 flex items-center gap-2 rounded-xl bg-emerald-50 px-4 py-3 text-xs font-bold text-emerald-700 border border-emerald-100">
+                  <CheckCircle2 size={14} /> {successMessage}
+                </div>
+              )}
 
-            <input
-              type="number"
-              value={form.sortOrder}
-              onChange={(event) =>
-                setForm((current) => ({ ...current, sortOrder: Number(event.target.value) }))
-              }
-              placeholder="Sort order"
-              className="w-full rounded-[1.4rem] border border-[var(--color-border)] px-4 py-3 outline-none"
-            />
-            <button disabled={isSaving} className="site-button site-button-primary w-full disabled:opacity-60">
-              {isSaving ? "Saving..." : form.id ? "Update category" : "Create category"}
-            </button>
-            {form.id ? (
-              <button
-                type="button"
-                onClick={resetForm}
-                disabled={isSaving}
-                className="site-button site-button-secondary w-full disabled:opacity-60"
-              >
-                Cancel edit
-              </button>
-            ) : null}
-          </div>
-        </form>
-
-        <div className="space-y-4">
-          {categories.map((category) => (
-            <div key={category.id} className="surface-card rounded-[2rem] p-5">
-              <div className="flex flex-col gap-3 md:flex-row md:items-center md:justify-between">
-                <div className="flex gap-4">
-                  {category.imageUrl ? (
-                    <div className="hidden h-20 w-20 overflow-hidden rounded-[1.2rem] bg-[var(--color-surface)] sm:block">
-                      <Image
-                        src={resolveAssetUrl(category.imageUrl)}
-                        alt={category.name}
-                        width={160}
-                        height={160}
-                        unoptimized
-                        className="h-full w-full object-cover"
-                      />
+              <div className="space-y-4">
+                 {[
+                    ["name", "Display Name", "e.g. Action Figures"],
+                    ["slug", "URL Slug", "action-figures"],
+                    ["priceRange", "Price Label", "Starts at Rs. 499"],
+                 ].map(([key, label, placeholder]) => (
+                    <div key={key} className="space-y-1.5 text-left">
+                       <label className="text-[10px] font-black uppercase tracking-wider text-slate-400 ml-1">{label}</label>
+                       <input
+                         value={String(form[key as keyof typeof form] ?? "")}
+                         onChange={(e) => setForm(c => ({ ...c, [key]: e.target.value }))}
+                         placeholder={placeholder}
+                         className="w-full rounded-xl border border-slate-200 bg-white px-4 py-3 text-sm font-bold text-[var(--color-blue)] outline-none focus:ring-2 focus:ring-[var(--color-blue)]/10"
+                       />
                     </div>
-                  ) : null}
-                  <div>
-                    <h3 className="text-xl font-semibold text-[var(--color-blue)]">{category.name}</h3>
-                    <p className="mt-2 text-sm text-[var(--color-ink-soft)]">{category.description}</p>
-                  </div>
-                </div>
-                <div className="flex gap-3">
-                  <button
-                    onClick={() => {
-                      setForm({
-                        id: category.id,
-                        name: category.name,
-                        slug: category.slug,
-                        description: category.description,
-                        priceRange: category.priceRange,
-                        themeColor: category.themeColor,
-                        imageUrl: category.imageUrl,
-                        sortOrder: category.sortOrder ?? 1,
-                        isActive: category.isActive ?? true,
-                      });
-                      setCategoryImageFile(null);
-                      setError("");
-                      setSuccessMessage("");
-                    }}
-                    className="site-button site-button-secondary"
-                  >
-                    Edit
-                  </button>
-                  <button
-                    onClick={async () => {
-                      if (!token) {
-                        return;
-                      }
+                 ))}
 
-                      setError("");
-                      setSuccessMessage("");
+                 <div className="space-y-1.5 text-left">
+                    <label className="text-[10px] font-black uppercase tracking-wider text-slate-400 ml-1">Description</label>
+                    <textarea
+                      value={form.description}
+                      onChange={(e) => setForm(c => ({ ...c, description: e.target.value }))}
+                      placeholder="Brief overview of this category..."
+                      className="min-h-24 w-full rounded-xl border border-slate-200 bg-white px-4 py-3 text-sm font-bold text-[var(--color-blue)] outline-none focus:ring-2 focus:ring-[var(--color-blue)]/10"
+                    />
+                 </div>
 
-                      try {
-                        await browserApi.deleteCategory(token, category.id);
-                        if (form.id === category.id) {
-                          resetForm();
-                        }
-                        await loadCategories();
-                        setSuccessMessage("Category deleted.");
-                      } catch (deleteError) {
-                        setError(getErrorMessage(deleteError));
-                      }
-                    }}
-                    className="site-button bg-red-500 text-white"
-                  >
-                    Delete
-                  </button>
-                </div>
+                 {/* Image Section */}
+                 <div className="rounded-2xl bg-slate-50 p-4 border border-slate-100">
+                    <div className="flex items-center justify-between mb-4">
+                       <span className="text-[10px] font-black uppercase tracking-wider text-slate-400">Category Cover</span>
+                       <label className="cursor-pointer text-[10px] font-black uppercase tracking-widest text-[var(--color-orange)] hover:underline">
+                          Change Image
+                          <input type="file" onChange={handleCategoryImageSelection} className="hidden" />
+                       </label>
+                    </div>
+
+                    {(pendingImage || form.imageUrl) ? (
+                       <div className="relative aspect-video rounded-xl overflow-hidden shadow-inner bg-slate-200">
+                          <Image
+                            src={pendingImage?.previewUrl ?? resolveAssetUrl(form.imageUrl)}
+                            alt="Preview"
+                            fill
+                            unoptimized
+                            className="object-cover"
+                          />
+                          {pendingImage && (
+                             <div className="absolute inset-0 bg-black/40 flex items-center justify-center text-white text-[10px] font-black uppercase tracking-widest">
+                                Pending Upload
+                             </div>
+                          )}
+                       </div>
+                    ) : (
+                       <div className="aspect-video rounded-xl border-2 border-dashed border-slate-300 flex flex-col items-center justify-center text-slate-400">
+                          <ImageIcon size={32} strokeWidth={1} />
+                          <span className="text-[10px] font-black uppercase mt-2">No Image Selected</span>
+                       </div>
+                    )}
+                 </div>
+
+                 <div className="grid grid-cols-2 gap-4">
+                    <div className="space-y-1.5 text-left">
+                       <label className="text-[10px] font-black uppercase tracking-wider text-slate-400 ml-1">Theme Color</label>
+                       <input
+                         type="color"
+                         value={form.themeColor}
+                         onChange={(e) => setForm(c => ({ ...c, themeColor: e.target.value }))}
+                         className="h-11 w-full rounded-xl border border-slate-200 bg-white p-1 cursor-pointer"
+                       />
+                    </div>
+                    <div className="space-y-1.5 text-left">
+                       <label className="text-[10px] font-black uppercase tracking-wider text-slate-400 ml-1">Sort Order</label>
+                       <input
+                         type="number"
+                         value={form.sortOrder}
+                         onChange={(e) => setForm(c => ({ ...c, sortOrder: Number(e.target.value) }))}
+                         className="w-full rounded-xl border border-slate-200 bg-white px-4 py-3 text-sm font-bold text-[var(--color-blue)] outline-none"
+                       />
+                    </div>
+                 </div>
               </div>
-            </div>
-          ))}
+
+              <div className="mt-8 flex gap-3">
+                 <button
+                   disabled={isSaving}
+                   className="flex-1 flex items-center justify-center gap-2 rounded-xl bg-[var(--color-blue)] py-4 text-[10px] font-black uppercase tracking-[0.2em] text-white shadow-lg shadow-[var(--color-blue)]/20 transition-all hover:bg-[var(--color-blue)]/90"
+                 >
+                   <Save size={16} /> COMMIT
+                 </button>
+                 {form.id && (
+                    <button type="button" onClick={resetForm} className="rounded-xl border border-slate-200 px-5 py-4 text-slate-400 hover:bg-slate-50">
+                       <X size={16} />
+                    </button>
+                 )}
+              </div>
+           </form>
+        </div>
+
+        {/* Categories List */}
+        <div className="flex-1 space-y-4">
+           {categories.map((cat) => (
+              <div key={cat.id} className="surface-card card-shadow group overflow-hidden rounded-[2rem] border border-transparent transition-all hover:border-[var(--color-blue)]/10 bg-white p-6">
+                 <div className="flex flex-col gap-6 md:flex-row md:items-center md:justify-between">
+                    <div className="flex items-center gap-6">
+                       <div className="relative h-20 w-32 flex-shrink-0 overflow-hidden rounded-2xl bg-slate-100 shadow-sm border border-slate-100">
+                          <Image
+                            src={resolveAssetUrl(cat.imageUrl)}
+                            alt={cat.name}
+                            fill
+                            unoptimized
+                            className="object-cover transition-transform group-hover:scale-105"
+                          />
+                          <div 
+                             className="absolute bottom-0 inset-x-0 h-1" 
+                             style={{ backgroundColor: cat.themeColor }} 
+                          />
+                       </div>
+                       <div className="min-w-0 text-left">
+                          <h3 className="text-xl font-black text-[var(--color-blue)] truncate group-hover:text-[var(--color-orange)] transition-colors">
+                             {cat.name}
+                          </h3>
+                          <p className="mt-1 text-[10px] font-black uppercase tracking-widest text-slate-400">
+                             /{cat.slug} · {cat.priceRange}
+                          </p>
+                          <p className="mt-2 text-xs font-medium text-slate-500 line-clamp-1 max-w-md">{cat.description}</p>
+                       </div>
+                    </div>
+
+                    <div className="flex items-center gap-3">
+                       <div className="flex flex-col items-end mr-4 hidden sm:flex">
+                          <span className="text-[10px] font-black uppercase tracking-widest text-slate-400">Order</span>
+                          <span className="text-sm font-black text-[var(--color-blue)]">#{cat.sortOrder}</span>
+                       </div>
+                       
+                       <button
+                         onClick={() => {
+                           setForm({ ...cat, id: cat.id });
+                           setCategoryImageFile(null);
+                           setError("");
+                           setSuccessMessage("");
+                         }}
+                         className="flex h-12 items-center gap-2 rounded-xl bg-slate-100 px-6 text-[10px] font-black uppercase tracking-widest text-[var(--color-blue)] transition-all hover:bg-[var(--color-blue)] hover:text-white"
+                       >
+                          <Edit3 size={16} /> Edit
+                       </button>
+                       <button
+                         onClick={async () => {
+                           if (!token || !confirm("Delete hierarchy entry?")) return;
+                           try {
+                             await browserApi.deleteCategory(token, cat.id);
+                             await loadCategories();
+                           } catch (err) { setError(getErrorMessage(err)); }
+                         }}
+                         className="flex h-12 w-12 items-center justify-center rounded-xl bg-red-50 text-red-600 transition-all hover:bg-red-600 hover:text-white"
+                       >
+                          <Trash2 size={18} />
+                       </button>
+                    </div>
+                 </div>
+              </div>
+           ))}
         </div>
       </div>
     </AdminShell>

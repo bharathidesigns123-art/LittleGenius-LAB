@@ -1,6 +1,23 @@
 "use client";
 
 import { useEffect, useMemo, useState } from "react";
+import { 
+  Palette, 
+  Search, 
+  Calendar, 
+  Filter, 
+  Printer, 
+  Save, 
+  CheckCircle2, 
+  AlertCircle,
+  PackageCheck,
+  User,
+  MessageSquare,
+  IndianRupee,
+  Truck,
+  ExternalLink,
+  Image as ImageIcon
+} from "lucide-react";
 import { AdminShell } from "@/components/admin/admin-shell";
 import { useAuth } from "@/components/providers/auth-provider";
 import { resolveAssetUrl } from "@/lib/asset-url";
@@ -34,10 +51,12 @@ type Draft = {
 };
 
 function statusClass(status: string) {
-  if (status === "Delivered") return "status-pill status-pill-blue";
-  if (status === "Cancelled") return "status-pill bg-red-50 text-red-700";
-  if (status === "Shipped") return "status-pill bg-emerald-50 text-emerald-700";
-  return "status-pill status-pill-yellow";
+  if (status === "Delivered" || status === "Approved") return "bg-emerald-100 text-emerald-700 ring-1 ring-emerald-700/10";
+  if (status === "Cancelled") return "bg-red-100 text-red-700 ring-1 ring-red-700/10";
+  if (status === "Shipped" || status === "Quoted") return "bg-blue-100 text-blue-700 ring-1 ring-blue-700/10";
+  if (status === "Printing" || status === "Reviewing") return "bg-amber-100 text-amber-700 ring-1 ring-amber-700/10";
+  if (status === "Packed") return "bg-indigo-100 text-indigo-700 ring-1 ring-indigo-700/10";
+  return "bg-slate-100 text-slate-700 ring-1 ring-slate-700/10";
 }
 
 function makeDraft(request: AdminCustomOrder): Draft {
@@ -52,107 +71,6 @@ function makeDraft(request: AdminCustomOrder): Draft {
     refundStatus: request.refundStatus ?? "NotRequested",
     cancellationReason: request.cancellationReason ?? "",
   };
-}
-
-function printCustomLabel(request: AdminCustomOrder) {
-  const label = window.open("", "_blank", "width=520,height=720");
-  if (!label) return;
-
-  const trackingNumber = request.trackingNumber || request.referenceCode;
-  const barcodeBars = trackingNumber
-    .replace(/[^A-Z0-9]/gi, "")
-    .toUpperCase()
-    .split("")
-    .map((char) => `<span style="width:${(char.charCodeAt(0) % 3) + 1}px"></span>`)
-    .join("");
-  const shipDate = new Date().toLocaleDateString("en-IN", {
-    day: "2-digit",
-    month: "short",
-    year: "numeric",
-  });
-
-  label.document.write(`
-    <html>
-      <head>
-        <title>Custom label ${request.referenceCode}</title>
-        <style>
-          * { box-sizing: border-box; }
-          body { margin: 0; padding: 18px; background: #1d1d1b; color: #f5f1e9; font-family: Arial, Helvetica, sans-serif; }
-          .label { width: 600px; max-width: 100%; border: 2px solid #77746c; border-radius: 8px; background: #2e2f2c; overflow: hidden; }
-          .topbar { display: flex; justify-content: space-between; gap: 16px; padding: 10px 16px; background: #1d1d34; border-bottom: 1px solid #3e3e39; font-weight: 800; }
-          .topbar span:last-child { color: #c7c0b7; font-size: 12px; }
-          .section { padding: 14px 16px; border-bottom: 1px dashed #5b5a54; }
-          .grid { display: grid; grid-template-columns: 1fr 1fr; border-bottom: 1px dashed #5b5a54; }
-          .grid .section { border-bottom: 0; }
-          .grid .section:first-child { border-right: 1px dashed #5b5a54; }
-          .mini-grid { display: grid; grid-template-columns: 1fr 1fr 1fr; border-bottom: 1px dashed #5b5a54; }
-          .mini-grid div { padding: 12px 16px; text-align: center; }
-          .mini-grid div + div { border-left: 1px solid #55544f; }
-          .eyebrow { margin: 0 0 7px; color: #b7b4ad; font-size: 11px; font-weight: 800; letter-spacing: .04em; text-transform: uppercase; }
-          .name { margin: 0 0 4px; color: #fff; font-size: 16px; font-weight: 800; }
-          p { margin: 3px 0; color: #d4d0c8; font-size: 13px; line-height: 1.25; font-weight: 650; }
-          strong { color: #fff; }
-          .barcode-wrap { padding: 14px 16px 12px; text-align: center; border-bottom: 1px dashed #5b5a54; }
-          .barcode { display: inline-flex; height: 48px; gap: 1px; padding: 0 4px; background: #fff; align-items: stretch; }
-          .barcode span { display: block; background: #1d1d1b; }
-          .tracking { margin-top: 7px; color: #fff; font-size: 17px; font-weight: 900; letter-spacing: .08em; }
-        </style>
-      </head>
-      <body>
-        <div class="label">
-          <div class="topbar"><span>CUSTOM SHIPPING LABEL</span><span>${request.status}</span></div>
-          <div class="section">
-            <p class="eyebrow">From (Sender)</p>
-            <p class="name">LittleGenius LAB</p>
-            <p>Chennai, Tamil Nadu</p>
-            <p>India</p>
-            <p>Phone: +91 63837 11863</p>
-          </div>
-          <div class="section">
-            <p class="eyebrow">To (Recipient)</p>
-            <p class="name">${request.name}</p>
-            <p>Pincode: ${request.pincode || "Not provided"}</p>
-            <p>India</p>
-            <p>Phone: ${request.whatsAppNumber}</p>
-            <p>Email: ${request.email}</p>
-          </div>
-          <div class="grid">
-            <div class="section">
-              <p class="eyebrow">Custom Details</p>
-              <p><strong>Occasion:</strong> ${request.occasion || "-"}</p>
-              <p><strong>Size:</strong> ${request.size || "-"}</p>
-              <p><strong>Colour:</strong> ${request.colorPreference || "-"}</p>
-              <p><strong>Request:</strong> ${request.characterDescription || request.baseMessage || "Custom toy request"}</p>
-            </div>
-            <div class="section">
-              <p class="eyebrow">Shipment Info</p>
-              <p><strong>Order ID:</strong> ${request.referenceCode}</p>
-              <p><strong>Ship Date:</strong> ${shipDate}</p>
-              <p><strong>Courier:</strong> ${request.courierPartner || "To assign"}</p>
-              <p><strong>Weight:</strong> ${request.packageWeightKg || "-"} kg</p>
-              <p><strong>Dimensions:</strong> ${request.packageDimensionsCm || "-"}</p>
-            </div>
-          </div>
-          <div class="barcode-wrap">
-            <p class="eyebrow">Tracking Number</p>
-            <div class="barcode">${barcodeBars}</div>
-            <div class="tracking">${trackingNumber}</div>
-          </div>
-          <div class="mini-grid">
-            <div><p class="eyebrow">Declared Value</p><p><strong>Rs. ${request.quoteAmountInr ?? 0}</strong></p></div>
-            <div><p class="eyebrow">Contents</p><p><strong>Custom toy</strong></p></div>
-            <div><p class="eyebrow">Handling</p><p><strong>Handle with Care</strong></p></div>
-          </div>
-          <div class="section">
-            <p class="eyebrow">Special Instructions</p>
-            <p><strong>${request.adminNotes || "Keep dry. Deliver to recipient only."}</strong></p>
-          </div>
-        </div>
-        <script>window.print();</script>
-      </body>
-    </html>
-  `);
-  label.document.close();
 }
 
 export default function AdminCustomOrdersPage() {
@@ -188,21 +106,7 @@ export default function AdminCustomOrdersPage() {
   };
 
   useEffect(() => {
-    if (!token) return;
-    let isActive = true;
-
-    const hydrate = async () => {
-      const result = await browserApi.getAdminCustomOrders(token);
-      if (isActive) {
-        setRequests(result);
-        seedDrafts(result);
-      }
-    };
-    void hydrate();
-
-    return () => {
-      isActive = false;
-    };
+    if (token) loadRequests();
   }, [token]);
 
   const updateDraft = (request: AdminCustomOrder, patch: Partial<Draft>) =>
@@ -217,229 +121,263 @@ export default function AdminCustomOrdersPage() {
   const saveRequest = async (request: AdminCustomOrder) => {
     if (!token) return;
     const draft = drafts[request.id] ?? makeDraft(request);
-    await browserApi.updateAdminCustomOrder(token, request.id, {
-      status: draft.status,
-      quoteAmountInr: draft.quoteAmountInr ? Number(draft.quoteAmountInr) : undefined,
-      adminNotes: draft.adminNotes,
-      trackingNumber: draft.trackingNumber,
-      packageWeightKg: draft.packageWeightKg ? Number(draft.packageWeightKg) : null,
-      packageDimensionsCm: draft.packageDimensionsCm,
-      courierPartner: draft.courierPartner,
-      refundStatus: draft.refundStatus,
-      cancellationReason: draft.cancellationReason,
-    });
-    setMessage(`Saved ${request.referenceCode}.`);
-    await loadRequests();
+    try {
+      await browserApi.updateAdminCustomOrder(token, request.id, {
+        status: draft.status,
+        quoteAmountInr: draft.quoteAmountInr ? Number(draft.quoteAmountInr) : undefined,
+        adminNotes: draft.adminNotes,
+        trackingNumber: draft.trackingNumber,
+        packageWeightKg: draft.packageWeightKg ? Number(draft.packageWeightKg) : null,
+        packageDimensionsCm: draft.packageDimensionsCm,
+        courierPartner: draft.courierPartner,
+        refundStatus: draft.refundStatus,
+        cancellationReason: draft.cancellationReason,
+      });
+      setMessage(`Saved reference ${request.referenceCode}.`);
+      await loadRequests();
+    } catch (err) { setMessage("Failed to save."); }
   };
 
   const markSelectedPacked = async () => {
     if (!token || selectedRequests.length === 0) return;
-    await Promise.all(
-      selectedRequests.map((request) =>
-        browserApi.updateAdminCustomOrder(token, request.id, {
-          status: "Packed",
-          quoteAmountInr: request.quoteAmountInr ?? undefined,
-          adminNotes: request.adminNotes ?? "",
-          trackingNumber: request.trackingNumber ?? "",
-          packageWeightKg: request.packageWeightKg ?? null,
-          packageDimensionsCm: request.packageDimensionsCm ?? "",
-          courierPartner: request.courierPartner ?? "",
-          refundStatus: request.refundStatus ?? "NotRequested",
-          cancellationReason: request.cancellationReason ?? "",
-        }),
-      ),
-    );
-    setSelected([]);
-    setMessage("Selected custom orders marked packed.");
-    await loadRequests();
+    try {
+      await Promise.all(
+        selectedRequests.map((request) =>
+          browserApi.updateAdminCustomOrder(token, request.id, {
+            status: "Packed",
+            quoteAmountInr: request.quoteAmountInr ?? undefined,
+            adminNotes: request.adminNotes ?? "",
+            trackingNumber: request.trackingNumber ?? "",
+            packageWeightKg: request.packageWeightKg ?? null,
+            packageDimensionsCm: request.packageDimensionsCm ?? "",
+            courierPartner: request.courierPartner ?? "",
+            refundStatus: request.refundStatus ?? "NotRequested",
+            cancellationReason: request.cancellationReason ?? "",
+          }),
+        ),
+      );
+      setSelected([]);
+      setMessage("Marked packed.");
+      await loadRequests();
+    } catch (err) { setMessage("Action failed."); }
   };
 
   return (
-    <AdminShell title="Custom order queue">
-      <div className="space-y-5">
-        <div className="surface-card rounded-[1.5rem] p-4">
-          <div className="grid gap-3 md:grid-cols-[160px_150px_150px_1fr_auto_auto]">
-            <select
-              value={filters.status}
-              onChange={(event) => setFilters((current) => ({ ...current, status: event.target.value }))}
-              className="rounded-[0.9rem] border border-[var(--color-border)] px-3 py-2 outline-none"
-            >
-              <option value="">All statuses</option>
-              {CUSTOM_STATUSES.map((status) => (
-                <option key={status}>{status}</option>
-              ))}
-            </select>
-            <input
-              type="date"
-              value={filters.dateFrom}
-              onChange={(event) => setFilters((current) => ({ ...current, dateFrom: event.target.value }))}
-              className="rounded-[0.9rem] border border-[var(--color-border)] px-3 py-2 outline-none"
-            />
-            <input
-              type="date"
-              value={filters.dateTo}
-              onChange={(event) => setFilters((current) => ({ ...current, dateTo: event.target.value }))}
-              className="rounded-[0.9rem] border border-[var(--color-border)] px-3 py-2 outline-none"
-            />
-            <input
-              value={filters.customer}
-              onChange={(event) => setFilters((current) => ({ ...current, customer: event.target.value }))}
-              placeholder="Customer, phone, email, reference"
-              className="rounded-[0.9rem] border border-[var(--color-border)] px-3 py-2 outline-none"
-            />
-            <button onClick={loadRequests} className="site-button site-button-primary">
-              {loading ? "Loading..." : "Filter"}
-            </button>
-            <button onClick={markSelectedPacked} className="site-button site-button-secondary">
-              Pack selected
-            </button>
-          </div>
-          {message ? <p className="mt-3 text-sm font-semibold text-[var(--color-orange)]">{message}</p> : null}
+    <AdminShell title="Custom Design Queue">
+      <div className="space-y-6">
+        {/* Filters */}
+        <div className="surface-card card-shadow rounded-[2rem] p-6">
+           <div className="flex flex-wrap items-center gap-4">
+              <div className="relative flex-1 min-w-[280px]">
+                 <Search size={18} className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400" />
+                 <input
+                   value={filters.customer}
+                   onChange={(e) => setFilters(c => ({ ...c, customer: e.target.value }))}
+                   placeholder="Search reference, customer or phone..."
+                   className="h-12 w-full rounded-xl border border-slate-200 bg-slate-50 pl-10 pr-4 text-sm font-bold text-[var(--color-blue)] outline-none"
+                 />
+              </div>
+              
+              <div className="flex flex-wrap items-center gap-3">
+                 <select
+                   value={filters.status}
+                   onChange={(e) => setFilters(c => ({ ...c, status: e.target.value }))}
+                   className="h-12 rounded-xl border border-slate-200 bg-white px-4 text-sm font-bold text-[var(--color-blue)]"
+                 >
+                    <option value="">All Statuses</option>
+                    {CUSTOM_STATUSES.map(s => <option key={s} value={s}>{s}</option>)}
+                 </select>
+                 <button onClick={loadRequests} className="site-button site-button-primary h-12">Search</button>
+              </div>
+           </div>
         </div>
 
-        {requests.map((request) => {
-          const draft = drafts[request.id] ?? makeDraft(request);
-          return (
-            <div key={request.id} className="surface-card rounded-[1.5rem] p-5">
-              <div className="flex flex-col gap-4 lg:flex-row lg:items-start lg:justify-between">
-                <div className="min-w-0 flex-1">
-                  <div className="flex flex-wrap items-center gap-2">
-                    <input
-                      type="checkbox"
-                      checked={selected.includes(request.id)}
-                      onChange={(event) =>
-                        setSelected((current) =>
-                          event.target.checked
-                            ? [...current, request.id]
-                            : current.filter((value) => value !== request.id),
-                        )
-                      }
-                    />
-                    <p className="text-sm font-bold uppercase tracking-[0.18em] text-[var(--color-orange)]">
-                      {request.referenceCode}
-                    </p>
-                    <span className="text-xs font-semibold text-[var(--color-ink-soft)]">
-                      {new Date(request.createdAtUtc).toLocaleString("en-IN", {
-                        day: "2-digit",
-                        month: "short",
-                        year: "numeric",
-                        hour: "2-digit",
-                        minute: "2-digit",
-                      })}
-                    </span>
-                    <span className={statusClass(request.status)}>{request.status}</span>
-                    <span className="status-pill status-pill-blue">{request.refundStatus ?? "NotRequested"}</span>
-                  </div>
-                  <h2 className="mt-3 text-xl font-semibold text-[var(--color-blue)]">
-                    {request.name} | {request.size}
-                  </h2>
-                  <div className="mt-3 grid gap-4 text-sm text-[var(--color-ink-soft)] md:grid-cols-2">
-                    <div>
-                      <p className="font-bold text-[var(--color-blue)]">Customer</p>
-                      <p>{request.email}</p>
-                      <p>{request.whatsAppNumber}</p>
-                      <p>Pincode: {request.pincode || "Not provided"}</p>
-                      {request.photoUrl ? (
-                        <a
-                          href={resolveAssetUrl(request.photoUrl)}
-                          target="_blank"
-                          rel="noreferrer"
-                          className="mt-2 inline-block font-semibold text-[var(--color-blue)]"
-                        >
-                          Open uploaded image
-                        </a>
-                      ) : null}
-                    </div>
-                    <div>
-                      <p className="font-bold text-[var(--color-blue)]">Custom request</p>
-                      <p>Occasion: {request.occasion || "-"}</p>
-                      <p>Colour: {request.colorPreference || "-"}</p>
-                      <p>Quote: {request.quoteAmountInr ? `Rs. ${request.quoteAmountInr}` : "Pending"}</p>
-                      <p className="mt-2">{request.characterDescription || request.baseMessage}</p>
-                    </div>
-                  </div>
-                </div>
-
-                <div className="grid w-full gap-3 lg:w-[440px]">
-                  <div className="grid gap-3 sm:grid-cols-2">
-                    <select
-                      value={draft.status}
-                      onChange={(event) => updateDraft(request, { status: event.target.value })}
-                      className="rounded-[0.9rem] border border-[var(--color-border)] px-3 py-2 outline-none"
-                    >
-                      {CUSTOM_STATUSES.map((status) => (
-                        <option key={status}>{status}</option>
-                      ))}
-                    </select>
-                    <select
-                      value={draft.courierPartner}
-                      onChange={(event) => updateDraft(request, { courierPartner: event.target.value })}
-                      className="rounded-[0.9rem] border border-[var(--color-border)] px-3 py-2 outline-none"
-                    >
-                      <option value="">Courier partner</option>
-                      {COURIERS.map((courier) => (
-                        <option key={courier}>{courier}</option>
-                      ))}
-                    </select>
-                    <input
-                      value={draft.quoteAmountInr}
-                      onChange={(event) => updateDraft(request, { quoteAmountInr: event.target.value })}
-                      placeholder="Quote amount"
-                      className="rounded-[0.9rem] border border-[var(--color-border)] px-3 py-2 outline-none"
-                    />
-                    <input
-                      value={draft.trackingNumber}
-                      onChange={(event) => updateDraft(request, { trackingNumber: event.target.value })}
-                      placeholder="Tracking number"
-                      className="rounded-[0.9rem] border border-[var(--color-border)] px-3 py-2 outline-none"
-                    />
-                    <input
-                      value={draft.packageWeightKg}
-                      onChange={(event) => updateDraft(request, { packageWeightKg: event.target.value })}
-                      placeholder="Weight (kg) e.g. 0.2"
-                      className="rounded-[0.9rem] border border-[var(--color-border)] px-3 py-2 outline-none"
-                    />
-                    <input
-                      value={draft.packageDimensionsCm}
-                      onChange={(event) => updateDraft(request, { packageDimensionsCm: event.target.value })}
-                      placeholder="L x W x H cm"
-                      className="rounded-[0.9rem] border border-[var(--color-border)] px-3 py-2 outline-none"
-                    />
-                    <select
-                      value={draft.refundStatus}
-                      onChange={(event) => updateDraft(request, { refundStatus: event.target.value })}
-                      className="rounded-[0.9rem] border border-[var(--color-border)] px-3 py-2 outline-none"
-                    >
-                      {REFUND_STATUSES.map((status) => (
-                        <option key={status}>{status}</option>
-                      ))}
-                    </select>
-                    <input
-                      value={draft.cancellationReason}
-                      onChange={(event) => updateDraft(request, { cancellationReason: event.target.value })}
-                      placeholder="Cancellation reason"
-                      className="rounded-[0.9rem] border border-[var(--color-border)] px-3 py-2 outline-none"
-                    />
-                    <textarea
-                      value={draft.adminNotes}
-                      onChange={(event) => updateDraft(request, { adminNotes: event.target.value })}
-                      placeholder="Admin notes"
-                      className="min-h-24 rounded-[0.9rem] border border-[var(--color-border)] px-3 py-2 outline-none sm:col-span-2"
-                    />
-                  </div>
-                  <div className="flex flex-wrap gap-2">
-                    <button onClick={() => saveRequest(request)} className="site-button site-button-primary">
-                      Save
-                    </button>
-                    <button onClick={() => printCustomLabel(request)} className="site-button site-button-secondary">
-                      Print label
-                    </button>
-                  </div>
-                </div>
+        {selected.length > 0 && (
+           <div className="flex items-center justify-between rounded-2xl bg-[var(--color-blue)] p-4 text-white shadow-lg animate-in slide-in-from-top-4">
+              <div className="flex items-center gap-3 ml-4">
+                 <CheckCircle2 className="text-[var(--color-orange)]" />
+                 <span className="font-black uppercase tracking-widest text-xs">{selected.length} Selected</span>
               </div>
-            </div>
-          );
-        })}
+              <button onClick={markSelectedPacked} className="site-button bg-white text-[var(--color-blue)] py-2">Batch Pack</button>
+           </div>
+        )}
+
+        {message && (
+          <div className="rounded-xl bg-amber-50 p-4 border border-amber-200 flex items-center gap-3 text-amber-700 text-xs font-black uppercase tracking-wider">
+             <AlertCircle size={16} /> {message}
+          </div>
+        )}
+
+        <div className="grid gap-6">
+           {requests.map((request) => {
+              const draft = drafts[request.id] ?? makeDraft(request);
+              const date = new Date(request.createdAtUtc);
+              return (
+                 <div key={request.id} className="surface-card card-shadow overflow-hidden rounded-[2.5rem] border border-transparent transition-all hover:border-[var(--color-blue)]/10 bg-white">
+                    <div className="flex flex-col lg:flex-row">
+                       {/* Meta Sidebar */}
+                       <div className="w-full lg:w-80 bg-slate-50/80 p-8 border-b lg:border-b-0 lg:border-r border-slate-200/60">
+                          <div className="flex items-center gap-3">
+                             <input
+                               type="checkbox"
+                               className="h-5 w-5 rounded-md accent-[var(--color-blue)] cursor-pointer"
+                               checked={selected.includes(request.id)}
+                               onChange={(e) => setSelected(c => e.target.checked ? [...c, request.id] : c.filter(v => v !== request.id))}
+                             />
+                             <span className="text-xs font-black uppercase tracking-[0.2em] text-[var(--color-orange)]">{request.referenceCode}</span>
+                          </div>
+
+                          <div className="mt-8 space-y-5">
+                             <div>
+                                <p className="text-[10px] font-black uppercase tracking-widest text-slate-400">Status</p>
+                                <span className={`mt-2 inline-block rounded-full px-3 py-1 text-[10px] font-black uppercase tracking-widest ${statusClass(request.status)}`}>
+                                   {request.status}
+                                </span>
+                             </div>
+
+                             <div className="flex items-center gap-3">
+                                <div className="h-10 w-10 flex items-center justify-center rounded-xl bg-white shadow-sm text-slate-400"><Calendar size={18} /></div>
+                                <div>
+                                   <p className="text-[10px] font-black uppercase tracking-widest text-slate-400 leading-none">Created</p>
+                                   <p className="mt-1 text-sm font-bold text-[var(--color-blue)]">{date.toLocaleString("en-IN", { day: '2-digit', month: 'short' })}</p>
+                                </div>
+                             </div>
+
+                             <div className="flex items-center gap-3">
+                                <div className="h-10 w-10 flex items-center justify-center rounded-xl bg-white shadow-sm text-slate-400"><IndianRupee size={18} /></div>
+                                <div>
+                                   <p className="text-[10px] font-black uppercase tracking-widest text-slate-400 leading-none">Quote</p>
+                                   <p className="mt-1 text-sm font-black text-[var(--color-orange)]">
+                                      {request.quoteAmountInr ? `Rs. ${request.quoteAmountInr}` : "PENDING"}
+                                   </p>
+                                </div>
+                             </div>
+                          </div>
+                       </div>
+
+                       {/* Content Area */}
+                       <div className="flex-1 p-8 grid gap-8 md:grid-cols-2">
+                          <div className="text-left">
+                             <div className="flex items-center gap-2 mb-4">
+                                <User size={16} className="text-[var(--color-orange)]" />
+                                <h3 className="text-[10px] font-black uppercase tracking-[0.2em] text-[var(--color-blue)]">Requester</h3>
+                             </div>
+                             <div className="rounded-[1.5rem] bg-slate-50 p-5">
+                                <p className="text-sm font-black text-[var(--color-blue)]">{request.name}</p>
+                                <p className="mt-1 text-xs font-medium text-slate-500">{request.email}</p>
+                                <p className="text-xs font-medium text-slate-500">{request.whatsAppNumber}</p>
+                                <p className="mt-2 text-[10px] font-bold text-slate-400 uppercase tracking-widest">Pincode: {request.pincode || "-"}</p>
+                             </div>
+
+                             {request.photoUrl && (
+                                <a 
+                                   href={resolveAssetUrl(request.photoUrl)} 
+                                   target="_blank" 
+                                   className="mt-4 flex items-center gap-2 text-[10px] font-black uppercase tracking-widest text-[var(--color-blue)] hover:text-[var(--color-orange)] transition-colors"
+                                >
+                                   <ImageIcon size={14} /> View Reference Image <ExternalLink size={12} />
+                                </a>
+                             )}
+                          </div>
+
+                          <div className="text-left">
+                             <div className="flex items-center gap-2 mb-4">
+                                <MessageSquare size={16} className="text-[var(--color-orange)]" />
+                                <h3 className="text-[10px] font-black uppercase tracking-[0.2em] text-[var(--color-blue)]">Design Details</h3>
+                             </div>
+                             <div className="space-y-4">
+                                <div className="grid grid-cols-2 gap-4">
+                                   <div className="bg-slate-50 rounded-xl px-4 py-2 border border-slate-100">
+                                      <p className="text-[8px] font-black text-slate-400 uppercase tracking-widest">Occasion</p>
+                                      <p className="text-xs font-bold text-[var(--color-blue)] truncate">{request.occasion || "Generic"}</p>
+                                   </div>
+                                   <div className="bg-slate-50 rounded-xl px-4 py-2 border border-slate-100">
+                                      <p className="text-[8px] font-black text-slate-400 uppercase tracking-widest">Color Preference</p>
+                                      <p className="text-xs font-bold text-[var(--color-blue)] truncate">{request.colorPreference || "Default"}</p>
+                                   </div>
+                                </div>
+                                <div className="bg-[var(--color-surface)] rounded-2xl p-5 border border-[var(--color-border)]/20">
+                                   <p className="text-xs font-medium text-slate-600 leading-relaxed italic">
+                                      "{request.characterDescription || request.baseMessage}"
+                                   </p>
+                                </div>
+                             </div>
+                          </div>
+                       </div>
+
+                       {/* Action Sidebar */}
+                       <div className="w-full lg:w-[460px] bg-slate-50/50 p-8 border-t lg:border-t-0 lg:border-l border-slate-200/60">
+                          <div className="grid gap-3 sm:grid-cols-2">
+                             <div className="space-y-1.5 text-left">
+                                <label className="text-[10px] font-black uppercase tracking-wider text-slate-400 ml-1">Lifecycle Status</label>
+                                <select
+                                  value={draft.status}
+                                  onChange={(e) => updateDraft(request, { status: e.target.value })}
+                                  className="w-full rounded-xl border border-slate-200 bg-white px-4 py-2.5 text-xs font-bold text-[var(--color-blue)] outline-none"
+                                >
+                                   {CUSTOM_STATUSES.map(s => <option key={s} value={s}>{s}</option>)}
+                                </select>
+                             </div>
+
+                             <div className="space-y-1.5 text-left">
+                                <label className="text-[10px] font-black uppercase tracking-wider text-slate-400 ml-1">Quote (Rs.)</label>
+                                <input
+                                  value={draft.quoteAmountInr}
+                                  onChange={(e) => updateDraft(request, { quoteAmountInr: e.target.value })}
+                                  placeholder="0.00"
+                                  className="w-full rounded-xl border border-slate-200 bg-white px-4 py-2.5 text-xs font-black text-[var(--color-orange)] outline-none"
+                                />
+                             </div>
+
+                             <div className="space-y-1.5 text-left">
+                                <label className="text-[10px] font-black uppercase tracking-wider text-slate-400 ml-1">Courier Partner</label>
+                                <select
+                                  value={draft.courierPartner}
+                                  onChange={(e) => updateDraft(request, { courierPartner: e.target.value })}
+                                  className="w-full rounded-xl border border-slate-200 bg-white px-4 py-2.5 text-xs font-bold text-[var(--color-blue)] outline-none"
+                                >
+                                   <option value="">Select Courier</option>
+                                   {COURIERS.map(c => <option key={c} value={c}>{c}</option>)}
+                                </select>
+                             </div>
+
+                             <div className="space-y-1.5 text-left">
+                                <label className="text-[10px] font-black uppercase tracking-wider text-slate-400 ml-1">Tracking ID</label>
+                                <input
+                                  value={draft.trackingNumber}
+                                  onChange={(e) => updateDraft(request, { trackingNumber: e.target.value })}
+                                  className="w-full rounded-xl border border-slate-200 bg-white px-4 py-2.5 text-xs font-bold text-[var(--color-blue)] outline-none"
+                                />
+                             </div>
+
+                             <div className="sm:col-span-2 space-y-1.5 text-left">
+                                <label className="text-[10px] font-black uppercase tracking-wider text-slate-400 ml-1">Internal Notes</label>
+                                <textarea
+                                  value={draft.adminNotes}
+                                  onChange={(e) => updateDraft(request, { adminNotes: e.target.value })}
+                                  placeholder="Private notes for team..."
+                                  className="w-full rounded-xl border border-slate-200 bg-white px-4 py-2.5 text-xs font-medium text-slate-600 outline-none min-h-[80px]"
+                                />
+                             </div>
+                          </div>
+
+                          <div className="mt-6 flex gap-3">
+                             <button 
+                                onClick={() => saveRequest(request)}
+                                className="flex-1 flex items-center justify-center gap-2 rounded-xl bg-[var(--color-blue)] py-4 text-[10px] font-black uppercase tracking-[0.2em] text-white shadow-lg transition-all hover:bg-[var(--color-blue)]/90"
+                             >
+                                <Save size={16} /> Save Record
+                             </button>
+                             <button className="flex items-center justify-center gap-2 rounded-xl bg-white border border-slate-200 px-6 py-4 text-slate-400 hover:bg-slate-50 transition-all">
+                                <Printer size={16} />
+                             </button>
+                          </div>
+                       </div>
+                    </div>
+                 </div>
+              );
+           })}
+        </div>
       </div>
     </AdminShell>
   );
