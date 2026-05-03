@@ -316,7 +316,12 @@ export default function AdminCategoriesPage() {
                        
                        <button
                          onClick={() => {
-                           setForm({ ...cat, id: cat.id });
+                           setForm({ 
+                             ...cat, 
+                             id: cat.id,
+                             sortOrder: cat.sortOrder ?? 1,
+                             isActive: cat.isActive ?? true
+                           });
                            setCategoryImageFile(null);
                            setError("");
                            setSuccessMessage("");

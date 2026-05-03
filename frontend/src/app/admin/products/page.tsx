@@ -214,8 +214,8 @@ export default function AdminProductsPage() {
       isPublished: product.isPublished,
       sizeMm: product.sizeMm,
       stockQuantity: product.stockQuantity,
-      lowStockThreshold: product.lowStockThreshold,
-      displayOrder: product.displayOrder,
+      lowStockThreshold: product.lowStockThreshold ?? 5,
+      displayOrder: product.displayOrder ?? 1,
     });
   };
 
