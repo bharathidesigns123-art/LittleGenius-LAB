@@ -28,6 +28,10 @@ const nextConfig: NextConfig = {
         protocol: "https",
         hostname: "littlegenius-lab.azurewebsites.net",
       },
+      {
+        protocol: "https",
+        hostname: "littlegenius-lab-f5e2fpb4chf7h0hg.southindia-01.azurewebsites.net",
+      },
     ],
   },
 };
