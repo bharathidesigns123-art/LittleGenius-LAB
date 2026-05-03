@@ -218,7 +218,19 @@ export default function AdminUsersPage() {
                           <td className="px-8 py-5 text-right">
                              <div className="flex justify-end gap-2">
                                 <button 
-                                  onClick={() => { setForm({ ...u, password: '', newPassword: '' }); setEditingId(u.id); setModalMode("edit"); }}
+                                  onClick={() => { 
+                                    setForm({ 
+                                      fullName: u.fullName,
+                                      email: u.email,
+                                      phone: u.phone ?? "",
+                                      password: "",
+                                      newPassword: "",
+                                      role: u.role as typeof ROLE_ADMIN | typeof ROLE_CUSTOMER,
+                                      isActive: u.isActive
+                                    }); 
+                                    setEditingId(u.id); 
+                                    setModalMode("edit"); 
+                                  }}
                                   className="h-10 w-10 flex items-center justify-center rounded-xl bg-white border border-slate-200 text-slate-400 transition-all hover:bg-[var(--color-blue)] hover:text-white hover:border-[var(--color-blue)]"
                                 >
                                    <Edit3 size={16} />
