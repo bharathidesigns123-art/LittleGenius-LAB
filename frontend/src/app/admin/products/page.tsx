@@ -2,6 +2,21 @@
 
 import Image from "next/image";
 import { ChangeEvent, FormEvent, useEffect, useRef, useState } from "react";
+import { 
+  Package, 
+  Plus, 
+  Trash2, 
+  Edit3, 
+  Image as ImageIcon, 
+  UploadCloud, 
+  Save, 
+  X, 
+  CheckCircle2,
+  TrendingDown,
+  Globe,
+  EyeOff,
+  AlertTriangle
+} from "lucide-react";
 import { AdminShell } from "@/components/admin/admin-shell";
 import { useAuth } from "@/components/providers/auth-provider";
 import { browserApi } from "@/lib/browser-api";
@@ -97,82 +112,6 @@ function isSupportedImage(file: File): boolean {
   );
 }
 
-type ImagePreviewCardProps = {
-  src: string;
-  alt: string;
-  badge: string;
-  onMoveLeft?: () => void;
-  onMoveRight?: () => void;
-  onDelete?: () => void;
-  disableMoveLeft?: boolean;
-  disableMoveRight?: boolean;
-  disabled?: boolean;
-};
-
-function ImagePreviewCard({
-  src,
-  alt,
-  badge,
-  onMoveLeft,
-  onMoveRight,
-  onDelete,
-  disableMoveLeft,
-  disableMoveRight,
-  disabled,
-}: ImagePreviewCardProps) {
-  return (
-    <div className="rounded-[1.6rem] border border-[var(--color-border)] bg-white p-3">
-      <div className="overflow-hidden rounded-[1.2rem] bg-[var(--color-surface)]">
-        <Image
-          src={src}
-          alt={alt}
-          width={320}
-          height={320}
-          unoptimized
-          className="h-36 w-full object-cover"
-        />
-      </div>
-      <div className="mt-3 flex items-center justify-between gap-2">
-        <span className="rounded-full bg-[var(--color-surface)] px-3 py-1 text-xs font-semibold tracking-[0.14em] text-[var(--color-blue)]">
-          {badge}
-        </span>
-        <div className="flex flex-wrap justify-end gap-2">
-          {onMoveLeft ? (
-            <button
-              type="button"
-              onClick={onMoveLeft}
-              disabled={disabled || disableMoveLeft}
-              className="rounded-full border border-[var(--color-border)] px-3 py-2 text-xs font-semibold text-[var(--color-blue)] disabled:opacity-50"
-            >
-              Left
-            </button>
-          ) : null}
-          {onMoveRight ? (
-            <button
-              type="button"
-              onClick={onMoveRight}
-              disabled={disabled || disableMoveRight}
-              className="rounded-full border border-[var(--color-border)] px-3 py-2 text-xs font-semibold text-[var(--color-blue)] disabled:opacity-50"
-            >
-              Right
-            </button>
-          ) : null}
-          {onDelete ? (
-            <button
-              type="button"
-              onClick={onDelete}
-              disabled={disabled}
-              className="rounded-full border border-red-200 px-3 py-2 text-xs font-semibold text-red-600 disabled:opacity-50"
-            >
-              Delete
-            </button>
-          ) : null}
-        </div>
-      </div>
-    </div>
-  );
-}
-
 export default function AdminProductsPage() {
   const { token } = useAuth();
   const [products, setProducts] = useState<AdminProduct[]>([]);
@@ -209,126 +148,44 @@ export default function AdminProductsPage() {
   };
 
   const loadData = async () => {
-    if (!token) {
-      return;
-    }
-
+    if (!token) return;
     try {
       const [productResults, categoryResults] = await Promise.all([
         browserApi.getAdminProducts(token),
         browserApi.getAdminCategories(token),
       ]);
-
       setProducts(productResults);
       setCategories(categoryResults);
-      setError("");
-      setForm((current) => {
-        if (current.id || categoryResults.some((category) => category.id === current.categoryId)) {
-          return current;
-        }
-
-        return {
-          ...current,
-          categoryId: categoryResults[0]?.id ?? current.categoryId,
-        };
-      });
-    } catch (loadError) {
-      setError(getErrorMessage(loadError));
+    } catch (err) {
+      setError(getErrorMessage(err));
     }
   };
 
   useEffect(() => {
-    if (!token) {
-      return;
-    }
-
-    let isActive = true;
-
-    const hydrate = async () => {
-      try {
-        const [productResults, categoryResults] = await Promise.all([
-          browserApi.getAdminProducts(token),
-          browserApi.getAdminCategories(token),
-        ]);
-
-        if (!isActive) {
-          return;
-        }
-
-        setProducts(productResults);
-        setCategories(categoryResults);
-        setError("");
-        setForm((current) => {
-          if (current.id || categoryResults.some((category) => category.id === current.categoryId)) {
-            return current;
-          }
-
-          return {
-            ...current,
-            categoryId: categoryResults[0]?.id ?? current.categoryId,
-          };
-        });
-      } catch (loadError) {
-        if (isActive) {
-          setError(getErrorMessage(loadError));
-        }
-      }
-    };
-
-    void hydrate();
-
-    return () => {
-      isActive = false;
-    };
+    if (token) loadData();
   }, [token]);
 
-  const editingProduct = form.id
-    ? products.find((product) => product.id === form.id) ?? null
-    : null;
+  const editingProduct = form.id ? products.find((p) => p.id === form.id) ?? null : null;
   const uploadedImages = editingProduct?.images ?? [];
 
   const handlePendingImageSelection = (event: ChangeEvent<HTMLInputElement>) => {
     const selectedFiles = Array.from(event.target.files ?? []);
-    if (selectedFiles.length === 0) {
-      return;
-    }
+    if (selectedFiles.length === 0) return;
 
     const acceptedImages: PendingImage[] = [];
-    let validationMessage = "";
-
     for (const file of selectedFiles) {
-      if (!isSupportedImage(file)) {
-        validationMessage = "Only JPG, PNG, and WEBP images are supported.";
-        continue;
+      if (isSupportedImage(file) && file.size <= maximumImageBytes) {
+        acceptedImages.push({
+          id: `${Date.now()}-${Math.random().toString(16).slice(2)}`,
+          file,
+          previewUrl: URL.createObjectURL(file),
+        });
       }
-
-      if (file.size > maximumImageBytes) {
-        validationMessage = "Each image must be 8 MB or smaller.";
-        continue;
-      }
-
-      acceptedImages.push({
-        id: `${Date.now()}-${Math.random().toString(16).slice(2)}`,
-        file,
-        previewUrl: URL.createObjectURL(file),
-      });
     }
 
     if (acceptedImages.length > 0) {
       setPendingImages((current) => [...current, ...acceptedImages]);
-      setSuccessMessage(
-        form.id
-          ? "Images selected. Save or upload actions are ready."
-          : "Images selected. They will upload automatically once the product is created.",
-      );
     }
-
-    if (validationMessage) {
-      setError(validationMessage);
-    } else {
-      setError("");
-    }
-
     event.target.value = "";
   };
 
@@ -357,17 +214,14 @@ export default function AdminProductsPage() {
       isPublished: product.isPublished,
       sizeMm: product.sizeMm,
       stockQuantity: product.stockQuantity,
-      lowStockThreshold: product.lowStockThreshold,
-      displayOrder: product.displayOrder,
+      lowStockThreshold: product.lowStockThreshold ?? 5,
+      displayOrder: product.displayOrder ?? 1,
     });
   };
 
   const saveProduct = async (event: FormEvent<HTMLFormElement>) => {
     event.preventDefault();
-    if (!token) {
-      return;
-    }
-
+    if (!token) return;
     setIsSaving(true);
     setError("");
     setSuccessMessage("");
@@ -391,13 +245,7 @@ export default function AdminProductsPage() {
 
       resetForm();
       await loadData();
-      setSuccessMessage(
-        filesToUpload.length > 0
-          ? "Product saved and images uploaded."
-          : form.id
-            ? "Product updated."
-            : "Product created.",
-      );
+      setSuccessMessage("Product committed successfully.");
     } catch (saveError) {
       setError(getErrorMessage(saveError));
     } finally {
@@ -405,414 +253,305 @@ export default function AdminProductsPage() {
     }
   };
 
-  const movePendingImage = (index: number, direction: number) => {
-    const targetIndex = index + direction;
-    if (targetIndex < 0 || targetIndex >= pendingImages.length) {
-      return;
-    }
-
-    setPendingImages((current) => moveItem(current, index, targetIndex));
-  };
-
-  const removePendingImage = (index: number) => {
-    setPendingImages((current) => {
-      const image = current[index];
-      if (!image) {
-        return current;
-      }
-
-      URL.revokeObjectURL(image.previewUrl);
-      return current.filter((_, currentIndex) => currentIndex !== index);
-    });
-  };
-
-  const moveUploadedImage = async (
-    productId: number,
-    images: ProductImage[],
-    index: number,
-    direction: number,
-  ) => {
-    if (!token) {
-      return;
-    }
-
-    const targetIndex = index + direction;
-    if (targetIndex < 0 || targetIndex >= images.length) {
-      return;
-    }
-
-    const reorderedImages = moveItem(images, index, targetIndex);
-    setBusyImageId(images[index]?.id ?? null);
-    setError("");
-    setSuccessMessage("");
-
-    try {
-      await browserApi.reorderProductImages(
-        token,
-        productId,
-        reorderedImages.map((image) => image.id),
-      );
-      await loadData();
-      setSuccessMessage("Product image order updated.");
-    } catch (moveError) {
-      setError(getErrorMessage(moveError));
-    } finally {
-      setBusyImageId(null);
-    }
-  };
-
   const deleteUploadedImage = async (productId: number, imageId: number) => {
-    if (!token) {
-      return;
-    }
-
+    if (!token) return;
     setBusyImageId(imageId);
-    setError("");
-    setSuccessMessage("");
-
     try {
       await browserApi.deleteProductImage(token, productId, imageId);
       await loadData();
-      setSuccessMessage("Product image deleted.");
-    } catch (deleteError) {
-      setError(getErrorMessage(deleteError));
+    } catch (err) {
+      setError(getErrorMessage(err));
     } finally {
       setBusyImageId(null);
+    }
+  };
+
+  const adjustStock = async (product: AdminProduct) => {
+    if (!token) return;
+    const change = stockAdjustments[product.id] ?? 0;
+    if (change === 0) return;
+    try {
+      await browserApi.adjustInventory(token, {
+        productId: product.id,
+        quantityChange: change,
+        reason: "Manual adjustment",
+      });
+      setStockAdjustments(c => ({ ...c, [product.id]: 0 }));
+      await loadData();
+      setSuccessMessage(`Updated stock for ${product.name}`);
+    } catch (err) {
+      setError(getErrorMessage(err));
     }
   };
 
   return (
-    <AdminShell title="Products and inventory">
-      <div className="grid gap-6 lg:grid-cols-[460px_1fr]">
-        <form onSubmit={saveProduct} className="surface-card rounded-[2rem] p-6">
-          <h2 className="text-xl font-semibold text-[var(--color-blue)]">
-            {form.id ? "Edit product" : "Add product"}
-          </h2>
-          <p className="mt-2 text-sm leading-7 text-[var(--color-ink-soft)]">
-            Manage catalogue details and attach gallery images through the Azure upload flow.
-          </p>
-
-          {error ? (
-            <div className="mt-4 rounded-[1.4rem] bg-red-50 px-4 py-3 text-sm text-red-700">{error}</div>
-          ) : null}
-          {successMessage ? (
-            <div className="mt-4 rounded-[1.4rem] bg-emerald-50 px-4 py-3 text-sm text-emerald-700">
-              {successMessage}
+    <AdminShell title="Inventory and Catalogue">
+      <div className="flex flex-col gap-8 lg:flex-row">
+        {/* Left Side: Product Form */}
+        <div className="w-full lg:w-[480px] lg:flex-shrink-0">
+          <form onSubmit={saveProduct} className="surface-card card-shadow sticky top-8 rounded-[2.5rem] p-8 border border-slate-100">
+            <div className="flex items-center justify-between mb-6">
+               <div className="flex h-12 w-12 items-center justify-center rounded-2xl bg-[var(--color-orange)]/10 text-[var(--color-orange)]">
+                  {form.id ? <Edit3 size={24} /> : <Plus size={24} />}
+               </div>
+               <div>
+                  <h2 className="text-xl font-bold text-[var(--color-blue)] text-right">
+                    {form.id ? "Edit Product" : "New Product"}
+                  </h2>
+                  <p className="text-[10px] font-black uppercase tracking-widest text-slate-400 text-right mt-1">
+                    Catalogue Entry
+                  </p>
+               </div>
             </div>
-          ) : null}
 
-          <div className="mt-5 grid gap-3">
-            <select
-              value={form.categoryId}
-              onChange={(event) =>
-                setForm((current) => ({ ...current, categoryId: Number(event.target.value) }))
-              }
-              className="rounded-[1.4rem] border border-[var(--color-border)] px-4 py-3 outline-none"
-            >
-              {categories.map((category) => (
-                <option key={category.id} value={category.id}>
-                  {category.name}
-                </option>
-              ))}
-            </select>
-            {[
-              ["name", "Name"],
-              ["slug", "Slug"],
-              ["sku", "SKU"],
-              ["badge", "Badge"],
-              ["colourway", "Colourway"],
-              ["material", "Material"],
-              ["finish", "Finish"],
-              ["shipsIn", "Ships in"],
-              ["madeIn", "Made in"],
-              ["tagline", "Tagline"],
-            ].map(([key, label]) => (
-              <input
-                key={key}
-                value={String(form[key as keyof typeof form] ?? "")}
-                onChange={(event) =>
-                  setForm((current) => ({ ...current, [key]: event.target.value }))
-                }
-                placeholder={label}
-                className="rounded-[1.4rem] border border-[var(--color-border)] px-4 py-3 outline-none"
-              />
-            ))}
-            <textarea
-              value={form.shortDescription}
-              onChange={(event) =>
-                setForm((current) => ({ ...current, shortDescription: event.target.value }))
-              }
-              placeholder="Short description"
-              className="min-h-24 rounded-[1.4rem] border border-[var(--color-border)] px-4 py-3 outline-none"
-            />
-            <textarea
-              value={form.fullDescription}
-              onChange={(event) =>
-                setForm((current) => ({ ...current, fullDescription: event.target.value }))
-              }
-              placeholder="Full description"
-              className="min-h-32 rounded-[1.4rem] border border-[var(--color-border)] px-4 py-3 outline-none"
-            />
-            <div className="grid gap-3 md:grid-cols-2">
-              {[
-                ["priceInr", "Price"],
-                ["compareAtPriceInr", "Compare at price"],
-                ["sizeMm", "Size (mm)"],
-                ["stockQuantity", "Stock"],
-                ["lowStockThreshold", "Low stock threshold"],
-                ["displayOrder", "Display order"],
-              ].map(([key, label]) => (
-                <input
-                  key={key}
-                  type="number"
-                  value={String(form[key as keyof typeof form] ?? "")}
-                  onChange={(event) =>
-                    setForm((current) => ({ ...current, [key]: event.target.value }))
-                  }
-                  placeholder={label}
-                  className="rounded-[1.4rem] border border-[var(--color-border)] px-4 py-3 outline-none"
-                />
-              ))}
-            </div>
-            <label className="flex items-center gap-3 text-sm font-semibold text-[var(--color-blue)]">
-              <input
-                type="checkbox"
-                checked={form.isFeatured}
-                onChange={(event) =>
-                  setForm((current) => ({ ...current, isFeatured: event.target.checked }))
-                }
-              />
-              Featured product
-            </label>
-            <label className="flex items-center gap-3 text-sm font-semibold text-[var(--color-blue)]">
-              <input
-                type="checkbox"
-                checked={form.isPublished}
-                onChange={(event) =>
-                  setForm((current) => ({ ...current, isPublished: event.target.checked }))
-                }
-              />
-              Published
-            </label>
-          </div>
-
-          <div className="mt-6 rounded-[1.8rem] border border-[var(--color-border)] bg-[var(--color-surface)] p-4">
-            <div className="flex flex-col gap-2 sm:flex-row sm:items-start sm:justify-between">
-              <div>
-                <h3 className="text-lg font-semibold text-[var(--color-blue)]">Product gallery</h3>
-                <p className="mt-1 text-sm leading-7 text-[var(--color-ink-soft)]">
-                  Upload JPG, PNG, or WEBP files. Images are validated on the server and resized for a
-                  consistent storefront gallery.
-                </p>
+            {error ? (
+              <div className="mb-6 rounded-2xl bg-red-50 px-5 py-3 text-xs font-bold text-red-700 flex items-center gap-2 border border-red-100">
+                <X size={14} /> {error}
               </div>
-              <label className="site-button site-button-secondary cursor-pointer text-center">
-                Choose images
-                <input
-                  type="file"
-                  multiple
-                  accept="image/jpeg,image/png,image/webp"
-                  onChange={handlePendingImageSelection}
-                  className="hidden"
-                />
-              </label>
-            </div>
-            <p className="mt-3 text-xs font-semibold uppercase tracking-[0.16em] text-[var(--color-orange)]">
-              Minimum 400x400 pixels, maximum 8 MB, recommended square or near-square photos.
-            </p>
-
-            {pendingImages.length > 0 ? (
-              <div className="mt-4">
-                <div className="flex items-center justify-between gap-3">
-                  <h4 className="text-sm font-semibold text-[var(--color-blue)]">Pending uploads</h4>
-                  <button
-                    type="button"
-                    onClick={clearPendingImages}
-                    className="text-sm font-semibold text-[var(--color-orange)]"
-                  >
-                    Clear selection
-                  </button>
-                </div>
-                <div className="mt-3 grid gap-3 sm:grid-cols-2">
-                  {pendingImages.map((image, index) => (
-                    <ImagePreviewCard
-                      key={image.id}
-                      src={image.previewUrl}
-                      alt={`${form.name || "New product"} pending image ${index + 1}`}
-                      badge={`Pending ${index + 1}`}
-                      onMoveLeft={() => movePendingImage(index, -1)}
-                      onMoveRight={() => movePendingImage(index, 1)}
-                      onDelete={() => removePendingImage(index)}
-                      disableMoveLeft={index === 0}
-                      disableMoveRight={index === pendingImages.length - 1}
-                      disabled={isSaving}
-                    />
-                  ))}
-                </div>
+            ) : null}
+            {successMessage ? (
+              <div className="mb-6 rounded-2xl bg-emerald-50 px-5 py-3 text-xs font-bold text-emerald-700 flex items-center gap-2 border border-emerald-100">
+                <CheckCircle2 size={14} /> {successMessage}
               </div>
             ) : null}
 
-            {form.id ? (
-              uploadedImages.length > 0 ? (
-                <div className="mt-4">
-                  <h4 className="text-sm font-semibold text-[var(--color-blue)]">Uploaded images</h4>
-                  <div className="mt-3 grid gap-3 sm:grid-cols-2">
-                    {uploadedImages.map((image, index) => (
-                      <ImagePreviewCard
-                        key={image.id}
-                        src={resolveAssetUrl(image.imageUrl)}
-                        alt={`${form.name || editingProduct?.name || "Product"} uploaded image ${index + 1}`}
-                        badge={index === 0 ? "Primary image" : `Image ${index + 1}`}
-                        onMoveLeft={() => moveUploadedImage(form.id!, uploadedImages, index, -1)}
-                        onMoveRight={() => moveUploadedImage(form.id!, uploadedImages, index, 1)}
-                        onDelete={() => deleteUploadedImage(form.id!, image.id)}
-                        disableMoveLeft={index === 0}
-                        disableMoveRight={index === uploadedImages.length - 1}
-                        disabled={busyImageId === image.id}
-                      />
+            <div className="space-y-4 text-left">
+               <div className="space-y-1.5 text-left">
+                  <label className="text-[10px] font-black uppercase tracking-wider text-slate-400 ml-1">Category</label>
+                  <select
+                    value={form.categoryId}
+                    onChange={(event) =>
+                      setForm((current) => ({ ...current, categoryId: Number(event.target.value) }))
+                    }
+                    className="w-full rounded-xl border border-slate-200 bg-slate-50 px-4 py-3 text-sm font-bold text-[var(--color-blue)] outline-none focus:ring-2 focus:ring-[var(--color-blue)]/10"
+                  >
+                    {categories.map((category) => (
+                      <option key={category.id} value={category.id}>
+                        {category.name}
+                      </option>
                     ))}
-                  </div>
-                </div>
-              ) : (
-                <p className="mt-4 text-sm leading-7 text-[var(--color-ink-soft)]">
-                  Add uploaded images to create this product gallery.
-                </p>
-              )
-            ) : (
-              <p className="mt-4 text-sm leading-7 text-[var(--color-ink-soft)]">
-                You can select images now. They will upload automatically after the new product is created.
-              </p>
-            )}
-          </div>
+                  </select>
+               </div>
 
-          <div className="mt-6 flex flex-col gap-3 sm:flex-row">
-            <button
-              disabled={isSaving}
-              className="site-button site-button-primary w-full disabled:opacity-60"
-            >
-              {isSaving ? "Saving..." : form.id ? "Update product" : "Create product"}
-            </button>
-            {form.id ? (
-              <button
-                type="button"
-                onClick={resetForm}
-                disabled={isSaving}
-                className="site-button site-button-secondary w-full disabled:opacity-60"
-              >
-                Cancel edit
-              </button>
-            ) : null}
-          </div>
-        </form>
-
-        <div className="space-y-4">
-          {products.map((product) => (
-            <div key={product.id} className="surface-card rounded-[2rem] p-5">
-              <div className="flex flex-col gap-4 lg:flex-row lg:items-start lg:justify-between">
-                <div className="flex gap-4">
-                  {product.heroImageUrl ? (
-                    <div className="hidden h-20 w-20 overflow-hidden rounded-[1.2rem] bg-[var(--color-surface)] sm:block">
-                      <Image
-                        src={resolveAssetUrl(product.heroImageUrl)}
-                        alt={product.name}
-                        width={160}
-                        height={160}
-                        unoptimized
-                        className="h-full w-full object-cover"
-                      />
+               <div className="grid gap-4 sm:grid-cols-2">
+                  {[
+                    ["name", "Product Name", "The Sparky Toy"],
+                    ["slug", "URL Slug", "sparky-toy"],
+                  ].map(([key, label, placeholder]) => (
+                    <div key={key} className="space-y-1.5 text-left">
+                       <label className="text-[10px] font-black uppercase tracking-wider text-slate-400 ml-1">{label}</label>
+                       <input
+                         value={String(form[key as keyof typeof form] ?? "")}
+                         onChange={(event) => setForm((current) => ({ ...current, [key]: event.target.value }))}
+                         placeholder={placeholder}
+                         className="w-full rounded-xl border border-slate-200 bg-white px-4 py-3 text-sm font-bold text-[var(--color-blue)] outline-none focus:ring-2 focus:ring-[var(--color-blue)]/10"
+                       />
                     </div>
-                  ) : null}
-                  <div>
-                    <h3 className="text-xl font-semibold text-[var(--color-blue)]">{product.name}</h3>
-                    <p className="mt-2 text-sm text-[var(--color-ink-soft)]">
-                      {product.categoryName} - SKU {product.sku}
-                    </p>
-                    <p className="mt-1 text-sm font-semibold text-[var(--color-orange)]">
-                      Rs. {product.priceInr} - Stock {product.stockQuantity}
-                    </p>
-                    <p className="mt-1 text-xs font-semibold uppercase tracking-[0.15em] text-[var(--color-blue)]">
-                      {product.imageCount > 0
-                        ? `${product.imageCount} uploaded image${product.imageCount === 1 ? "" : "s"}`
-                        : "No uploaded images yet"}
-                    </p>
-                  </div>
-                </div>
-                <div className="flex flex-wrap gap-3">
-                  <button
-                    type="button"
-                    onClick={() => handleEditProduct(product)}
-                    className="site-button site-button-secondary"
-                  >
-                    Edit
-                  </button>
-                  <button
-                    type="button"
-                    onClick={async () => {
-                      if (!token) {
-                        return;
-                      }
+                  ))}
+               </div>
 
-                      setError("");
-                      setSuccessMessage("");
+               <div className="grid gap-4 sm:grid-cols-2">
+                  {[
+                    ["priceInr", "Price (Rs.)"],
+                    ["stockQuantity", "Current Stock"],
+                  ].map(([key, label]) => (
+                    <div key={key} className="space-y-1.5 text-left">
+                       <label className="text-[10px] font-black uppercase tracking-wider text-slate-400 ml-1">{label}</label>
+                       <input
+                         type="number"
+                         value={String(form[key as keyof typeof form] ?? "")}
+                         onChange={(event) => setForm((current) => ({ ...current, [key]: event.target.value }))}
+                         className="w-full rounded-xl border border-slate-200 bg-white px-4 py-3 text-sm font-black text-[var(--color-blue)] outline-none focus:ring-2 focus:ring-[var(--color-blue)]/10"
+                       />
+                    </div>
+                  ))}
+               </div>
 
-                      try {
-                        await browserApi.deleteProduct(token, product.id);
-                        if (form.id === product.id) {
-                          resetForm();
-                        }
-                        await loadData();
-                        setSuccessMessage("Product deleted.");
-                      } catch (deleteError) {
-                        setError(getErrorMessage(deleteError));
+               <div className="space-y-1.5 pt-2">
+                  <label className="flex items-center gap-3 cursor-pointer group">
+                    <div className={`h-5 w-5 rounded-md border-2 transition-all flex items-center justify-center ${form.isPublished ? 'bg-[var(--color-blue)] border-[var(--color-blue)]' : 'border-slate-300 group-hover:border-slate-400'}`}>
+                       {form.isPublished && <CheckCircle2 size={12} className="text-white" />}
+                    </div>
+                    <input
+                      type="checkbox"
+                      className="hidden"
+                      checked={form.isPublished}
+                      onChange={(event) =>
+                        setForm((current) => ({ ...current, isPublished: event.target.checked }))
                       }
-                    }}
-                    className="site-button bg-red-500 text-white"
-                  >
-                    Delete
-                  </button>
-                </div>
-              </div>
-              <div className="mt-4 flex flex-wrap items-center gap-3">
-                <input
-                  type="number"
-                  value={stockAdjustments[product.id] ?? 0}
-                  onChange={(event) =>
-                    setStockAdjustments((current) => ({
-                      ...current,
-                      [product.id]: Number(event.target.value),
-                    }))
-                  }
-                  className="w-28 rounded-[1.2rem] border border-[var(--color-border)] px-4 py-3 outline-none"
-                />
+                    />
+                    <span className="text-sm font-bold text-[var(--color-blue)]">Publish to storefront</span>
+                  </label>
+               </div>
+            </div>
+
+            {/* Image Gallery Section in Sidebar */}
+            <div className="mt-8 pt-8 border-t border-slate-100">
+               <div className="flex items-center justify-between mb-4">
+                  <h3 className="text-sm font-black uppercase tracking-wider text-[var(--color-blue)] flex items-center gap-2">
+                     <ImageIcon size={16} className="text-[var(--color-orange)]" />
+                     Gallery
+                  </h3>
+                  <label className="flex items-center gap-2 px-3 py-1.5 rounded-lg bg-slate-100 text-[var(--color-blue)] text-[10px] font-black uppercase tracking-widest cursor-pointer hover:bg-slate-200 transition-colors">
+                     <UploadCloud size={14} /> Add Images
+                     <input type="file" multiple accept="image/*" onChange={handlePendingImageSelection} className="hidden" />
+                  </label>
+               </div>
+               
+               <div className="grid grid-cols-4 gap-2">
+                  {uploadedImages.map((img) => (
+                     <div key={img.id} className="relative aspect-square rounded-lg overflow-hidden group border border-slate-200 bg-slate-50">
+                        <Image src={resolveAssetUrl(img.imageUrl)} alt="" fill unoptimized className="object-cover" />
+                        <button 
+                           type="button"
+                           disabled={busyImageId === img.id}
+                           onClick={() => deleteUploadedImage(form.id!, img.id)}
+                           className="absolute inset-0 bg-red-600/80 text-white flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity disabled:opacity-100 disabled:bg-slate-400/50"
+                        >
+                           <Trash2 size={14} />
+                        </button>
+                     </div>
+                  ))}
+                  {pendingImages.map((img, i) => (
+                     <div key={img.id} className="relative aspect-square rounded-lg overflow-hidden border-2 border-dashed border-[var(--color-orange)] p-0.5">
+                        <Image src={img.previewUrl} alt="" fill unoptimized className="object-cover rounded-md" />
+                        <div className="absolute inset-0 bg-[var(--color-orange)]/20 flex items-center justify-center pointer-events-none">
+                           <span className="text-[8px] font-black text-white bg-[var(--color-orange)] px-1 rounded-sm uppercase">Pending</span>
+                        </div>
+                     </div>
+                  ))}
+               </div>
+            </div>
+
+            <div className="mt-8 flex gap-3">
+              <button
+                disabled={isSaving}
+                className="flex-1 flex items-center justify-center gap-2 rounded-xl bg-[var(--color-blue)] py-4 text-xs font-black uppercase tracking-[0.2em] text-white shadow-lg shadow-[var(--color-blue)]/20 transition-all hover:bg-[var(--color-blue)]/90 disabled:opacity-50"
+              >
+                <Save size={16} />
+                {isSaving ? "Saving..." : "Commit Changes"}
+              </button>
+              {form.id && (
                 <button
                   type="button"
-                  onClick={async () => {
-                    if (!token) {
-                      return;
-                    }
-
-                    setError("");
-                    setSuccessMessage("");
-
-                    try {
-                      await browserApi.adjustInventory(token, {
-                        productId: product.id,
-                        quantityChange: stockAdjustments[product.id] ?? 0,
-                        reason: "Admin manual update",
-                      });
-                      setStockAdjustments((current) => ({ ...current, [product.id]: 0 }));
-                      await loadData();
-                      setSuccessMessage("Inventory updated.");
-                    } catch (inventoryError) {
-                      setError(getErrorMessage(inventoryError));
-                    }
-                  }}
-                  className="site-button site-button-secondary"
+                  onClick={resetForm}
+                  className="rounded-xl border border-slate-200 bg-white px-5 py-4 text-xs font-black uppercase tracking-[0.15em] text-slate-400 hover:bg-slate-50 transition-all"
                 >
-                  Adjust stock
+                  <X size={16} />
                 </button>
-              </div>
+              )}
             </div>
-          ))}
+          </form>
+        </div>
+
+        {/* Right Side: Product List */}
+        <div className="flex-1">
+          <div className="grid gap-6 md:grid-cols-2 xl:grid-cols-3">
+            {products.map((product) => (
+              <div key={product.id} className="surface-card card-shadow group flex flex-col overflow-hidden rounded-[2.5rem] border border-transparent transition-all hover:border-[var(--color-blue)]/10 bg-white">
+                <div className="relative aspect-square overflow-hidden bg-slate-100">
+                  {product.heroImageUrl ? (
+                    <Image
+                      src={resolveAssetUrl(product.heroImageUrl)}
+                      alt={product.name}
+                      fill
+                      unoptimized
+                      className="object-cover transition-transform duration-500 group-hover:scale-110"
+                    />
+                  ) : (
+                    <div className="flex h-full w-full items-center justify-center text-slate-300">
+                       <ImageIcon size={48} strokeWidth={1} />
+                    </div>
+                  )}
+                  
+                  <div className="absolute left-4 top-4 flex flex-col gap-2">
+                     <span className={`flex items-center gap-1 rounded-full px-3 py-1 text-[10px] font-black uppercase tracking-wider shadow-sm ${product.isPublished ? "bg-white text-emerald-600" : "bg-white text-slate-400"}`}>
+                        {product.isPublished ? <Globe size={10} /> : <EyeOff size={10} />}
+                        {product.isPublished ? "Public" : "Draft"}
+                     </span>
+                     {product.stockQuantity <= product.lowStockThreshold && (
+                        <span className="flex items-center gap-1 rounded-full bg-red-600 px-3 py-1 text-[10px] font-black uppercase tracking-wider text-white shadow-lg shadow-red-600/20">
+                           <AlertTriangle size={10} /> Low Stock
+                        </span>
+                     )}
+                  </div>
+
+                  <div className="absolute bottom-0 inset-x-0 bg-gradient-to-t from-black/60 to-transparent p-6 opacity-0 group-hover:opacity-100 transition-opacity">
+                     <div className="flex gap-2">
+                        <button
+                          type="button"
+                          onClick={() => handleEditProduct(product)}
+                          className="flex-1 flex items-center justify-center gap-2 rounded-xl bg-white/20 backdrop-blur-md py-2.5 text-[10px] font-black uppercase tracking-widest text-white hover:bg-white hover:text-[var(--color-blue)] transition-all font-bold"
+                        >
+                          <Edit3 size={14} /> Quick Edit
+                        </button>
+                        <button
+                          type="button"
+                          onClick={async () => {
+                             if (!token || !confirm(`Delete ${product.name}?`)) return;
+                             try {
+                                await browserApi.deleteProduct(token, product.id);
+                                await loadData();
+                             } catch (err) { setError(getErrorMessage(err)); }
+                          }}
+                          className="flex h-10 w-10 items-center justify-center rounded-xl bg-red-600/20 backdrop-blur-md text-white hover:bg-red-600 transition-all"
+                        >
+                          <Trash2 size={16} />
+                        </button>
+                     </div>
+                  </div>
+                </div>
+
+                <div className="p-6 text-left">
+                  <div className="flex items-start justify-between gap-3 text-left">
+                     <div className="min-w-0 flex-1 text-left">
+                        <h3 className="truncate text-lg font-bold text-[var(--color-blue)] group-hover:text-[var(--color-orange)] transition-colors">
+                           {product.name}
+                        </h3>
+                        <p className="mt-1 text-[10px] font-black uppercase tracking-widest text-slate-400">
+                           {product.categoryName} · {product.sku}
+                        </p>
+                     </div>
+                     <p className="text-lg font-black text-[var(--color-blue)]">
+                        Rs.{product.priceInr}
+                     </p>
+                  </div>
+
+                  <div className="mt-6 flex items-center gap-4">
+                     <div className="flex-1 space-y-2">
+                        <div className="flex items-center justify-between text-[10px] font-black uppercase tracking-wider text-slate-400">
+                           <span>Stock Level</span>
+                           <span className={product.stockQuantity <= product.lowStockThreshold ? "text-red-600 font-black" : "text-emerald-600 font-black"}>
+                              {product.stockQuantity} Left
+                           </span>
+                        </div>
+                        <div className="h-1.5 w-full overflow-hidden rounded-full bg-slate-100 p-0.5 border border-slate-200/50">
+                           <div 
+                              className={`h-full rounded-full transition-all duration-500 ${product.stockQuantity <= product.lowStockThreshold ? 'bg-red-600' : 'bg-emerald-500'}`} 
+                              style={{ width: `${Math.min(100, (product.stockQuantity / 50) * 100)}%` }} 
+                           />
+                        </div>
+                     </div>
+                     
+                     <div className="flex flex-col items-center gap-1">
+                        <input
+                          type="number"
+                          value={stockAdjustments[product.id] ?? 0}
+                          onChange={(e) => setStockAdjustments(c => ({ ...c, [product.id]: Number(e.target.value) }))}
+                          className="w-14 rounded-lg border border-slate-100 bg-slate-50 p-1 text-center text-xs font-black text-[var(--color-blue)] focus:ring-2 focus:ring-[var(--color-orange)]/20 outline-none"
+                        />
+                        <button 
+                           onClick={() => adjustStock(product)}
+                           className="text-[8px] font-black uppercase tracking-tighter text-[var(--color-orange)] hover:underline"
+                        >
+                           Adjust
+                        </button>
+                     </div>
+                  </div>
+                </div>
+              </div>
+            ))}
+          </div>
         </div>
       </div>
     </AdminShell>
