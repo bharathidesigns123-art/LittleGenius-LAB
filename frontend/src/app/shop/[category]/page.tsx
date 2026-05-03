@@ -3,6 +3,8 @@ import { StorefrontShell } from "@/components/site/storefront-shell";
 import { SectionHeading } from "@/components/ui/section-heading";
 import { getCategories, getProducts } from "@/lib/api";
 
+export const dynamic = "force-dynamic";
+
 type CategoryPageProps = {
   params: Promise<{ category: string }>;
 };
