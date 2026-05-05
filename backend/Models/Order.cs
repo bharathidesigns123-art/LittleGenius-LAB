@@ -18,7 +18,7 @@ public sealed class Order
     public string Pincode { get; set; } = string.Empty;
     public string Status { get; set; } = OrderStatuses.Pending;
     public string PaymentStatus { get; set; } = PaymentStatuses.Pending;
-    public string PaymentMethod { get; set; } = "Cash on Delivery";
+    public string PaymentMethod { get; set; } = "Razorpay";
     public decimal SubtotalInr { get; set; }
     public decimal ShippingFeeInr { get; set; }
     public decimal TotalPriceInr { get; set; }
