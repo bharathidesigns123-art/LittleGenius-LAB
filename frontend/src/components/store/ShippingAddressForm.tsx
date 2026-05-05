@@ -1,13 +1,15 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
 import { zodResolver } from "@hookform/resolvers/zod";
-import { useForm, useWatch } from "react-hook-form";
+import { Controller, useForm, useWatch } from "react-hook-form";
 import { z } from "zod";
+import type { NominatimSearchHit } from "@/lib/nominatim-address";
+import { mapNominatimHitToIndianAddress } from "@/lib/nominatim-address";
 
 const shippingAddressSchema = z.object({
   fullName: z.string().trim().min(2, "Full name is required"),
-  phoneNumber: z.string().regex(/^\d{10}$/, "Phone number must be exactly 10 digits"),
+  phone: z.string().regex(/^\d{10}$/, "Phone number must be exactly 10 digits"),
   email: z.string().trim().email("Enter a valid email address"),
   addressLine1: z.string().trim().min(5, "Address line 1 is required"),
   addressLine2: z.string().trim().optional(),
@@ -34,6 +36,10 @@ type PostalApiResponse = {
   }> | null;
 };
 
+const DEBOUNCE_MS = 500;
+
+export type { NominatimSearchHit } from "@/lib/nominatim-address";
+
 const inputClass =
   "w-full rounded-2xl border border-[var(--color-border)] bg-white px-4 py-3 text-sm text-[var(--color-ink)] outline-none transition focus:border-[var(--color-blue)] focus:ring-4 focus:ring-[var(--color-blue)]/10 disabled:bg-slate-50 disabled:text-slate-500";
 
@@ -42,6 +48,14 @@ const errorClass = "text-xs font-medium text-red-600";
 
 export function ShippingAddressForm({ defaultValues, onSubmit }: ShippingAddressFormProps) {
   const [isFetchingPincode, setIsFetchingPincode] = useState(false);
+  const [suggestions, setSuggestions] = useState<NominatimSearchHit[]>([]);
+  const [addressSuggestLoading, setAddressSuggestLoading] = useState(false);
+  const [addressSuggestOpen, setAddressSuggestOpen] = useState(false);
+  const [highlightIndex, setHighlightIndex] = useState(-1);
+
+  const blurCloseTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const suggestionAbortRef = useRef<AbortController | null>(null);
+  const debounceTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
   const {
     register,
@@ -56,7 +70,7 @@ export function ShippingAddressForm({ defaultValues, onSubmit }: ShippingAddress
     mode: "onChange",
     defaultValues: {
       fullName: "",
-      phoneNumber: "",
+      phone: "",
       email: "",
       addressLine1: "",
       addressLine2: "",
@@ -68,6 +82,53 @@ export function ShippingAddressForm({ defaultValues, onSubmit }: ShippingAddress
   });
 
   const pincode = useWatch({ control, name: "pincode" });
+
+  const clearBlurTimer = () => {
+    if (blurCloseTimer.current) {
+      clearTimeout(blurCloseTimer.current);
+      blurCloseTimer.current = null;
+    }
+  };
+
+  const fetchSuggestions = useCallback(async (term: string) => {
+    const q = term.trim();
+    if (q.length < 3) {
+      setSuggestions([]);
+      setAddressSuggestLoading(false);
+      return;
+    }
+
+    suggestionAbortRef.current?.abort();
+    const controller = new AbortController();
+    suggestionAbortRef.current = controller;
+
+    setAddressSuggestLoading(true);
+    setSuggestions([]);
+
+    try {
+      const response = await fetch(`/api/nominatim/search?q=${encodeURIComponent(q)}`, {
+        signal: controller.signal,
+      });
+      if (!response.ok) {
+        setSuggestions([]);
+        return;
+      }
+      const data = (await response.json()) as NominatimSearchHit[];
+      if (!controller.signal.aborted) {
+        setSuggestions(Array.isArray(data) ? data : []);
+        setHighlightIndex(-1);
+      }
+    } catch (error) {
+      if (error instanceof DOMException && error.name === "AbortError") {
+        return;
+      }
+      setSuggestions([]);
+    } finally {
+      if (!controller.signal.aborted) {
+        setAddressSuggestLoading(false);
+      }
+    }
+  }, []);
 
   useEffect(() => {
     const normalizedPincode = pincode?.trim() ?? "";
@@ -128,8 +189,38 @@ export function ShippingAddressForm({ defaultValues, onSubmit }: ShippingAddress
     return () => controller.abort();
   }, [clearErrors, pincode, setError, setValue]);
 
+  useEffect(() => {
+    return () => {
+      clearBlurTimer();
+      if (debounceTimerRef.current) {
+        clearTimeout(debounceTimerRef.current);
+      }
+      suggestionAbortRef.current?.abort();
+    };
+  }, []);
+
   const submitAddress = async (values: ShippingAddressFormValues) => {
     await onSubmit?.(values);
+  };
+
+  const applySuggestion = (hit: NominatimSearchHit) => {
+    const mapped = mapNominatimHitToIndianAddress(hit);
+    setValue("addressLine1", mapped.line1, { shouldDirty: true, shouldValidate: true });
+    if (mapped.pincode.length === 6) {
+      setValue("pincode", mapped.pincode, { shouldDirty: true, shouldValidate: true });
+    }
+    if (mapped.city) {
+      setValue("city", mapped.city, { shouldDirty: true, shouldValidate: true });
+    }
+    if (mapped.state) {
+      setValue("state", mapped.state, { shouldDirty: true, shouldValidate: true });
+    }
+    clearErrors(["addressLine1", "pincode", "city", "state"]);
+    setSuggestions([]);
+    setAddressSuggestOpen(false);
+    setHighlightIndex(-1);
+    suggestionAbortRef.current?.abort();
+    setAddressSuggestLoading(false);
   };
 
   return (
@@ -147,9 +238,9 @@ export function ShippingAddressForm({ defaultValues, onSubmit }: ShippingAddress
         </label>
 
         <label className="flex flex-col gap-2">
-          <span className={labelClass}>Phone Number</span>
+          <span className={labelClass}>Phone</span>
           <input
-            {...register("phoneNumber", {
+            {...register("phone", {
               onChange: (event) => {
                 event.target.value = event.target.value.replace(/\D/g, "").slice(0, 10);
               },
@@ -159,7 +250,7 @@ export function ShippingAddressForm({ defaultValues, onSubmit }: ShippingAddress
             inputMode="numeric"
             autoComplete="tel"
           />
-          {errors.phoneNumber ? <span className={errorClass}>{errors.phoneNumber.message}</span> : null}
+          {errors.phone ? <span className={errorClass}>{errors.phone.message}</span> : null}
         </label>
 
         <label className="flex flex-col gap-2 md:col-span-2">
@@ -174,16 +265,119 @@ export function ShippingAddressForm({ defaultValues, onSubmit }: ShippingAddress
           {errors.email ? <span className={errorClass}>{errors.email.message}</span> : null}
         </label>
 
-        <label className="flex flex-col gap-2 md:col-span-2">
+        <div className="relative z-20 md:col-span-2">
           <span className={labelClass}>Address Line 1</span>
-          <input
-            {...register("addressLine1")}
-            className={inputClass}
-            placeholder="House no, street, area"
-            autoComplete="address-line1"
+          <p className="mt-1 text-xs text-[var(--color-ink-soft)]">Start typing for India-wide address suggestions (OpenStreetMap).</p>
+          <Controller
+            name="addressLine1"
+            control={control}
+            render={({ field }) => (
+              <div className="relative mt-2">
+                <input
+                  {...field}
+                  className={inputClass}
+                  placeholder="House no, street, area — search as you type"
+                  autoComplete="street-address"
+                  aria-expanded={addressSuggestOpen}
+                  aria-controls="address-suggest-list"
+                  aria-activedescendant={
+                    highlightIndex >= 0 ? `address-suggest-${highlightIndex}` : undefined
+                  }
+                  onChange={(event) => {
+                    field.onChange(event);
+                    const next = event.target.value;
+                    setAddressSuggestOpen(true);
+                    if (debounceTimerRef.current) {
+                      clearTimeout(debounceTimerRef.current);
+                    }
+                    debounceTimerRef.current = setTimeout(() => {
+                      void fetchSuggestions(next);
+                    }, DEBOUNCE_MS);
+                  }}
+                  onFocus={() => {
+                    clearBlurTimer();
+                    setAddressSuggestOpen(true);
+                    const q = field.value?.trim() ?? "";
+                    if (q.length >= 3) {
+                      if (debounceTimerRef.current) {
+                        clearTimeout(debounceTimerRef.current);
+                      }
+                      debounceTimerRef.current = setTimeout(() => {
+                        void fetchSuggestions(q);
+                      }, DEBOUNCE_MS);
+                    }
+                  }}
+                  onBlur={() => {
+                    blurCloseTimer.current = setTimeout(() => {
+                      setAddressSuggestOpen(false);
+                      setHighlightIndex(-1);
+                    }, 180);
+                  }}
+                  onKeyDown={(event) => {
+                    if (!addressSuggestOpen || suggestions.length === 0) {
+                      return;
+                    }
+                    if (event.key === "ArrowDown") {
+                      event.preventDefault();
+                      setHighlightIndex((i) => Math.min(i + 1, suggestions.length - 1));
+                    } else if (event.key === "ArrowUp") {
+                      event.preventDefault();
+                      setHighlightIndex((i) => Math.max(i - 1, 0));
+                    } else if (event.key === "Enter") {
+                      event.preventDefault();
+                      const pick =
+                        highlightIndex >= 0 ? suggestions[highlightIndex] : suggestions[0];
+                      if (pick) {
+                        applySuggestion(pick);
+                      }
+                    } else if (event.key === "Escape") {
+                      setAddressSuggestOpen(false);
+                      setHighlightIndex(-1);
+                    }
+                  }}
+                />
+
+                {addressSuggestOpen && (addressSuggestLoading || suggestions.length > 0) ? (
+                  <ul
+                    id="address-suggest-list"
+                    role="listbox"
+                    className="absolute left-0 right-0 top-full z-30 mt-2 max-h-64 overflow-auto rounded-2xl border border-[var(--color-border)] bg-white py-2 shadow-xl shadow-slate-900/10"
+                  >
+                    {addressSuggestLoading ? (
+                      <li className="flex items-center gap-2 px-4 py-3 text-sm text-[var(--color-ink-soft)]">
+                        <span
+                          className="inline-block h-4 w-4 animate-spin rounded-full border-2 border-[var(--color-blue)]/25 border-t-[var(--color-blue)]"
+                          aria-hidden
+                        />
+                        Loading suggestions…
+                      </li>
+                    ) : null}
+                    {!addressSuggestLoading &&
+                      suggestions.map((hit, index) => (
+                        <li key={`${hit.display_name}-${index}`} role="presentation">
+                          <button
+                            type="button"
+                            role="option"
+                            id={`address-suggest-${index}`}
+                            aria-selected={highlightIndex === index}
+                            className={`w-full px-4 py-3 text-left text-sm leading-snug transition hover:bg-[var(--color-surface)] ${
+                              highlightIndex === index ? "bg-[var(--color-surface)]" : ""
+                            }`}
+                            onMouseEnter={() => setHighlightIndex(index)}
+                            onMouseDown={(event) => event.preventDefault()}
+                            onClick={() => applySuggestion(hit)}
+                          >
+                            {hit.display_name}
+                          </button>
+                        </li>
+                      ))}
+                  </ul>
+                ) : null}
+              </div>
+            )}
           />
           {errors.addressLine1 ? <span className={errorClass}>{errors.addressLine1.message}</span> : null}
-        </label>
+        </div>
 
         <label className="flex flex-col gap-2 md:col-span-2">
           <span className={labelClass}>Address Line 2</span>
