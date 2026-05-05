@@ -386,14 +386,14 @@ public static class StorefrontEndpoints
             AppDbContext db,
             INotificationQueue notificationQueue) =>
         {
-            if (string.Equals(request.PaymentMethod.Trim(), "Razorpay", StringComparison.OrdinalIgnoreCase))
+            return Results.BadRequest(new
             {
-                return Results.BadRequest(new
-                {
-                    message =
-                        "Online card/UPI payment does not create an order until payment succeeds. Choose Razorpay on checkout and complete payment — your order is created automatically after Razorpay confirms."
-                });
-            }
+                message = "Cash on Delivery is temporarily unavailable. Please use Razorpay (Card/UPI) for your order."
+            });
+
+            /*
+            if (string.Equals(request.PaymentMethod.Trim(), "Razorpay", StringComparison.OrdinalIgnoreCase))
+            */
 
             var (cart, validationError) = await TryValidateCheckoutAsync(context, request, db);
             if (validationError is not null)

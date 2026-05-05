@@ -7,6 +7,7 @@ import { useEffect, useMemo, useState } from "react";
 import { useAuth } from "@/components/providers/auth-provider";
 import { useCart } from "@/components/providers/cart-provider";
 import { StorefrontShell } from "@/components/site/storefront-shell";
+import { NominatimAddressLine1Input } from "@/components/store/NominatimAddressLine1Input";
 import { EmptyState } from "@/components/ui/empty-state";
 import { browserApi } from "@/lib/browser-api";
 import { getCurrentUserIdentifier } from "@/lib/user-identifier";
@@ -28,7 +29,7 @@ export default function CheckoutPage() {
     state: "Tamil Nadu",
     country: "India",
     pincode: "",
-    paymentMethod: "Cash on Delivery",
+    paymentMethod: "Razorpay",
     notes: "",
   });
   const [submitting, setSubmitting] = useState(false);
@@ -178,7 +179,7 @@ export default function CheckoutPage() {
                 Shipping and payment
               </h1>
               <p className="mt-3 text-sm text-[var(--color-ink-soft)]">
-                Delivery in 2-4 days | Secure payments via Razorpay / UPI / COD
+                 Delivery in 2-4 days | Secure payments via Razorpay / UPI
               </p>
               <div className="mt-4 flex flex-wrap gap-2 text-xs font-semibold text-[var(--color-ink-soft)]">
                 <span className="rounded-full bg-[var(--color-surface)] px-3 py-2">Secure payment</span>
@@ -210,12 +211,24 @@ export default function CheckoutPage() {
                     {fieldErrors[key] ? <span className="text-xs text-red-600">{fieldErrors[key]}</span> : null}
                   </label>
                 ))}
-                <label className="flex flex-col gap-2 md:col-span-2">
+                <label className="flex w-full min-w-0 flex-col gap-2 md:col-span-2">
                   <span className="text-sm font-semibold text-[var(--color-blue)]">Address line 1</span>
-                  <input
+                  <p className="text-xs text-[var(--color-ink-soft)]">
+                    Type at least 3 characters — India-wide suggestions via OpenStreetMap (debounced).
+                  </p>
+                  <NominatimAddressLine1Input
                     value={form.line1}
-                    onChange={(event) => setForm((current) => ({ ...current, line1: event.target.value }))}
-                    className="rounded-[1.4rem] border border-[var(--color-border)] px-4 py-3 outline-none"
+                    onChange={(line1) => setForm((current) => ({ ...current, line1 }))}
+                    onPick={(mapped) =>
+                      setForm((current) => ({
+                        ...current,
+                        line1: mapped.line1,
+                        ...(mapped.pincode.length === 6 ? { pincode: mapped.pincode } : {}),
+                        ...(mapped.city ? { city: mapped.city } : {}),
+                        ...(mapped.state ? { state: mapped.state } : {}),
+                      }))
+                    }
+                    inputClassName="rounded-[1.4rem] border border-[var(--color-border)] px-4 py-3 outline-none transition focus:border-[var(--color-blue)] focus:ring-4 focus:ring-[var(--color-blue)]/10"
                     required
                   />
                   {fieldErrors.line1 ? <span className="text-xs text-red-600">{fieldErrors.line1}</span> : null}
@@ -245,7 +258,6 @@ export default function CheckoutPage() {
                     }
                     className="rounded-[1.4rem] border border-[var(--color-border)] px-4 py-3 outline-none"
                   >
-                    <option>Cash on Delivery</option>
                     <option>Razorpay</option>
                   </select>
                 </label>
