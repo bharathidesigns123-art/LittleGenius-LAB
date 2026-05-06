@@ -21,6 +21,7 @@ import {
 import { AdminShell } from "@/components/admin/admin-shell";
 import { useAuth } from "@/components/providers/auth-provider";
 import { browserApi } from "@/lib/browser-api";
+import { formatUtcDate } from "@/lib/date-time";
 import type { AdminUserRow } from "@/lib/types";
 
 const ROLE_ADMIN = "Admin";
@@ -213,7 +214,7 @@ export default function AdminUsersPage() {
                                    {u.isActive ? "Authorized" : "Restricted"}
                                 </span>
                              </div>
-                             <p className="mt-1 text-[8px] font-bold text-slate-400 uppercase tracking-tighter">Joined {new Date(u.createdAtUtc).toLocaleDateString()}</p>
+                             <p className="mt-1 text-[8px] font-bold text-slate-400 uppercase tracking-tighter">Joined {formatUtcDate(u.createdAtUtc)}</p>
                           </td>
                           <td className="px-8 py-5 text-right">
                              <div className="flex justify-end gap-2">

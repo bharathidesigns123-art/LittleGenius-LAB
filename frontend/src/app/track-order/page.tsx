@@ -3,6 +3,7 @@
 import { useState } from "react";
 import { StorefrontShell } from "@/components/site/storefront-shell";
 import { browserApi } from "@/lib/browser-api";
+import { formatUtcDate } from "@/lib/date-time";
 import type { TrackOrderResponse } from "@/lib/types";
 
 const ORDER_STEPS = ["Printing", "Packed", "Shipped", "Delivered"];
@@ -154,9 +155,9 @@ export default function TrackOrderPage() {
                 ) : null}
                 {result.trackingNumber ? <p>Tracking: {result.trackingNumber}</p> : null}
                 {result.deliveredAtUtc ? (
-                  <p>Delivered: {new Date(result.deliveredAtUtc).toLocaleDateString("en-IN")}</p>
+                  <p>Delivered: {formatUtcDate(result.deliveredAtUtc)}</p>
                 ) : result.shippedAtUtc ? (
-                  <p>Shipped: {new Date(result.shippedAtUtc).toLocaleDateString("en-IN")}</p>
+                  <p>Shipped: {formatUtcDate(result.shippedAtUtc)}</p>
                 ) : null}
               </div>
               <div className="mt-5 flex flex-wrap items-center gap-3">

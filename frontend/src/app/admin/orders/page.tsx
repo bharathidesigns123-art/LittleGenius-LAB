@@ -19,6 +19,7 @@ import {
 import { AdminShell } from "@/components/admin/admin-shell";
 import { useAuth } from "@/components/providers/auth-provider";
 import { browserApi } from "@/lib/browser-api";
+import { parseUtcDate } from "@/lib/date-time";
 import type { OrderSummary } from "@/lib/types";
 
 const ORDER_STATUSES = ["Pending", "Printing", "Packed", "Shipped", "Delivered", "Cancelled"];
@@ -484,7 +485,7 @@ export default function AdminOrdersPage() {
         <div className="grid gap-6">
           {orders.map((order) => {
             const draft = drafts[order.id];
-            const date = new Date(order.createdAtUtc);
+            const date = parseUtcDate(order.createdAtUtc);
             return (
               <div key={order.id} className="surface-card card-shadow overflow-hidden rounded-[2.5rem] border border-transparent transition-all hover:border-[var(--color-blue)]/10">
                 <div className="flex flex-col lg:flex-row">
@@ -516,7 +517,13 @@ export default function AdminOrdersPage() {
                          <div>
                             <p className="text-[10px] font-bold uppercase tracking-wider text-slate-400 leading-none">Placed on</p>
                             <p className="mt-1 text-sm font-bold text-[var(--color-blue)]">
-                              {date.toLocaleString("en-IN", { day: "2-digit", month: "short", year: "numeric" })}
+                              {date?.toLocaleString("en-IN", {
+                                day: "2-digit",
+                                month: "short",
+                                year: "numeric",
+                                hour: "numeric",
+                                minute: "2-digit",
+                              }) ?? ""}
                             </p>
                          </div>
                       </div>

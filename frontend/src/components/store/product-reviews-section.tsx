@@ -4,6 +4,7 @@ import Link from "next/link";
 import { useEffect, useRef, useState } from "react";
 import { useAuth } from "@/components/providers/auth-provider";
 import { browserApi } from "@/lib/browser-api";
+import { formatUtcDate } from "@/lib/date-time";
 import type { ProductReviewSummary, ReviewEligibility } from "@/lib/types";
 
 const filledStar = "\u2605";
@@ -203,9 +204,7 @@ export function ProductReviewsSection({
                     </p>
                   )}
                   <p className="mt-5 text-xs font-semibold uppercase tracking-[0.18em] text-[var(--color-ink-soft)]">
-                    {new Intl.DateTimeFormat("en-IN", { dateStyle: "medium" }).format(
-                      new Date(review.updatedAtUtc),
-                    )}
+                    {formatUtcDate(review.updatedAtUtc, { dateStyle: "medium" })}
                   </p>
                 </article>
               ))}
@@ -266,9 +265,7 @@ export function ProductReviewsSection({
               {selectedOrder ? (
                 <p className="rounded-[1.2rem] bg-[var(--color-surface)] px-4 py-3 text-sm leading-7 text-[var(--color-ink-soft)]">
                   Delivered on{" "}
-                  {new Intl.DateTimeFormat("en-IN", { dateStyle: "medium" }).format(
-                    new Date(selectedOrder.deliveredAtUtc),
-                  )}
+                  {formatUtcDate(selectedOrder.deliveredAtUtc, { dateStyle: "medium" })}
                   {selectedOrder.existingReview ? ". Your existing review will be updated." : "."}
                 </p>
               ) : null}

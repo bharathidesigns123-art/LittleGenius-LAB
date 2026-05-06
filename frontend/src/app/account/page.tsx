@@ -7,6 +7,7 @@ import { useAuth } from "@/components/providers/auth-provider";
 import { StorefrontShell } from "@/components/site/storefront-shell";
 import { EmptyState } from "@/components/ui/empty-state";
 import { browserApi } from "@/lib/browser-api";
+import { formatUtcDate } from "@/lib/date-time";
 import type { OrderSummary } from "@/lib/types";
 
 const ORDER_STEPS = ["Printing", "Packed", "Shipped", "Delivered"];
@@ -247,9 +248,9 @@ export default function AccountPage() {
                       ) : null}
                       {order.trackingNumber ? <p>Tracking: {order.trackingNumber}</p> : null}
                       {order.deliveredAtUtc ? (
-                        <p>Delivered: {new Date(order.deliveredAtUtc).toLocaleDateString("en-IN")}</p>
+                        <p>Delivered: {formatUtcDate(order.deliveredAtUtc)}</p>
                       ) : order.shippedAtUtc ? (
-                        <p>Shipped: {new Date(order.shippedAtUtc).toLocaleDateString("en-IN")}</p>
+                        <p>Shipped: {formatUtcDate(order.shippedAtUtc)}</p>
                       ) : null}
                       {order.orderType === "custom" ? (
                         <p className="font-semibold text-[var(--color-ink-soft)]">
