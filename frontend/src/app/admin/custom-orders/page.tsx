@@ -22,6 +22,7 @@ import { AdminShell } from "@/components/admin/admin-shell";
 import { useAuth } from "@/components/providers/auth-provider";
 import { resolveAssetUrl } from "@/lib/asset-url";
 import { browserApi } from "@/lib/browser-api";
+import { parseUtcDate } from "@/lib/date-time";
 import type { AdminCustomOrder } from "@/lib/types";
 
 const CUSTOM_STATUSES = [
@@ -211,7 +212,7 @@ export default function AdminCustomOrdersPage() {
         <div className="grid gap-6">
            {requests.map((request) => {
               const draft = drafts[request.id] ?? makeDraft(request);
-              const date = new Date(request.createdAtUtc);
+              const date = parseUtcDate(request.createdAtUtc);
               return (
                  <div key={request.id} className="surface-card card-shadow overflow-hidden rounded-[2.5rem] border border-transparent transition-all hover:border-[var(--color-blue)]/10 bg-white">
                     <div className="flex flex-col lg:flex-row">
@@ -239,7 +240,7 @@ export default function AdminCustomOrdersPage() {
                                 <div className="h-10 w-10 flex items-center justify-center rounded-xl bg-white shadow-sm text-slate-400"><Calendar size={18} /></div>
                                 <div>
                                    <p className="text-[10px] font-black uppercase tracking-widest text-slate-400 leading-none">Created</p>
-                                   <p className="mt-1 text-sm font-bold text-[var(--color-blue)]">{date.toLocaleString("en-IN", { day: '2-digit', month: 'short' })}</p>
+                                   <p className="mt-1 text-sm font-bold text-[var(--color-blue)]">{date?.toLocaleString("en-IN", { day: '2-digit', month: 'short', hour: 'numeric', minute: '2-digit' }) ?? ""}</p>
                                 </div>
                              </div>
 

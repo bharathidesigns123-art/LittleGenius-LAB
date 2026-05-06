@@ -6,6 +6,7 @@ import { Suspense, useEffect, useState } from "react";
 import { StorefrontShell } from "@/components/site/storefront-shell";
 import { useAuth } from "@/components/providers/auth-provider";
 import { browserApi } from "@/lib/browser-api";
+import { formatUtcDateTime } from "@/lib/date-time";
 import type { OrderSummary } from "@/lib/types";
 import { getCurrentUserIdentifier } from "@/lib/user-identifier";
 
@@ -112,7 +113,7 @@ function OrdersContent() {
                       {order.orderType === "custom" ? "Custom" : "Order"} · {order.orderCode}
                     </p>
                     <p className="mt-1 text-sm text-[var(--color-ink-soft)]">
-                      {new Date(order.createdAtUtc).toLocaleString("en-IN", {
+                      {formatUtcDateTime(order.createdAtUtc, {
                         dateStyle: "medium",
                         timeStyle: "short",
                       })}
