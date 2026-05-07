@@ -53,25 +53,22 @@ export function InlineLoader({
 
 export function PageLoader({
   title = "Loading LittleGenius LAB",
-  message = "Getting everything ready...",
 }: {
   title?: string;
-  message?: string;
 }) {
   return (
-    <div className="page-shell flex min-h-[55vh] items-center justify-center py-16">
-      <div className="w-full max-w-md rounded-[2rem] border border-white/80 bg-white/90 p-7 text-center shadow-brand-card backdrop-blur">
-        <div className="mx-auto flex h-16 w-16 items-center justify-center rounded-full bg-brand-primary/10 text-brand-primary">
-          <LoadingSpinner className="h-8 w-8 text-brand-primary" label={title} />
+    <div className="flex min-h-[55vh] items-center justify-center bg-transparent py-16" role="status" aria-label={title}>
+      <div className="toy-loader" aria-hidden="true">
+        <div className="toy-loader-track">
+          <span className="toy-loader-block toy-loader-block-cyan" />
+          <span className="toy-loader-block toy-loader-block-orange" />
+          <span className="toy-loader-block toy-loader-block-pink" />
+          <span className="toy-loader-block toy-loader-block-yellow" />
         </div>
-        <h1 className="display-font mt-5 text-2xl font-semibold text-[var(--color-blue)]">
-          {title}
-        </h1>
-        <p className="mt-2 text-sm font-semibold text-[var(--color-ink-soft)]">
-          {message}
-        </p>
-        <div className="mt-6 overflow-hidden rounded-full bg-brand-primary/10">
-          <div className="app-loader-bar h-2 w-1/2 rounded-full bg-gradient-to-r from-brand-primary via-brand-accent to-brand-secondary" />
+        <div className="toy-loader-base">
+          <span />
+          <span />
+          <span />
         </div>
       </div>
     </div>
