@@ -1,12 +1,21 @@
 import Image from "next/image";
 import Link from "next/link";
+import type { Metadata } from "next";
 import { StorefrontShell } from "@/components/site/storefront-shell";
 import { ProductCard } from "@/components/store/product-card";
 import { SectionHeading } from "@/components/ui/section-heading";
 import { getHomeData } from "@/lib/api";
 import { resolveAssetUrl } from "@/lib/asset-url";
 
-export const dynamic = "force-dynamic";
+export const revalidate = 300;
+export const metadata: Metadata = {
+  title: "3D Printed Toys, Keychains and Custom Gifts in India",
+  description:
+    "Buy 3D printed toys, custom keychains, anime keychains, and personalized 3D printed gifts from LittleGenius LAB with India-wide shipping.",
+  alternates: {
+    canonical: "/",
+  },
+};
 
 export default async function HomePage() {
   const data = await getHomeData();
@@ -14,18 +23,47 @@ export default async function HomePage() {
   const trendingProducts = data.featuredProducts.slice(0, 3);
   const bestSellers = data.featuredProducts.slice(0, 6);
   const topCategories = data.categories.slice(0, 4);
+  const organizationSchema = {
+    "@context": "https://schema.org",
+    "@type": "Organization",
+    name: "LittleGenius LAB",
+    url: "https://littlegeniuslab.in",
+    logo: "https://littlegeniuslab.in/android-chrome-512x512.png",
+    contactPoint: [
+      {
+        "@type": "ContactPoint",
+        contactType: "customer support",
+        email: "hello@littlegeniuslab.in",
+        availableLanguage: ["en", "ta", "hi"],
+      },
+    ],
+    sameAs: ["https://wa.me/919876543210"],
+  };
+  const webSiteSchema = {
+    "@context": "https://schema.org",
+    "@type": "WebSite",
+    name: "LittleGenius LAB",
+    url: "https://littlegeniuslab.in",
+    potentialAction: {
+      "@type": "SearchAction",
+      target: "https://littlegeniuslab.in/shop?q={search_term_string}",
+      "query-input": "required name=search_term_string",
+    },
+  };
 
   return (
     <StorefrontShell>
+      <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(organizationSchema) }} />
+      <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(webSiteSchema) }} />
       <section className="overflow-hidden border-b border-[var(--color-border)] bg-[linear-gradient(180deg,#fffaf2_0%,#f4fbff_100%)]">
         <div className="page-shell grid gap-5 py-5 lg:grid-cols-[0.9fr_1.1fr] lg:items-center lg:py-7">
           <div className="animate-home-rise">
             <span className="status-pill status-pill-yellow w-fit">{data.hero.eyebrow}</span>
             <h1 className="display-font mt-3 max-w-2xl text-4xl font-semibold leading-tight text-[var(--color-blue)] sm:text-5xl lg:text-6xl">
-              3D-printed toys kids spot instantly
+              3D printed toys, custom keychains, and gifts kids love
             </h1>
             <p className="mt-3 max-w-xl text-sm leading-7 text-[var(--color-ink-soft)] sm:text-base">
-              Colorful ready-to-ship animals, robots, chibi figures, and custom toys made in India with safe PLA finishes.
+              Explore ready-to-ship 3D printed toys, anime-style keychains, and custom printed products made in India with safe PLA finishes.
             </p>
             <div className="mt-5 flex flex-col gap-3 sm:flex-row">
               <Link href="/shop" className="site-button site-button-primary">

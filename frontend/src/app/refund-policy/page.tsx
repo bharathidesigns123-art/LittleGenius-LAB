@@ -1,4 +1,15 @@
 import { StorefrontShell } from "@/components/site/storefront-shell";
+import type { Metadata } from "next";
+import Link from "next/link";
+
+export const metadata: Metadata = {
+  title: "Refund and Cancellation Policy",
+  description:
+    "Refund and cancellation policy for LittleGenius LAB 3D printed toys, custom keychains, and personalized printed products.",
+  alternates: {
+    canonical: "/refund-policy",
+  },
+};
 
 export default function RefundPolicyPage() {
   return (
@@ -39,6 +50,9 @@ export default function RefundPolicyPage() {
             <h2 className="text-2xl font-bold text-[var(--color-blue)] mb-4">Questions?</h2>
             <p>If you have any doubts about your order, please chat with us on WhatsApp before purchasing. We are happy to help!</p>
           </section>
+          <p className="text-sm">
+            Start with our <Link href="/shop" className="font-semibold text-[var(--color-blue)]">ready-made 3D printed toys</Link> or request a <Link href="/custom-order" className="font-semibold text-[var(--color-blue)]">custom product</Link>.
+          </p>
         </div>
       </section>
     </StorefrontShell>

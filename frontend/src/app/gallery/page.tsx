@@ -1,5 +1,15 @@
 import { StorefrontShell } from "@/components/site/storefront-shell";
 import Link from "next/link";
+import type { Metadata } from "next";
+
+export const metadata: Metadata = {
+  title: "3D Printed Toys and Custom Keychain Gallery",
+  description:
+    "Explore the LittleGenius LAB gallery of 3D printed toys, anime keychains, and personalized custom printed products.",
+  alternates: {
+    canonical: "/gallery",
+  },
+};
 
 export default function GalleryPage() {
   const categories = [
@@ -29,7 +39,7 @@ export default function GalleryPage() {
             Fresh Off the Printer
           </h1>
           <p className="mt-6 text-lg text-[var(--color-ink-soft)] max-w-2xl mx-auto">
-            A peek inside our studio. Real photos of real toys made for families just like yours.
+            A peek inside our studio with real 3D printed toys, custom keychains, and personalized printed gifts made for families like yours.
           </p>
         </div>
 
@@ -68,6 +78,9 @@ export default function GalleryPage() {
            <p className="text-[var(--color-ink-soft)] mb-8 max-w-lg mx-auto">
               We post unboxing videos, 3D printing timelapses, and new design reveals every day.
            </p>
+          <p className="mb-4 text-sm text-[var(--color-ink-soft)]">
+            Want to order now? Browse the <Link href="/shop" className="font-semibold text-[var(--color-blue)]">shop collection</Link> or create a <Link href="/custom-order" className="font-semibold text-[var(--color-blue)]">custom 3D printed gift</Link>.
+          </p>
            <a 
              href="https://instagram.com/littlegeniuslab" 
              target="_blank" 

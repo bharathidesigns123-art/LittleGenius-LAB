@@ -1,4 +1,15 @@
 import { StorefrontShell } from "@/components/site/storefront-shell";
+import type { Metadata } from "next";
+import Link from "next/link";
+
+export const metadata: Metadata = {
+  title: "Terms of Service",
+  description:
+    "Review LittleGenius LAB terms for ordering 3D printed toys, custom keychains, anime keychains, and personalized 3D printed gifts.",
+  alternates: {
+    canonical: "/terms-of-service",
+  },
+};
 
 export default function TermsOfServicePage() {
   return (
@@ -38,6 +49,9 @@ export default function TermsOfServicePage() {
             <h2 className="text-2xl font-bold text-[var(--color-blue)] mb-4">6. Governing Law</h2>
             <p>These terms are governed by the laws of India and any disputes will be subject to the jurisdiction of the courts in Tamil Nadu.</p>
           </section>
+          <p className="text-sm">
+            Continue shopping from our <Link href="/shop" className="font-semibold text-[var(--color-blue)]">3D printed toy and keychain collection</Link>.
+          </p>
         </div>
       </section>
     </StorefrontShell>

@@ -13,6 +13,7 @@ export function SiteFooter() {
         <div>
           <p className="text-sm font-bold uppercase tracking-[0.24em] text-white/70">Shop</p>
           <div className="mt-4 flex flex-col gap-3 text-sm text-white/85">
+            <Link href="/shop">Shop All Toys</Link>
             <Link href="/shop/animals">Animals</Link>
             <Link href="/shop/robots">Robots</Link>
             <Link href="/shop/chibi">Chibi</Link>
