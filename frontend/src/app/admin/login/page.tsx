@@ -4,6 +4,7 @@ import { useRouter } from "next/navigation";
 import { useEffect, useState } from "react";
 import { Eye, EyeOff } from "lucide-react";
 import { useAuth } from "@/components/providers/auth-provider";
+import { LoadingButtonContent } from "@/components/ui/loading-indicator";
 
 export default function AdminLoginPage() {
   const router = useRouter();
@@ -73,9 +74,11 @@ export default function AdminLoginPage() {
           {error ? <p className="text-sm text-red-700">{error}</p> : null}
           <button
             disabled={loading || authLoading}
-            className="site-button site-button-primary w-full disabled:opacity-60"
+            className="site-button site-button-primary w-full disabled:cursor-wait disabled:opacity-60"
           >
-            {loading || authLoading ? "Signing in..." : "Login as admin"}
+            <LoadingButtonContent loading={loading || authLoading} loadingText="Signing in...">
+              Login as admin
+            </LoadingButtonContent>
           </button>
         </form>
       </div>

@@ -6,6 +6,7 @@ import { useState } from "react";
 import { Eye, EyeOff } from "lucide-react";
 import { StorefrontShell } from "@/components/site/storefront-shell";
 import { useAuth } from "@/components/providers/auth-provider";
+import { LoadingButtonContent } from "@/components/ui/loading-indicator";
 
 export default function SignupPage() {
   const router = useRouter();
@@ -85,8 +86,10 @@ export default function SignupPage() {
             {error ? (
               <div className="rounded-[1.4rem] bg-red-50 px-4 py-3 text-sm text-red-700">{error}</div>
             ) : null}
-            <button disabled={loading} className="site-button site-button-primary w-full disabled:opacity-60">
-              {loading ? "Creating account..." : "Create account"}
+            <button disabled={loading} className="site-button site-button-primary w-full disabled:cursor-wait disabled:opacity-60">
+              <LoadingButtonContent loading={loading} loadingText="Creating account...">
+                Create account
+              </LoadingButtonContent>
             </button>
           </form>
           <p className="mt-5 text-sm text-[var(--color-ink-soft)]">

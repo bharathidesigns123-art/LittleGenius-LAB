@@ -2,6 +2,7 @@
 
 import { useState } from "react";
 import { StorefrontShell } from "@/components/site/storefront-shell";
+import { LoadingButtonContent } from "@/components/ui/loading-indicator";
 import { browserApi } from "@/lib/browser-api";
 import { formatUtcDate } from "@/lib/date-time";
 import type { TrackOrderResponse } from "@/lib/types";
@@ -113,8 +114,10 @@ export default function TrackOrderPage() {
               placeholder="Phone number"
               required
             />
-            <button className="site-button site-button-primary md:col-span-2">
-              {loading ? "Tracking..." : "Track order"}
+            <button disabled={loading} className="site-button site-button-primary md:col-span-2 disabled:cursor-wait disabled:opacity-70">
+              <LoadingButtonContent loading={loading} loadingText="Tracking...">
+                Track order
+              </LoadingButtonContent>
             </button>
           </form>
           {error ? <p className="mt-4 text-sm font-semibold text-red-700">{error}</p> : null}
@@ -165,9 +168,11 @@ export default function TrackOrderPage() {
                   <button
                     onClick={cancelTrackedOrder}
                     disabled={cancelling}
-                    className="site-button site-button-secondary"
+                    className="site-button site-button-secondary disabled:cursor-wait disabled:opacity-70"
                   >
-                    {cancelling ? "Cancelling..." : "Cancel order"}
+                    <LoadingButtonContent loading={cancelling} loadingText="Cancelling...">
+                      Cancel order
+                    </LoadingButtonContent>
                   </button>
                 ) : null}
                 <p className="text-sm font-semibold text-[var(--color-ink-soft)]">

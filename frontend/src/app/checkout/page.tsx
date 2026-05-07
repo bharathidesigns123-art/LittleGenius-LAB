@@ -9,6 +9,7 @@ import { useCart } from "@/components/providers/cart-provider";
 import { StorefrontShell } from "@/components/site/storefront-shell";
 import { NominatimAddressLine1Input } from "@/components/store/NominatimAddressLine1Input";
 import { EmptyState } from "@/components/ui/empty-state";
+import { LoadingButtonContent, LoadingSpinner } from "@/components/ui/loading-indicator";
 import { browserApi } from "@/lib/browser-api";
 import type { Address } from "@/lib/types";
 import { getCurrentUserIdentifier } from "@/lib/user-identifier";
@@ -513,9 +514,11 @@ export default function CheckoutPage() {
                     type="button"
                     onClick={useCurrentLocation}
                     disabled={isLocating}
-                    className="site-button site-button-secondary px-5 py-2.5 text-xs"
+                    className="site-button site-button-secondary px-5 py-2.5 text-xs disabled:cursor-wait disabled:opacity-70"
                   >
-                    {isLocating ? "Locating..." : "Use my location"}
+                    <LoadingButtonContent loading={isLocating} loadingText="Locating...">
+                      Use my location
+                    </LoadingButtonContent>
                   </button>
                 </div>
                 {locationStatus ? (
@@ -649,7 +652,8 @@ export default function CheckoutPage() {
                       required
                     />
                     {isFetchingPincode ? (
-                      <span className="absolute right-3 top-1/2 -translate-y-1/2 text-xs font-bold text-brand-primary-dark">
+                      <span className="absolute right-3 top-1/2 inline-flex -translate-y-1/2 items-center gap-1.5 text-xs font-bold text-brand-primary-dark">
+                        <LoadingSpinner className="h-3.5 w-3.5 text-brand-primary" label="Checking pincode" />
                         Checking
                       </span>
                     ) : null}
@@ -747,8 +751,10 @@ export default function CheckoutPage() {
                 <div className="mt-5 rounded-[1.4rem] bg-red-50 px-4 py-3 text-sm text-red-700">{error}</div>
               ) : null}
 
-              <button disabled={submitting || isFetchingPincode} className="site-button site-button-primary mt-6 w-full">
-                {submitting ? "Placing order..." : "Place My Order"}
+              <button disabled={submitting || isFetchingPincode} className="site-button site-button-primary mt-6 w-full disabled:cursor-wait disabled:opacity-70">
+                <LoadingButtonContent loading={submitting} loadingText="Placing order...">
+                  Place My Order
+                </LoadingButtonContent>
               </button>
             </form>
 
@@ -798,9 +804,11 @@ export default function CheckoutPage() {
               type="submit"
               form="checkout-form"
               disabled={submitting || isFetchingPincode}
-              className="site-button site-button-primary min-w-44"
+              className="site-button site-button-primary min-w-44 disabled:cursor-wait disabled:opacity-70"
             >
-              {submitting ? "Placing..." : "Place Order"}
+              <LoadingButtonContent loading={submitting} loadingText="Placing...">
+                Place Order
+              </LoadingButtonContent>
             </button>
           </div>
         </div>
