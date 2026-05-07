@@ -4,6 +4,7 @@ import Link from "next/link";
 import { useSearchParams } from "next/navigation";
 import { Suspense, useEffect, useState } from "react";
 import { StorefrontShell } from "@/components/site/storefront-shell";
+import { SkeletonBlock } from "@/components/ui/loading-indicator";
 import { useAuth } from "@/components/providers/auth-provider";
 import { browserApi } from "@/lib/browser-api";
 import { formatUtcDateTime } from "@/lib/date-time";
@@ -87,7 +88,7 @@ function OrdersContent() {
         {loading || authLoading ? (
           <div className="grid gap-4">
             {[1, 2, 3].map((i) => (
-              <div key={i} className="h-40 animate-pulse rounded-[1.5rem] bg-white/60" />
+              <SkeletonBlock key={i} className="h-40 bg-white/70" />
             ))}
           </div>
         ) : error ? (
@@ -164,8 +165,8 @@ export default function OrdersPage() {
       fallback={
         <StorefrontShell>
           <div className="page-shell py-14">
-            <div className="h-10 w-48 animate-pulse rounded-xl bg-white/60" />
-            <div className="mt-6 h-40 animate-pulse rounded-[1.5rem] bg-white/60" />
+            <SkeletonBlock className="h-10 w-48 bg-white/70" />
+            <SkeletonBlock className="mt-6 h-40 bg-white/70" />
           </div>
         </StorefrontShell>
       }

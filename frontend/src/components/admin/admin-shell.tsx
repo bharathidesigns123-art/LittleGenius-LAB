@@ -3,7 +3,7 @@
 import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
 import { useEffect, useState } from "react";
-import { 
+import {
   LayoutDashboard, 
   Package, 
   Tags, 
@@ -19,6 +19,7 @@ import {
   Search
 } from "lucide-react";
 import { useAuth } from "@/components/providers/auth-provider";
+import { PageLoader } from "@/components/ui/loading-indicator";
 
 const links = [
   { href: "/admin", label: "Overview", icon: LayoutDashboard },
@@ -49,18 +50,14 @@ export function AdminShell({
 
   // Close mobile menu on route change
   useEffect(() => {
-    setIsMobileMenuOpen(false);
+    const timeout = window.setTimeout(() => setIsMobileMenuOpen(false), 0);
+    return () => window.clearTimeout(timeout);
   }, [pathname]);
 
   if (loading || !isAuthenticated || !isAdmin) {
     return (
       <div className="flex min-h-screen items-center justify-center bg-slate-50">
-        <div className="surface-card card-shadow max-w-md rounded-[2rem] px-8 py-12 text-center">
-          <div className="mx-auto h-12 w-12 animate-spin rounded-full border-4 border-[var(--color-orange)] border-t-transparent" />
-          <h1 className="display-font mt-6 text-2xl font-semibold text-[var(--color-blue)]">
-            Authenticating Admin...
-          </h1>
-        </div>
+        <PageLoader title="Authenticating admin" message="Checking dashboard access..." />
       </div>
     );
   }

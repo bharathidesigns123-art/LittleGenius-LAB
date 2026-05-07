@@ -6,6 +6,7 @@ import { useEffect, useState } from "react";
 import { Eye, EyeOff } from "lucide-react";
 import { StorefrontShell } from "@/components/site/storefront-shell";
 import { useAuth } from "@/components/providers/auth-provider";
+import { LoadingButtonContent } from "@/components/ui/loading-indicator";
 
 export default function LoginPage() {
   const router = useRouter();
@@ -80,9 +81,11 @@ export default function LoginPage() {
             ) : null}
             <button
               disabled={loading || authLoading}
-              className="site-button site-button-primary w-full disabled:opacity-60"
+              className="site-button site-button-primary w-full disabled:cursor-wait disabled:opacity-60"
             >
-              {loading || authLoading ? "Signing in..." : "Login"}
+              <LoadingButtonContent loading={loading || authLoading} loadingText="Signing in...">
+                Login
+              </LoadingButtonContent>
             </button>
           </form>
           <p className="mt-5 text-sm text-[var(--color-ink-soft)]">

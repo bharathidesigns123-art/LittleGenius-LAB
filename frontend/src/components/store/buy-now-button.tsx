@@ -1,7 +1,9 @@
 "use client";
 
 import { useRouter } from "next/navigation";
+import { useState } from "react";
 import { useCart } from "@/components/providers/cart-provider";
+import { LoadingButtonContent } from "@/components/ui/loading-indicator";
 
 export function BuyNowButton({
   product,
@@ -20,9 +22,10 @@ export function BuyNowButton({
 }) {
   const { items, addItem } = useCart();
   const router = useRouter();
+  const [isNavigating, setIsNavigating] = useState(false);
 
   const handleBuyNow = () => {
-    if (disabled) return;
+    if (disabled || isNavigating) return;
 
     const isInCart = items.some((item) => item.productId === product.id);
     
@@ -36,19 +39,22 @@ export function BuyNowButton({
       }, 1);
     }
 
-    // Small delay to ensure state update is processed (though usually synchronous in React, 
-    // it's safer for the navigation to happen in the next tick)
+    setIsNavigating(true);
     router.push("/checkout");
   };
 
   return (
     <button
       type="button"
-      disabled={disabled}
+      disabled={disabled || isNavigating}
       onClick={handleBuyNow}
-      className={className ?? "site-button site-button-secondary"}
+      className={`${className ?? "site-button site-button-secondary"} ${
+        disabled || isNavigating ? "cursor-wait opacity-70" : ""
+      }`}
     >
-      Buy Now
+      <LoadingButtonContent loading={isNavigating} loadingText="Opening checkout...">
+        Buy Now
+      </LoadingButtonContent>
     </button>
   );
 }

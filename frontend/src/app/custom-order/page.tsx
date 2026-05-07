@@ -5,6 +5,7 @@ import Link from "next/link";
 import { useMemo, useState } from "react";
 import { StorefrontShell } from "@/components/site/storefront-shell";
 import { useAuth } from "@/components/providers/auth-provider";
+import { LoadingButtonContent } from "@/components/ui/loading-indicator";
 import { browserApi } from "@/lib/browser-api";
 import { resolveAssetUrl } from "@/lib/asset-url";
 
@@ -209,8 +210,10 @@ export default function CustomOrderPage() {
                               }}
                               className="absolute inset-0 opacity-0 cursor-pointer"
                             />
-                            <div className="site-button site-button-secondary py-2 px-6 text-xs pointer-events-none">
-                              {uploading ? "Uploading..." : "Select File"}
+                            <div className="site-button site-button-secondary pointer-events-none px-6 py-2 text-xs">
+                              <LoadingButtonContent loading={uploading} loadingText="Uploading...">
+                                Select File
+                              </LoadingButtonContent>
                             </div>
                           </>
                         )}
@@ -350,9 +353,11 @@ export default function CustomOrderPage() {
                   <button
                     disabled={!canSubmit}
                     aria-label="Send custom order request"
-                    className="site-button site-button-primary w-full py-4 text-lg shadow-lg shadow-orange-500/20 disabled:opacity-60"
+                    className="site-button site-button-primary w-full py-4 text-lg shadow-lg shadow-orange-500/20 disabled:cursor-wait disabled:opacity-60"
                   >
-                    {submitting ? "Sending Request..." : "Send My Request — Get a Quote in 2 Hours"}
+                    <LoadingButtonContent loading={submitting} loadingText="Sending request...">
+                      Send My Request - Get a Quote in 2 Hours
+                    </LoadingButtonContent>
                   </button>
                   <p className="mt-4 text-center text-sm text-[var(--color-ink-soft)]">
                     We share quote and delivery timeline before confirming your order.

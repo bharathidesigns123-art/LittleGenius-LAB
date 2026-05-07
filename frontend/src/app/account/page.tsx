@@ -6,6 +6,7 @@ import { useEffect, useState } from "react";
 import { useAuth } from "@/components/providers/auth-provider";
 import { StorefrontShell } from "@/components/site/storefront-shell";
 import { EmptyState } from "@/components/ui/empty-state";
+import { LoadingButtonContent, PageLoader, SkeletonBlock } from "@/components/ui/loading-indicator";
 import { browserApi } from "@/lib/browser-api";
 import { formatUtcDate } from "@/lib/date-time";
 import type { OrderSummary } from "@/lib/types";
@@ -124,9 +125,7 @@ export default function AccountPage() {
     <StorefrontShell>
       <div className="page-shell py-10">
         {loading ? (
-          <div className="surface-card rounded-[1.5rem] p-6 text-sm text-[var(--color-ink-soft)]">
-            Loading your account...
-          </div>
+          <PageLoader title="Loading your account" message="Pulling your profile and order history..." />
         ) : !isAuthenticated ? (
           <EmptyState
             title="Login to view your account"
@@ -166,8 +165,10 @@ export default function AccountPage() {
                   className="w-full rounded-[1rem] border border-[var(--color-border)] px-4 py-3 outline-none"
                 />
                 {message ? <p className="text-sm font-semibold text-[var(--color-orange)]">{message}</p> : null}
-                <button disabled={saving} className="site-button site-button-primary w-full">
-                  {saving ? "Saving..." : "Save profile"}
+                <button disabled={saving} className="site-button site-button-primary w-full disabled:cursor-wait disabled:opacity-70">
+                  <LoadingButtonContent loading={saving} loadingText="Saving...">
+                    Save profile
+                  </LoadingButtonContent>
                 </button>
                 <button
                   type="button"
@@ -189,8 +190,9 @@ export default function AccountPage() {
                 </h2>
               </div>
               {loadingOrders ? (
-                <div className="surface-card rounded-[1.5rem] p-6 text-sm text-[var(--color-ink-soft)]">
-                  Loading your orders...
+                <div className="grid gap-4">
+                  <SkeletonBlock className="h-36 bg-white/70" />
+                  <SkeletonBlock className="h-36 bg-white/70" />
                 </div>
               ) : orders.length === 0 ? (
                 <EmptyState
