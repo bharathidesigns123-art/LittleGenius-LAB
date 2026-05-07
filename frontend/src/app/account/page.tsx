@@ -125,7 +125,7 @@ export default function AccountPage() {
     <StorefrontShell>
       <div className="page-shell py-10">
         {loading ? (
-          <PageLoader title="Loading your account" message="Pulling your profile and order history..." />
+          <PageLoader title="Loading your account" />
         ) : !isAuthenticated ? (
           <EmptyState
             title="Login to view your account"

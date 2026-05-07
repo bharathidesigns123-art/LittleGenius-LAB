@@ -57,7 +57,7 @@ export function AdminShell({
   if (loading || !isAuthenticated || !isAdmin) {
     return (
       <div className="flex min-h-screen items-center justify-center bg-slate-50">
-        <PageLoader title="Authenticating admin" message="Checking dashboard access..." />
+        <PageLoader title="Authenticating admin" />
       </div>
     );
   }
