@@ -28,7 +28,7 @@ function resolveApiBaseUrl(): string {
 async function fetchStoreJson<T>(path: string): Promise<T> {
   const base = resolveApiBaseUrl();
   const response = await fetch(`${base}${path}`, {
-    cache: "no-store",
+    next: { revalidate: 300 },
   });
 
   if (!response.ok) {
@@ -54,7 +54,7 @@ export async function getProducts(category?: string): Promise<ProductSummary[]> 
 export async function getProductDetail(slug: string): Promise<ProductDetail | null> {
   const base = resolveApiBaseUrl();
   const response = await fetch(`${base}/api/store/products/${slug}`, {
-    cache: "no-store",
+    next: { revalidate: 300 },
   });
 
   if (response.status === 404) {
@@ -71,7 +71,7 @@ export async function getProductDetail(slug: string): Promise<ProductDetail | nu
 export async function getProductReviews(slug: string): Promise<ProductReviewSummary | null> {
   const base = resolveApiBaseUrl();
   const response = await fetch(`${base}/api/store/products/${slug}/reviews`, {
-    cache: "no-store",
+    next: { revalidate: 300 },
   });
 
   if (response.status === 404) {

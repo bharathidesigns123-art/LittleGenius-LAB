@@ -1,4 +1,15 @@
 import { StorefrontShell } from "@/components/site/storefront-shell";
+import type { Metadata } from "next";
+import Link from "next/link";
+
+export const metadata: Metadata = {
+  title: "Privacy Policy",
+  description:
+    "Read how LittleGenius LAB handles customer data for 3D printed toys, custom keychains, and personalized 3D printed products.",
+  alternates: {
+    canonical: "/privacy-policy",
+  },
+};
 
 export default function PrivacyPolicyPage() {
   return (
@@ -38,6 +49,9 @@ export default function PrivacyPolicyPage() {
             <h2 className="text-2xl font-bold text-[var(--color-blue)] mb-4">5. Your Rights</h2>
             <p>You can request to view, update, or delete your personal data by contacting us at hello@littlegeniuslab.in.</p>
           </section>
+          <p className="text-sm">
+            Explore our <Link href="/shop" className="font-semibold text-[var(--color-blue)]">3D printed toys and keychains</Link> or place a <Link href="/custom-order" className="font-semibold text-[var(--color-blue)]">custom printed product request</Link>.
+          </p>
         </div>
       </section>
     </StorefrontShell>

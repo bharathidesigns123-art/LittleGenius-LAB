@@ -10,7 +10,7 @@ import { EmptyState } from "@/components/ui/empty-state";
 import { getProductDetail, getProductReviews } from "@/lib/api";
 import { resolveAssetUrl } from "@/lib/asset-url";
 
-export const dynamic = "force-dynamic";
+export const revalidate = 300;
 
 type ProductPageProps = {
   params: Promise<{ slug: string }>;
@@ -33,7 +33,7 @@ export async function generateMetadata({ params }: ProductPageProps): Promise<Me
   const { product } = detail;
   return {
     title: product.name,
-    description: product.shortDescription,
+    description: `${product.shortDescription} Buy this 3D printed ${product.categoryName.toLowerCase()} product from LittleGenius LAB.`,
     alternates: {
       canonical: `/products/${product.slug}`,
     },
@@ -252,7 +252,7 @@ export default async function ProductPage({ params }: ProductPageProps) {
             >
               <Image
                 src={resolveAssetUrl(item.heroImageUrl)}
-                alt={item.name}
+            alt={`${item.name} related 3D printed toy or keychain`}
                 width={900}
                 height={900}
                 className="h-52 w-full rounded-xl object-cover"

@@ -7,11 +7,11 @@ import { SectionHeading } from "@/components/ui/section-heading";
 import { getHomeData } from "@/lib/api";
 import { resolveAssetUrl } from "@/lib/asset-url";
 
-export const dynamic = "force-dynamic";
+export const revalidate = 300;
 export const metadata: Metadata = {
-  title: "3D Printed Toys and Custom Figurines in India",
+  title: "3D Printed Toys, Keychains and Custom Gifts in India",
   description:
-    "Buy ready-to-ship 3D printed toys and order custom figurines from LittleGenius LAB. Safe PLA materials, fast India-wide shipping.",
+    "Buy 3D printed toys, custom keychains, anime keychains, and personalized 3D printed gifts from LittleGenius LAB with India-wide shipping.",
   alternates: {
     canonical: "/",
   },
@@ -60,10 +60,10 @@ export default async function HomePage() {
           <div className="animate-home-rise">
             <span className="status-pill status-pill-yellow w-fit">{data.hero.eyebrow}</span>
             <h1 className="display-font mt-3 max-w-2xl text-4xl font-semibold leading-tight text-[var(--color-blue)] sm:text-5xl lg:text-6xl">
-              3D-printed toys kids spot instantly
+              3D printed toys, custom keychains, and gifts kids love
             </h1>
             <p className="mt-3 max-w-xl text-sm leading-7 text-[var(--color-ink-soft)] sm:text-base">
-              Colorful ready-to-ship animals, robots, chibi figures, and custom toys made in India with safe PLA finishes.
+              Explore ready-to-ship 3D printed toys, anime-style keychains, and custom printed products made in India with safe PLA finishes.
             </p>
             <div className="mt-5 flex flex-col gap-3 sm:flex-row">
               <Link href="/shop" className="site-button site-button-primary">

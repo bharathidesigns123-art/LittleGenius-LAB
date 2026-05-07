@@ -1,4 +1,15 @@
 import { StorefrontShell } from "@/components/site/storefront-shell";
+import type { Metadata } from "next";
+import Link from "next/link";
+
+export const metadata: Metadata = {
+  title: "Shipping Policy",
+  description:
+    "Shipping policy for LittleGenius LAB 3D printed toys, custom keychains, anime keychains, and personalized printed gifts across India.",
+  alternates: {
+    canonical: "/shipping-policy",
+  },
+};
 
 export default function ShippingPolicyPage() {
   return (
@@ -59,6 +70,9 @@ export default function ShippingPolicyPage() {
             <h2 className="text-2xl font-bold text-[var(--color-blue)] mb-4">Tracking Your Order</h2>
             <p>Once your toy is printed and dispatched, you will receive a tracking link via WhatsApp and Email. You can also track your order directly on our website using your Order ID.</p>
           </section>
+          <p className="text-sm">
+            Looking for delivery-ready items? Browse <Link href="/shop" className="font-semibold text-[var(--color-blue)]">3D printed toys and keychains</Link>.
+          </p>
         </div>
       </section>
     </StorefrontShell>

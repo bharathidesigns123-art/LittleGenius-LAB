@@ -26,6 +26,15 @@ export const metadata: Metadata = {
   },
   description:
     "Full-stack toy commerce platform for LittleGenius LAB, an India-based 3D printed toy brand.",
+  keywords: [
+    "3d printed toys",
+    "custom keychains",
+    "anime keychains",
+    "personalized 3d printed gifts",
+    "3d printed accessories",
+    "custom printed products",
+    "little genius lab",
+  ],
   openGraph: {
     type: "website",
     title: "LittleGenius LAB",

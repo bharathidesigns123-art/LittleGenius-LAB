@@ -4,7 +4,7 @@ import { ProductCard } from "@/components/store/product-card";
 import { getCategories, getProducts } from "@/lib/api";
 import { productCountLabel } from "@/lib/product-count-label";
 
-export const dynamic = "force-dynamic";
+export const revalidate = 300;
 
 type CategoryPageProps = {
   params: Promise<{ category: string }>;
@@ -16,11 +16,11 @@ export async function generateMetadata({ params }: CategoryPageProps): Promise<M
   const currentCategory = categories.find((item) => item.slug === category);
   const categoryName = currentCategory?.name ?? "Category";
   const description = currentCategory
-    ? `${currentCategory.description} Explore ${categoryName} toys from LittleGenius LAB with India-wide delivery.`
-    : "Explore category-specific 3D printed toys from LittleGenius LAB.";
+    ? `${currentCategory.description} Explore ${categoryName} 3D printed toys, keychains, and gift products from LittleGenius LAB.`
+    : "Explore category-specific 3D printed toys, keychains, and custom gift products from LittleGenius LAB.";
 
   return {
-    title: `${categoryName} Toys`,
+    title: `${categoryName} 3D Printed Toys and Keychains`,
     description,
     alternates: {
       canonical: `/shop/${category}`,
@@ -61,6 +61,9 @@ export default async function CategoryPage({ params }: CategoryPageProps) {
     <StorefrontShell>
       <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(breadcrumbSchema) }} />
       <section className="page-shell py-10">
+        <h1 className="display-font mb-4 text-4xl font-semibold text-[var(--color-blue)]">
+          {currentCategory?.name ?? "Category"} 3D printed toys and keychains
+        </h1>
         <div className="mb-8 rounded-[2rem] bg-[var(--color-surface-2)] px-5 py-4 text-sm font-semibold text-[var(--color-blue)]">
           {currentCategory?.name ?? "Selected type"} selected{" - "}
           {productCountLabel(products.length)} available

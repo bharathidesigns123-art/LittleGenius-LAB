@@ -28,9 +28,10 @@ export function ProductCard({ product }: { product: ProductSummary }) {
         <div className="relative">
           <Image
             src={resolveAssetUrl(product.heroImageUrl)}
-            alt={product.name}
+            alt={`${product.name} 3D printed toy or keychain`}
             width={600}
             height={600}
+            sizes="(min-width: 1024px) 30vw, (min-width: 768px) 45vw, 100vw"
             className="h-56 w-full rounded-[1.6rem] object-cover transition duration-200 group-hover:scale-[1.02]"
           />
           {discountPercentage > 0 ? (

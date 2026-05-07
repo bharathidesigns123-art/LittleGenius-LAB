@@ -7,11 +7,11 @@ import { getProducts } from "@/lib/api";
 import { productCountLabel } from "@/lib/product-count-label";
 import { filterProductsByQuery, normalizeProductQuery } from "@/lib/product-search";
 
-export const dynamic = "force-dynamic";
+export const revalidate = 300;
 export const metadata: Metadata = {
-  title: "Shop 3D Printed Toys",
+  title: "Shop 3D Printed Toys, Keychains and Gifts",
   description:
-    "Browse all LittleGenius LAB toys including animals, robots, and chibi designs. Ready-to-ship options and custom-friendly collections.",
+    "Browse 3D printed toys, custom keychains, anime keychains, and personalized gift products from LittleGenius LAB.",
   alternates: {
     canonical: "/shop",
   },
@@ -29,6 +29,9 @@ export default async function ShopPage({ searchParams }: ShopPageProps) {
   return (
     <StorefrontShell>
       <section className="page-shell py-10">
+        <h1 className="display-font mb-4 text-4xl font-semibold text-[var(--color-blue)]">
+          Shop 3D printed toys, keychains, and custom gifts
+        </h1>
         <SectionHeading
           eyebrow="Shop All"
           title="Something for every little explorer"
