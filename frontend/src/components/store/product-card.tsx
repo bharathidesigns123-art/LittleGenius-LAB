@@ -23,7 +23,7 @@ export function ProductCard({ product }: { product: ProductSummary }) {
         : "bg-emerald-100 text-emerald-700";
 
   return (
-    <div className="bg-card shadow-card-lg flex h-full flex-col rounded-3xl border border-[var(--color-border)] p-4">
+    <div className="product-card">
       <Link href={`/products/${product.slug}`} aria-label={`View details for ${product.name}`} className="group block">
         <div className="relative">
           <Image
