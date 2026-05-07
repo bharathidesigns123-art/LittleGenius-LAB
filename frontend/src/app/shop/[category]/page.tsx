@@ -1,3 +1,4 @@
+import type { Metadata } from "next";
 import { StorefrontShell } from "@/components/site/storefront-shell";
 import { ProductCard } from "@/components/store/product-card";
 import { getCategories, getProducts } from "@/lib/api";
@@ -9,13 +10,56 @@ type CategoryPageProps = {
   params: Promise<{ category: string }>;
 };
 
+export async function generateMetadata({ params }: CategoryPageProps): Promise<Metadata> {
+  const { category } = await params;
+  const categories = await getCategories();
+  const currentCategory = categories.find((item) => item.slug === category);
+  const categoryName = currentCategory?.name ?? "Category";
+  const description = currentCategory
+    ? `${currentCategory.description} Explore ${categoryName} toys from LittleGenius LAB with India-wide delivery.`
+    : "Explore category-specific 3D printed toys from LittleGenius LAB.";
+
+  return {
+    title: `${categoryName} Toys`,
+    description,
+    alternates: {
+      canonical: `/shop/${category}`,
+    },
+  };
+}
+
 export default async function CategoryPage({ params }: CategoryPageProps) {
   const { category } = await params;
   const [categories, products] = await Promise.all([getCategories(), getProducts(category)]);
   const currentCategory = categories.find((item) => item.slug === category);
+  const breadcrumbSchema = {
+    "@context": "https://schema.org",
+    "@type": "BreadcrumbList",
+    itemListElement: [
+      {
+        "@type": "ListItem",
+        position: 1,
+        name: "Home",
+        item: "https://littlegeniuslab.in/",
+      },
+      {
+        "@type": "ListItem",
+        position: 2,
+        name: "Shop",
+        item: "https://littlegeniuslab.in/shop",
+      },
+      {
+        "@type": "ListItem",
+        position: 3,
+        name: currentCategory?.name ?? "Category",
+        item: `https://littlegeniuslab.in/shop/${category}`,
+      },
+    ],
+  };
 
   return (
     <StorefrontShell>
+      <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(breadcrumbSchema) }} />
       <section className="page-shell py-10">
         <div className="mb-8 rounded-[2rem] bg-[var(--color-surface-2)] px-5 py-4 text-sm font-semibold text-[var(--color-blue)]">
           {currentCategory?.name ?? "Selected type"} selected{" - "}

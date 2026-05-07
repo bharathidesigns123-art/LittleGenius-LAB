@@ -15,8 +15,18 @@ import {
   Truck,
 } from "lucide-react";
 import Link from "next/link";
+import type { Metadata } from "next";
 import { StorefrontShell } from "@/components/site/storefront-shell";
 import { SectionHeading } from "@/components/ui/section-heading";
+
+export const metadata: Metadata = {
+  title: "How LittleGenius LAB Works",
+  description:
+    "See how ready-to-ship and custom 3D printed toys are designed, printed, quality-checked, and delivered by LittleGenius LAB.",
+  alternates: {
+    canonical: "/how-it-works",
+  },
+};
 
 const readySteps = [
   {

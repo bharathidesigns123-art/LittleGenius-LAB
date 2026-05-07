@@ -1,5 +1,6 @@
 import Image from "next/image";
 import Link from "next/link";
+import type { Metadata } from "next";
 import { StorefrontShell } from "@/components/site/storefront-shell";
 import { ProductCard } from "@/components/store/product-card";
 import { SectionHeading } from "@/components/ui/section-heading";
@@ -7,6 +8,14 @@ import { getHomeData } from "@/lib/api";
 import { resolveAssetUrl } from "@/lib/asset-url";
 
 export const dynamic = "force-dynamic";
+export const metadata: Metadata = {
+  title: "3D Printed Toys and Custom Figurines in India",
+  description:
+    "Buy ready-to-ship 3D printed toys and order custom figurines from LittleGenius LAB. Safe PLA materials, fast India-wide shipping.",
+  alternates: {
+    canonical: "/",
+  },
+};
 
 export default async function HomePage() {
   const data = await getHomeData();
@@ -14,9 +23,38 @@ export default async function HomePage() {
   const trendingProducts = data.featuredProducts.slice(0, 3);
   const bestSellers = data.featuredProducts.slice(0, 6);
   const topCategories = data.categories.slice(0, 4);
+  const organizationSchema = {
+    "@context": "https://schema.org",
+    "@type": "Organization",
+    name: "LittleGenius LAB",
+    url: "https://littlegeniuslab.in",
+    logo: "https://littlegeniuslab.in/android-chrome-512x512.png",
+    contactPoint: [
+      {
+        "@type": "ContactPoint",
+        contactType: "customer support",
+        email: "hello@littlegeniuslab.in",
+        availableLanguage: ["en", "ta", "hi"],
+      },
+    ],
+    sameAs: ["https://wa.me/919876543210"],
+  };
+  const webSiteSchema = {
+    "@context": "https://schema.org",
+    "@type": "WebSite",
+    name: "LittleGenius LAB",
+    url: "https://littlegeniuslab.in",
+    potentialAction: {
+      "@type": "SearchAction",
+      target: "https://littlegeniuslab.in/shop?q={search_term_string}",
+      "query-input": "required name=search_term_string",
+    },
+  };
 
   return (
     <StorefrontShell>
+      <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(organizationSchema) }} />
+      <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(webSiteSchema) }} />
       <section className="overflow-hidden border-b border-[var(--color-border)] bg-[linear-gradient(180deg,#fffaf2_0%,#f4fbff_100%)]">
         <div className="page-shell grid gap-5 py-5 lg:grid-cols-[0.9fr_1.1fr] lg:items-center lg:py-7">
           <div className="animate-home-rise">

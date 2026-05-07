@@ -1,5 +1,6 @@
 import { ProductCard } from "@/components/store/product-card";
 import { ProductSearch } from "@/components/store/product-search";
+import type { Metadata } from "next";
 import { StorefrontShell } from "@/components/site/storefront-shell";
 import { SectionHeading } from "@/components/ui/section-heading";
 import { getProducts } from "@/lib/api";
@@ -7,6 +8,14 @@ import { productCountLabel } from "@/lib/product-count-label";
 import { filterProductsByQuery, normalizeProductQuery } from "@/lib/product-search";
 
 export const dynamic = "force-dynamic";
+export const metadata: Metadata = {
+  title: "Shop 3D Printed Toys",
+  description:
+    "Browse all LittleGenius LAB toys including animals, robots, and chibi designs. Ready-to-ship options and custom-friendly collections.",
+  alternates: {
+    canonical: "/shop",
+  },
+};
 
 type ShopPageProps = {
   searchParams?: Promise<{ q?: string | string[] }>;

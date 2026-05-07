@@ -1,5 +1,15 @@
+import type { Metadata } from "next";
 import { StorefrontShell } from "@/components/site/storefront-shell";
 import Link from "next/link";
+
+export const metadata: Metadata = {
+  title: "About LittleGenius LAB",
+  description:
+    "Learn about LittleGenius LAB, our Tamil Nadu studio, safe PLA materials, and how we craft 3D printed toys for families across India.",
+  alternates: {
+    canonical: "/about",
+  },
+};
 
 export default function AboutPage() {
   return (
@@ -65,6 +75,10 @@ export default function AboutPage() {
           <div className="text-lg text-[var(--color-ink-soft)] leading-relaxed italic text-center italic">
             &quot;As makers, we saw how technology like 3D printing could be used to create something truly personal. LittleGenius LAB is our way of bringing that technology home. Whether it&apos;s a gift for a first birthday or a custom figurine of a beloved pet, we pour our heart into every layer we print.&quot;
           </div>
+          <p className="mt-6 text-center text-sm text-[var(--color-ink-soft)]">
+            Discover our <Link href="/shop" className="font-semibold text-[var(--color-blue)]">ready-to-ship toy collection</Link> or
+            begin a <Link href="/custom-order" className="font-semibold text-[var(--color-blue)]">custom toy order</Link>.
+          </p>
           <div className="mt-10 text-center">
             <p className="font-bold text-[var(--color-blue)]">Team LittleGenius LAB</p>
             <p className="text-sm text-[var(--color-ink-soft)]">Surandai, Tamil Nadu</p>

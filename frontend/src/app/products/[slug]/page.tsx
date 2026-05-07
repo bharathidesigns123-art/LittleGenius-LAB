@@ -1,5 +1,6 @@
 import Image from "next/image";
 import Link from "next/link";
+import type { Metadata } from "next";
 import { AddToCartButton } from "@/components/store/add-to-cart-button";
 import { BuyNowButton } from "@/components/store/buy-now-button";
 import { ProductGallery } from "@/components/store/product-gallery";
@@ -14,6 +15,48 @@ export const dynamic = "force-dynamic";
 type ProductPageProps = {
   params: Promise<{ slug: string }>;
 };
+
+export async function generateMetadata({ params }: ProductPageProps): Promise<Metadata> {
+  const { slug } = await params;
+  const detail = await getProductDetail(slug);
+
+  if (!detail) {
+    return {
+      title: "Product not found",
+      robots: {
+        index: false,
+        follow: false,
+      },
+    };
+  }
+
+  const { product } = detail;
+  return {
+    title: product.name,
+    description: product.shortDescription,
+    alternates: {
+      canonical: `/products/${product.slug}`,
+    },
+    openGraph: {
+      type: "website",
+      title: product.name,
+      description: product.shortDescription,
+      url: `https://littlegeniuslab.in/products/${product.slug}`,
+      images: [
+        {
+          url: resolveAssetUrl(product.heroImageUrl),
+          alt: product.name,
+        },
+      ],
+    },
+    twitter: {
+      card: "summary_large_image",
+      title: product.name,
+      description: product.shortDescription,
+      images: [resolveAssetUrl(product.heroImageUrl)],
+    },
+  };
+}
 
 export default async function ProductPage({ params }: ProductPageProps) {
   const { slug } = await params;
@@ -38,9 +81,70 @@ export default async function ProductPage({ params }: ProductPageProps) {
   }
 
   const { product, relatedProducts, images } = detail;
+  const productSchema = {
+    "@context": "https://schema.org",
+    "@type": "Product",
+    name: product.name,
+    description: product.shortDescription,
+    image: [resolveAssetUrl(product.heroImageUrl)],
+    sku: product.sku,
+    brand: {
+      "@type": "Brand",
+      name: "LittleGenius LAB",
+    },
+    category: product.categoryName,
+    offers: {
+      "@type": "Offer",
+      url: `https://littlegeniuslab.in/products/${product.slug}`,
+      priceCurrency: "INR",
+      price: String(product.priceInr),
+      availability:
+        product.stockQuantity > 0 ? "https://schema.org/InStock" : "https://schema.org/OutOfStock",
+    },
+    aggregateRating:
+      (product.reviewCount ?? 0) > 0
+        ? {
+            "@type": "AggregateRating",
+            ratingValue: product.averageRating ?? 0,
+            reviewCount: product.reviewCount ?? 0,
+          }
+        : undefined,
+  };
+  const breadcrumbSchema = {
+    "@context": "https://schema.org",
+    "@type": "BreadcrumbList",
+    itemListElement: [
+      {
+        "@type": "ListItem",
+        position: 1,
+        name: "Home",
+        item: "https://littlegeniuslab.in/",
+      },
+      {
+        "@type": "ListItem",
+        position: 2,
+        name: "Shop",
+        item: "https://littlegeniuslab.in/shop",
+      },
+      {
+        "@type": "ListItem",
+        position: 3,
+        name: product.categoryName,
+        item: `https://littlegeniuslab.in/shop/${product.categorySlug}`,
+      },
+      {
+        "@type": "ListItem",
+        position: 4,
+        name: product.name,
+        item: `https://littlegeniuslab.in/products/${product.slug}`,
+      },
+    ],
+  };
 
   return (
     <StorefrontShell>
+      <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(productSchema) }} />
+      <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(breadcrumbSchema) }} />
       <section className="page-shell py-10">
         <div className="grid gap-10 md:grid-cols-[1fr_0.9fr]">
           <ProductGallery images={images} productName={product.name} />

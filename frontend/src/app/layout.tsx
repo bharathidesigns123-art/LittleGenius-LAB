@@ -26,6 +26,21 @@ export const metadata: Metadata = {
   },
   description:
     "Full-stack toy commerce platform for LittleGenius LAB, an India-based 3D printed toy brand.",
+  openGraph: {
+    type: "website",
+    title: "LittleGenius LAB",
+    description:
+      "Shop ready-to-ship 3D printed toys and create custom figurines in India with safe PLA materials.",
+    url: "https://littlegeniuslab.in",
+    siteName: "LittleGenius LAB",
+    locale: "en_IN",
+  },
+  twitter: {
+    card: "summary_large_image",
+    title: "LittleGenius LAB",
+    description:
+      "Shop ready-to-ship 3D printed toys and custom figurines made in India.",
+  },
   icons: {
     icon: [
       { url: "/favicon-32x32.png", sizes: "32x32", type: "image/png" },
