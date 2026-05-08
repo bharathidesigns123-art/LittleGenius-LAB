@@ -89,19 +89,19 @@ export default function CustomOrderPage() {
 
   return (
     <StorefrontShell>
-      <section className="page-shell py-12">
-        <div className="grid items-start gap-6 rounded-[2rem] bg-[linear-gradient(135deg,#1a3c6e_0%,#264b82_55%,#e05c1a_180%)] p-5 text-white md:grid-cols-[1.1fr_0.9fr] md:gap-8 md:rounded-[3rem] md:p-10">
+      <section className="page-shell py-8 sm:py-12">
+        <div className="grid items-start gap-5 rounded-4xl bg-[linear-gradient(135deg,#1a3c6e_0%,#264b82_55%,#e05c1a_180%)] p-4 text-white md:grid-cols-[1.1fr_0.9fr] md:gap-8 md:rounded-[3rem] md:p-10">
           <div>
             <p className="mb-4 text-sm font-bold uppercase tracking-[0.24em] text-[var(--color-yellow)]">
               Custom Toy Studio
             </p>
-            <h1 className="display-font text-4xl font-semibold leading-tight md:text-6xl">
+            <h1 className="display-font text-3xl font-semibold leading-tight sm:text-4xl md:text-6xl">
               Turn your memory into a premium keepsake
             </h1>
-            <p className="mt-4 max-w-lg text-base leading-8 text-white/80 md:text-lg">
+            <p className="mt-4 max-w-lg text-sm leading-7 text-white/85 sm:text-base sm:leading-8 md:text-lg">
               Upload a reference, approve a 3D render on WhatsApp, and receive your printed toy in 5-7 days.
             </p>
-            <div className="mt-6 flex flex-wrap gap-3 text-sm font-medium">
+            <div className="mt-5 flex flex-wrap gap-2 text-xs font-semibold sm:mt-6 sm:gap-3 sm:text-sm">
               {["Free design preview", "2 revisions included", "From Rs. 800", "Made in India"].map((item) => (
                 <span key={item} className="rounded-full border border-white/20 bg-white/10 px-4 py-2">
                   {item}
@@ -109,7 +109,7 @@ export default function CustomOrderPage() {
               ))}
             </div>
           </div>
-            <div className="rounded-[1.8rem] border border-white/15 bg-white/10 p-5 backdrop-blur-md md:rounded-[2.5rem] md:p-6">
+          <div className="rounded-[1.8rem] border border-white/15 bg-white/10 p-4 backdrop-blur-md sm:p-5 md:rounded-[2.5rem] md:p-6">
             <p className="text-sm font-bold uppercase tracking-[0.24em] text-[var(--color-yellow)]">Progress tracker</p>
             <div className="mt-4 h-2 rounded-full bg-white/20">
               <div className="h-full rounded-full bg-[var(--color-yellow)] transition-all" style={{ width: `${progress}%` }} />
@@ -134,7 +134,7 @@ export default function CustomOrderPage() {
       </section>
 
       <section className="page-shell pb-20">
-        <div className="surface-card card-shadow rounded-[2rem] p-5 md:rounded-[3rem] md:p-12">
+        <div className="surface-card card-shadow rounded-4xl p-4 sm:p-6 md:rounded-[3rem] md:p-12">
           {success ? (
             <div className="max-w-xl mx-auto text-center py-10">
               <div className="mb-6 text-5xl sm:text-6xl">🎉</div>
@@ -161,7 +161,7 @@ export default function CustomOrderPage() {
             </div>
           ) : (
             <>
-              <div className="mb-10">
+              <div className="mb-8 sm:mb-10">
                 <h3 className="display-font text-3xl font-bold text-[var(--color-blue)]">
                   Tell us about your toy
                 </h3>
@@ -170,16 +170,16 @@ export default function CustomOrderPage() {
                 </p>
               </div>
 
-              <form onSubmit={handleSubmit} className="grid gap-8 md:grid-cols-2">
+              <form onSubmit={handleSubmit} className="grid gap-6 md:grid-cols-2 md:gap-8">
                 <div className="md:col-span-2">
                   <div className="flex items-center gap-3 mb-4">
                     <span className="flex h-9 w-9 items-center justify-center rounded-full bg-blue-100 text-xs font-bold text-blue-600">1</span>
                     <h4 className="font-bold text-[var(--color-ink)] uppercase tracking-wider text-sm">Upload reference</h4>
                   </div>
                   
-                  <div className="grid md:grid-cols-2 gap-6">
+                  <div className="grid gap-4 md:grid-cols-2 md:gap-6">
                     <div className="relative group">
-                      <div className={`border-2 border-dashed rounded-[2rem] p-8 transition-colors text-center flex flex-col items-center justify-center min-h-[200px] ${form.photoUrl ? 'border-[var(--color-orange)] bg-orange-50' : 'border-[var(--color-border)] hover:border-[var(--color-blue)]'}`}>
+                      <div className={`flex min-h-44 flex-col items-center justify-center rounded-4xl border-2 border-dashed p-5 text-center transition-colors sm:min-h-50 sm:p-8 ${form.photoUrl ? 'border-[var(--color-orange)] bg-orange-50' : 'border-[var(--color-border)] hover:border-[var(--color-blue)]'}`}>
                         {form.photoUrl ? (
                           <>
                             <div className="w-20 h-20 rounded-xl overflow-hidden mb-3 border-2 border-white shadow-md">
@@ -224,7 +224,7 @@ export default function CustomOrderPage() {
                     <textarea
                       value={form.characterDescription}
                       onChange={(event) => setForm(c => ({ ...c, characterDescription: event.target.value }))}
-                      className="min-h-[200px] rounded-[2rem] border border-[var(--color-border)] px-6 py-5 outline-none focus:border-[var(--color-blue)] transition-colors resize-none"
+                      className="min-h-44 resize-none rounded-4xl border border-[var(--color-border)] px-4 py-4 text-sm outline-none transition-colors focus:border-[var(--color-blue)] sm:min-h-50 sm:px-6 sm:py-5"
                       placeholder="OR describe your character... (Hairstyle, clothes, accessories, any details we should know!)"
                     />
                   </div>
@@ -236,7 +236,7 @@ export default function CustomOrderPage() {
                     <h4 className="font-bold text-[var(--color-ink)] uppercase tracking-wider text-sm">Customize Your Order</h4>
                   </div>
                   
-                  <div className="grid md:grid-cols-3 gap-6">
+                  <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3 lg:gap-6">
                     <label className="flex flex-col gap-2">
                       <span className="text-xs font-bold text-[var(--color-blue)] uppercase tracking-wide ml-2">Occasion</span>
                       <select
@@ -353,14 +353,14 @@ export default function CustomOrderPage() {
                   <button
                     disabled={!canSubmit}
                     aria-label="Send custom order request"
-                    className="site-button site-button-primary w-full py-4 text-lg shadow-lg shadow-orange-500/20 disabled:cursor-wait disabled:opacity-60"
+                    className="site-button site-button-primary w-full py-3.5 text-base shadow-lg shadow-orange-500/20 disabled:cursor-wait disabled:opacity-60 sm:text-lg"
                   >
                     <LoadingButtonContent loading={submitting} loadingText="Sending request...">
-                      Send My Request - Get a Quote in 2 Hours
+                      Send Request
                     </LoadingButtonContent>
                   </button>
                   <p className="mt-4 text-center text-sm text-[var(--color-ink-soft)]">
-                    We share quote and delivery timeline before confirming your order.
+                    Get your quote and delivery timeline in about 2 hours.
                   </p>
                 </div>
               </form>
@@ -375,7 +375,7 @@ export default function CustomOrderPage() {
             200+ custom toys made and delivered
           </h4>
         </div>
-        <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+        <div className="grid grid-cols-2 gap-3 sm:gap-4 md:grid-cols-4">
            {[
              { label: "Birthday gift for daughter", icon: "🎈" },
              { label: "Pet miniature — Retriever", icon: "🐾" },
@@ -384,7 +384,7 @@ export default function CustomOrderPage() {
            ].map((item, i) => (
              <div key={i} className="surface-card rounded-[1.6rem] border-2 border-dashed p-5 text-center sm:rounded-[2rem] sm:p-6">
                <div className="text-4xl mb-3">{item.icon}</div>
-               <p className="text-[11px] font-bold uppercase tracking-tight text-[var(--color-ink-soft)] sm:text-xs">
+               <p className="text-[11px] font-bold tracking-tight text-[var(--color-ink-soft)] sm:text-xs sm:tracking-normal">
                  {item.label}
                </p>
              </div>
