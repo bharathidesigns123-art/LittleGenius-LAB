@@ -26,7 +26,7 @@ function OrderProgress({ status, orderType }: { status: string; orderType?: stri
   const activeIndex = steps.indexOf(status);
   return (
     <div className="mt-4 overflow-x-auto pb-1">
-      <div className="grid min-w-[520px] grid-cols-4 gap-2 md:min-w-0 md:grid-cols-8">
+      <div className="grid min-w-[440px] grid-cols-4 gap-2 md:min-w-0 md:grid-cols-8">
       {steps.map((step, index) => (
         <div key={step} className="min-w-0">
           <div
@@ -203,9 +203,9 @@ export default function AccountPage() {
                 />
               ) : (
                 orders.map((order) => (
-                  <div key={order.orderCode} className="surface-card rounded-[1.5rem] p-6">
-                    <div className="flex flex-col gap-3 md:flex-row md:items-center md:justify-between">
-                      <div>
+                  <div key={order.orderCode} className="surface-card rounded-[1.5rem] p-4 sm:p-6">
+                    <div className="flex flex-col gap-3 md:flex-row md:items-start md:justify-between">
+                      <div className="min-w-0">
                         <p className="text-sm font-bold uppercase tracking-[0.2em] text-[var(--color-orange)]">
                           {order.orderCode}
                         </p>
@@ -220,21 +220,21 @@ export default function AccountPage() {
                           ) : null}
                         </div>
                       </div>
-                      <div className="flex flex-wrap items-center gap-2">
-                        <p className="text-sm font-semibold text-[var(--color-ink-soft)]">
+                      <div className="flex w-full flex-col items-stretch gap-2 min-[430px]:flex-row min-[430px]:items-center min-[430px]:justify-between md:w-auto md:justify-end">
+                        <p className="text-sm font-semibold text-[var(--color-ink-soft)] min-[430px]:text-right">
                           Rs. {order.totalPriceInr}
                         </p>
                         {order.cancellationEligible && order.orderType !== "custom" ? (
-                          <button onClick={() => cancelOrder(order)} className="site-button site-button-secondary">
+                          <button onClick={() => cancelOrder(order)} className="site-button site-button-secondary w-full min-[430px]:w-auto">
                             Cancel order
                           </button>
                         ) : null}
                       </div>
                     </div>
                     <OrderProgress status={order.status} orderType={order.orderType} />
-                    <div className="mt-4 space-y-2 text-sm text-[var(--color-ink-soft)]">
+                    <div className="mt-4 space-y-2 text-sm text-[var(--color-ink-soft)] break-words">
                       {order.items.map((item) => (
-                        <p key={item.productName}>
+                        <p key={item.productName} className="leading-relaxed">
                           {item.productName} x {item.quantity}
                         </p>
                       ))}

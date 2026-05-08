@@ -472,7 +472,7 @@ export default function CheckoutPage() {
   return (
     <StorefrontShell>
       <Script src="https://checkout.razorpay.com/v1/checkout.js" strategy="afterInteractive" />
-      <div className="page-shell py-8 pb-32 sm:py-10 md:pb-10">
+      <div className="page-shell py-8 pb-36 sm:py-10 md:pb-10">
         {items.length === 0 ? (
           <EmptyState
             title="Your checkout is empty"
@@ -489,7 +489,7 @@ export default function CheckoutPage() {
           </div>
         ) : (
           <div className="grid gap-6 lg:grid-cols-[minmax(0,1fr)_360px] lg:gap-8">
-            <form id="checkout-form" onSubmit={handleSubmit} className="surface-card card-shadow rounded-[2rem] p-5 sm:p-8">
+            <form id="checkout-form" onSubmit={handleSubmit} className="surface-card card-shadow max-w-full overflow-hidden rounded-[2rem] p-4 sm:p-6 md:p-8">
               <p className="text-sm font-bold uppercase tracking-[0.24em] text-[var(--color-orange)]">
                 Checkout
               </p>
@@ -530,7 +530,7 @@ export default function CheckoutPage() {
                     <p className="text-xs font-bold uppercase tracking-[0.16em] text-[var(--color-ink-soft)]">
                       Saved addresses
                     </p>
-                    <div className="mt-2 grid gap-2 sm:grid-cols-2">
+                    <div className="mt-2 grid gap-2 md:grid-cols-2">
                       {savedAddresses.slice(0, 4).map((address) => (
                         <button
                           type="button"
@@ -551,7 +551,7 @@ export default function CheckoutPage() {
                 ) : null}
               </section>
 
-              <div className="mt-6 grid gap-4 sm:grid-cols-2">
+              <div className="mt-6 grid gap-4 md:grid-cols-2">
                 <label className="flex flex-col gap-2">
                   <span className={labelClass}>Recipient name</span>
                   <input
@@ -579,7 +579,7 @@ export default function CheckoutPage() {
                   {fieldErrors.phone ? <span className={errorClass}>{fieldErrors.phone}</span> : null}
                 </label>
 
-                <label className="flex flex-col gap-2 sm:col-span-2">
+                <label className="flex flex-col gap-2 md:col-span-2">
                   <span className={labelClass}>Email</span>
                   <input
                     value={form.email}
@@ -593,7 +593,7 @@ export default function CheckoutPage() {
                   {fieldErrors.email ? <span className={errorClass}>{fieldErrors.email}</span> : null}
                 </label>
 
-                <label className="flex flex-col gap-2 sm:col-span-2">
+                <label className="flex flex-col gap-2 md:col-span-2">
                   <span className={labelClass}>Search address or enter house details</span>
                   <NominatimAddressLine1Input
                     value={form.line1}
@@ -628,7 +628,7 @@ export default function CheckoutPage() {
                   {fieldErrors.line1 ? <span className={errorClass}>{fieldErrors.line1}</span> : null}
                 </label>
 
-                <label className="flex flex-col gap-2 sm:col-span-2">
+                <label className="flex flex-col gap-2 md:col-span-2">
                   <span className={labelClass}>Flat, house, landmark</span>
                   <input
                     value={form.line2}
@@ -726,7 +726,7 @@ export default function CheckoutPage() {
                   </select>
                 </label>
 
-                <label className="flex flex-col gap-2 sm:col-span-2">
+                <label className="flex flex-col gap-2 md:col-span-2">
                   <span className={labelClass}>Order notes</span>
                   <textarea
                     value={form.notes}
@@ -758,7 +758,7 @@ export default function CheckoutPage() {
               </button>
             </form>
 
-            <aside className="surface-card card-shadow h-fit rounded-[2rem] p-6">
+            <aside className="surface-card card-shadow h-fit rounded-[2rem] p-4 sm:p-6">
               <p className="text-sm font-bold uppercase tracking-[0.24em] text-[var(--color-orange)]">
                 Order summary
               </p>
@@ -795,7 +795,7 @@ export default function CheckoutPage() {
       </div>
       {items.length > 0 && !successOrderCode ? (
         <div className="fixed inset-x-0 bottom-0 z-50 border-t border-[var(--color-border)] bg-white/95 px-3 pb-[calc(0.75rem+env(safe-area-inset-bottom))] pt-3 shadow-[0_-8px_30px_rgba(15,23,42,0.1)] backdrop-blur md:hidden">
-          <div className="page-shell flex items-center gap-3">
+          <div className="page-shell flex flex-col items-stretch gap-2 min-[390px]:flex-row min-[390px]:items-center min-[390px]:gap-3">
             <div className="min-w-0">
               <p className="text-xs text-[var(--color-ink-soft)]">Payable</p>
               <p className="text-lg font-bold text-[var(--color-blue)]">Rs. {total}</p>
@@ -804,7 +804,7 @@ export default function CheckoutPage() {
               type="submit"
               form="checkout-form"
               disabled={submitting || isFetchingPincode}
-              className="site-button site-button-primary ml-auto min-w-0 flex-1 px-4 py-3 text-sm disabled:cursor-wait disabled:opacity-70"
+              className="site-button site-button-primary min-w-0 w-full px-4 py-3 text-sm disabled:cursor-wait disabled:opacity-70 min-[390px]:ml-auto min-[390px]:w-auto min-[390px]:flex-1"
             >
               <LoadingButtonContent loading={submitting} loadingText="Placing...">
                 Place order
