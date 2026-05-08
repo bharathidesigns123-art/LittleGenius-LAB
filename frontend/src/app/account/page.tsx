@@ -25,8 +25,8 @@ function OrderProgress({ status, orderType }: { status: string; orderType?: stri
   const steps = orderType === "custom" ? CUSTOM_ORDER_STEPS : ORDER_STEPS;
   const activeIndex = steps.indexOf(status);
   return (
-    <div className="mt-4 overflow-x-auto pb-1">
-      <div className="grid min-w-[440px] grid-cols-4 gap-2 md:min-w-0 md:grid-cols-8">
+    <div className="mt-4 pb-1">
+      <div className="grid grid-cols-4 gap-2 md:grid-cols-8">
       {steps.map((step, index) => (
         <div key={step} className="min-w-0">
           <div
@@ -38,7 +38,7 @@ function OrderProgress({ status, orderType }: { status: string; orderType?: stri
                   : "bg-[var(--color-border)]"
             }`}
           />
-          <p className="mt-2 text-xs font-semibold text-[var(--color-ink-soft)] md:truncate">{step}</p>
+          <p className="mt-2 text-[11px] font-semibold text-[var(--color-ink-soft)] leading-tight md:truncate md:text-xs">{step}</p>
         </div>
       ))}
       </div>
@@ -125,7 +125,7 @@ export default function AccountPage() {
 
   return (
     <StorefrontShell>
-      <div className="page-shell py-10">
+      <div className="page-shell py-8 sm:py-10">
         {loading ? (
           <PageLoader title="Loading your account" />
         ) : !isAuthenticated ? (
@@ -139,12 +139,12 @@ export default function AccountPage() {
             }
           />
         ) : (
-          <div className="grid gap-6 lg:grid-cols-[360px_1fr] lg:gap-8">
-            <div className="surface-card card-shadow rounded-[1.5rem] p-6">
+          <div className="grid gap-5 lg:grid-cols-[360px_1fr] lg:gap-8">
+            <div className="surface-card card-shadow rounded-[1.5rem] p-4 sm:p-6">
               <p className="text-sm font-bold uppercase tracking-[0.24em] text-[var(--color-orange)]">
                 Profile
               </p>
-              <h1 className="display-font mt-2 text-3xl font-semibold text-[var(--color-blue)]">
+              <h1 className="display-font mt-2 text-2xl font-semibold text-[var(--color-blue)] sm:text-3xl">
                 Your account
               </h1>
               <Link href="/orders" className="mt-3 inline-block text-sm font-bold text-[var(--color-blue)] underline">
@@ -182,12 +182,12 @@ export default function AccountPage() {
               </form>
             </div>
 
-            <div className="space-y-5">
-              <div className="surface-card card-shadow rounded-[1.5rem] p-6">
+            <div className="space-y-4 sm:space-y-5">
+              <div className="surface-card card-shadow rounded-[1.5rem] p-4 sm:p-6">
                 <p className="text-sm font-bold uppercase tracking-[0.24em] text-[var(--color-orange)]">
                   Order history
                 </p>
-                <h2 className="display-font mt-2 text-3xl font-semibold text-[var(--color-blue)]">
+                <h2 className="display-font mt-2 text-2xl font-semibold text-[var(--color-blue)] sm:text-3xl">
                   Track every purchase
                 </h2>
               </div>
@@ -206,7 +206,7 @@ export default function AccountPage() {
                   <div key={order.orderCode} className="surface-card rounded-[1.5rem] p-4 sm:p-6">
                     <div className="flex flex-col gap-3 md:flex-row md:items-start md:justify-between">
                       <div className="min-w-0">
-                        <p className="text-sm font-bold uppercase tracking-[0.2em] text-[var(--color-orange)]">
+                        <p className="break-all text-xs font-bold uppercase tracking-[0.16em] text-[var(--color-orange)] sm:text-sm sm:tracking-[0.2em]">
                           {order.orderCode}
                         </p>
                         <div className="mt-2 flex flex-wrap gap-2">
@@ -221,7 +221,7 @@ export default function AccountPage() {
                         </div>
                       </div>
                       <div className="flex w-full flex-col items-stretch gap-2 min-[430px]:flex-row min-[430px]:items-center min-[430px]:justify-between md:w-auto md:justify-end">
-                        <p className="text-sm font-semibold text-[var(--color-ink-soft)] min-[430px]:text-right">
+                        <p className="text-sm font-semibold text-[var(--color-ink-soft)] min-[430px]:text-right md:text-base">
                           Rs. {order.totalPriceInr}
                         </p>
                         {order.cancellationEligible && order.orderType !== "custom" ? (
@@ -232,7 +232,7 @@ export default function AccountPage() {
                       </div>
                     </div>
                     <OrderProgress status={order.status} orderType={order.orderType} />
-                    <div className="mt-4 space-y-2 text-sm text-[var(--color-ink-soft)] break-words">
+                    <div className="mt-4 space-y-2 text-sm leading-relaxed text-[var(--color-ink-soft)] break-words">
                       {order.items.map((item) => (
                         <p key={item.productName} className="leading-relaxed">
                           {item.productName} x {item.quantity}
