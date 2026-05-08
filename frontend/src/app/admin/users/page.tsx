@@ -135,8 +135,8 @@ export default function AdminUsersPage() {
     <AdminShell title="User Management">
       <div className="space-y-6">
         {/* Actions Bar */}
-        <div className="surface-card card-shadow rounded-[2rem] p-6 flex flex-wrap items-center justify-between gap-6">
-           <div className="flex flex-1 flex-wrap items-center gap-4 min-w-[320px]">
+        <div className="surface-card card-shadow flex flex-wrap items-center justify-between gap-4 rounded-[2rem] p-4 sm:gap-6 sm:p-6">
+           <div className="flex flex-1 flex-wrap items-center gap-3 sm:gap-4">
               <div className="relative flex-1">
                  <Search size={18} className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-400" />
                  <input 
@@ -176,10 +176,10 @@ export default function AdminUsersPage() {
               <table className="w-full text-left">
                  <thead className="bg-slate-50 border-b border-slate-100">
                     <tr>
-                       <th className="px-8 py-5 text-[10px] font-black uppercase tracking-widest text-slate-400">User Identity</th>
-                       <th className="px-8 py-5 text-[10px] font-black uppercase tracking-widest text-slate-400">Access Role</th>
-                       <th className="px-8 py-5 text-[10px] font-black uppercase tracking-widest text-slate-400">Activity Status</th>
-                       <th className="px-8 py-5 text-[10px] font-black uppercase tracking-widest text-slate-400 text-right">Actions</th>
+                       <th className="px-6 py-5 text-xs font-black uppercase tracking-wide text-slate-400 sm:px-8">User Identity</th>
+                       <th className="px-6 py-5 text-xs font-black uppercase tracking-wide text-slate-400 sm:px-8">Access Role</th>
+                       <th className="px-6 py-5 text-xs font-black uppercase tracking-wide text-slate-400 sm:px-8">Activity Status</th>
+                       <th className="px-6 py-5 text-right text-xs font-black uppercase tracking-wide text-slate-400 sm:px-8">Actions</th>
                     </tr>
                  </thead>
                  <tbody className="divide-y divide-slate-100">
@@ -187,36 +187,36 @@ export default function AdminUsersPage() {
                        <tr><td colSpan={4} className="px-8 py-20 text-center"><div className="flex flex-col items-center gap-3 text-slate-400"><div className="h-8 w-8 animate-spin rounded-full border-4 border-slate-200 border-t-[var(--color-blue)]" /><span className="text-xs font-bold uppercase tracking-widest">Retrieving Directory...</span></div></td></tr>
                     ) : users.map((u) => (
                        <tr key={u.id} className="group transition-colors hover:bg-slate-50/50">
-                          <td className="px-8 py-5">
+                          <td className="px-6 py-5 sm:px-8">
                              <div className="flex items-center gap-4">
                                 <div className="h-12 w-12 flex items-center justify-center rounded-2xl bg-[var(--color-surface)] text-[var(--color-blue)] font-black text-lg">
                                    {u.fullName[0]}
                                 </div>
                                 <div className="text-left">
                                    <p className="text-sm font-black text-[var(--color-blue)]">{u.fullName}</p>
-                                   <div className="mt-1 flex items-center gap-3 text-[10px] font-bold text-slate-400">
+                                   <div className="mt-1 flex flex-wrap items-center gap-2 text-xs font-bold text-slate-400">
                                       <span className="flex items-center gap-1"><Mail size={10} /> {u.email}</span>
                                       {u.phone && <span className="flex items-center gap-1"><Phone size={10} /> {u.phone}</span>}
                                    </div>
                                 </div>
                              </div>
                           </td>
-                          <td className="px-8 py-5">
-                             <span className={`inline-flex items-center gap-1.5 rounded-full px-3 py-1 text-[10px] font-black uppercase tracking-wider ${u.role === ROLE_ADMIN ? "bg-amber-100 text-amber-700" : "bg-slate-100 text-slate-500"}`}>
+                          <td className="px-6 py-5 sm:px-8">
+                             <span className={`inline-flex items-center gap-1.5 rounded-full px-3 py-1 text-xs font-black uppercase tracking-wide ${u.role === ROLE_ADMIN ? "bg-amber-100 text-amber-700" : "bg-slate-100 text-slate-500"}`}>
                                 {u.role === ROLE_ADMIN ? <Shield size={10} /> : <UserIcon size={10} />}
                                 {u.role}
                              </span>
                           </td>
-                          <td className="px-8 py-5 text-left">
+                          <td className="px-6 py-5 text-left sm:px-8">
                              <div className="flex items-center gap-2">
                                 <div className={`h-2 w-2 rounded-full ${u.isActive ? "bg-emerald-500 shadow-[0_0_8px_rgba(16,185,129,0.4)]" : "bg-red-500"}`} />
-                                <span className={`text-[10px] font-black uppercase tracking-wider ${u.isActive ? "text-emerald-600" : "text-red-600"}`}>
+                                <span className={`text-xs font-black uppercase tracking-wide ${u.isActive ? "text-emerald-600" : "text-red-600"}`}>
                                    {u.isActive ? "Authorized" : "Restricted"}
                                 </span>
                              </div>
-                             <p className="mt-1 text-[8px] font-bold text-slate-400 uppercase tracking-tighter">Joined {formatUtcDate(u.createdAtUtc)}</p>
+                             <p className="mt-1 text-[11px] font-bold text-slate-400 uppercase tracking-tight">Joined {formatUtcDate(u.createdAtUtc)}</p>
                           </td>
-                          <td className="px-8 py-5 text-right">
+                          <td className="px-6 py-5 text-right sm:px-8">
                              <div className="flex justify-end gap-2">
                                 <button 
                                   onClick={() => { 
@@ -232,19 +232,19 @@ export default function AdminUsersPage() {
                                     setEditingId(u.id); 
                                     setModalMode("edit"); 
                                   }}
-                                  className="h-10 w-10 flex items-center justify-center rounded-xl bg-white border border-slate-200 text-slate-400 transition-all hover:bg-[var(--color-blue)] hover:text-white hover:border-[var(--color-blue)]"
+                                  className="flex h-11 w-11 items-center justify-center rounded-xl border border-slate-200 bg-white text-slate-400 transition-all hover:border-[var(--color-blue)] hover:bg-[var(--color-blue)] hover:text-white"
                                 >
                                    <Edit3 size={16} />
                                 </button>
                                 <button 
                                   onClick={() => toggleBlock(u)}
-                                  className={`h-10 w-10 flex items-center justify-center rounded-xl border transition-all ${u.isActive ? "bg-white border-slate-200 text-slate-400 hover:bg-amber-50 hover:text-amber-600 hover:border-amber-200" : "bg-emerald-50 border-emerald-100 text-emerald-600 hover:bg-emerald-600 hover:text-white"}`}
+                                  className={`flex h-11 w-11 items-center justify-center rounded-xl border transition-all ${u.isActive ? "border-slate-200 bg-white text-slate-400 hover:border-amber-200 hover:bg-amber-50 hover:text-amber-600" : "border-emerald-100 bg-emerald-50 text-emerald-600 hover:bg-emerald-600 hover:text-white"}`}
                                 >
                                    {u.isActive ? <Ban size={16} /> : <CheckCircle2 size={16} />}
                                 </button>
                                 <button 
                                   disabled={currentUser?.id === u.id}
-                                  className="h-10 w-10 flex items-center justify-center rounded-xl bg-white border border-slate-200 text-slate-400 transition-all hover:bg-red-600 hover:text-white hover:border-red-600 disabled:opacity-30"
+                                  className="flex h-11 w-11 items-center justify-center rounded-xl border border-slate-200 bg-white text-slate-400 transition-all hover:border-red-600 hover:bg-red-600 hover:text-white disabled:opacity-30"
                                 >
                                    <Trash2 size={16} />
                                 </button>
@@ -257,14 +257,14 @@ export default function AdminUsersPage() {
            </div>
 
            {/* Pagination */}
-           <div className="bg-slate-50/50 border-t border-slate-100 px-8 py-5 flex items-center justify-between">
-              <p className="text-[10px] font-black uppercase tracking-[0.2em] text-slate-400">
+           <div className="flex items-center justify-between border-t border-slate-100 bg-slate-50/50 px-6 py-5 sm:px-8">
+              <p className="text-xs font-black uppercase tracking-wide text-slate-400">
                  Directory Record <span className="text-[var(--color-blue)] mx-1">{users.length} of {total}</span>
               </p>
               <div className="flex gap-2">
-                 <button disabled={page === 1} onClick={() => setPage(p => p - 1)} className="h-10 w-10 flex items-center justify-center rounded-xl bg-white border border-slate-200 text-slate-600 disabled:opacity-40 transition-all hover:bg-slate-100"><ChevronLeft size={18} /></button>
+                 <button disabled={page === 1} onClick={() => setPage(p => p - 1)} className="flex h-11 w-11 items-center justify-center rounded-xl border border-slate-200 bg-white text-slate-600 transition-all hover:bg-slate-100 disabled:opacity-40"><ChevronLeft size={18} /></button>
                  <div className="h-10 px-4 flex items-center justify-center rounded-xl bg-white border border-slate-200 text-xs font-black text-[var(--color-blue)]">{page} / {totalPages}</div>
-                 <button disabled={page === totalPages} onClick={() => setPage(p => p + 1)} className="h-10 w-10 flex items-center justify-center rounded-xl bg-white border border-slate-200 text-slate-600 disabled:opacity-40 transition-all hover:bg-slate-100"><ChevronRight size={18} /></button>
+                 <button disabled={page === totalPages} onClick={() => setPage(p => p + 1)} className="flex h-11 w-11 items-center justify-center rounded-xl border border-slate-200 bg-white text-slate-600 transition-all hover:bg-slate-100 disabled:opacity-40"><ChevronRight size={18} /></button>
               </div>
            </div>
         </div>
@@ -284,19 +284,19 @@ export default function AdminUsersPage() {
                <form onSubmit={handleFormSubmit} className="mt-10 space-y-6">
                   <div className="grid gap-6 sm:grid-cols-2 text-left">
                      <div className="space-y-1.5 text-left">
-                        <label className="text-[10px] font-black uppercase tracking-wider text-slate-400 ml-1">Legal Full Name</label>
+                        <label className="ml-1 text-xs font-black uppercase tracking-wide text-slate-400">Legal Full Name</label>
                         <input required value={form.fullName} onChange={e => setForm(f => ({ ...f, fullName: e.target.value }))} className="w-full rounded-xl border border-slate-200 bg-slate-50 px-4 py-3 text-sm font-bold text-[var(--color-blue)] outline-none" />
                      </div>
                      <div className="space-y-1.5 text-left">
-                        <label className="text-[10px] font-black uppercase tracking-wider text-slate-400 ml-1">Email Address</label>
+                        <label className="ml-1 text-xs font-black uppercase tracking-wide text-slate-400">Email Address</label>
                         <input required type="email" value={form.email} onChange={e => setForm(f => ({ ...f, email: e.target.value }))} className="w-full rounded-xl border border-slate-200 bg-slate-50 px-4 py-3 text-sm font-bold text-[var(--color-blue)] outline-none" />
                      </div>
                      <div className="space-y-1.5 text-left">
-                        <label className="text-[10px] font-black uppercase tracking-wider text-slate-400 ml-1">Phone (WhatsApp)</label>
+                        <label className="ml-1 text-xs font-black uppercase tracking-wide text-slate-400">Phone (WhatsApp)</label>
                         <input value={form.phone} onChange={e => setForm(f => ({ ...f, phone: e.target.value }))} className="w-full rounded-xl border border-slate-200 bg-slate-50 px-4 py-3 text-sm font-bold text-[var(--color-blue)] outline-none" />
                      </div>
                      <div className="space-y-1.5 text-left">
-                        <label className="text-[10px] font-black uppercase tracking-wider text-slate-400 ml-1">System Role</label>
+                        <label className="ml-1 text-xs font-black uppercase tracking-wide text-slate-400">System Role</label>
                         <select value={form.role} onChange={e => setForm(f => ({ ...f, role: e.target.value as any }))} className="w-full rounded-xl border border-slate-200 bg-slate-50 px-4 py-3 text-sm font-bold text-[var(--color-blue)] outline-none">
                            <option value={ROLE_CUSTOMER}>Standard User</option>
                            <option value={ROLE_ADMIN}>Platform Admin</option>
@@ -306,12 +306,12 @@ export default function AdminUsersPage() {
 
                   {modalMode === 'add' ? (
                      <div className="space-y-1.5 text-left">
-                        <label className="text-[10px] font-black uppercase tracking-wider text-slate-400 ml-1">Initial Password</label>
+                        <label className="ml-1 text-xs font-black uppercase tracking-wide text-slate-400">Initial Password</label>
                         <input required type="password" value={form.password} onChange={e => setForm(f => ({ ...f, password: e.target.value }))} className="w-full rounded-xl border border-slate-200 bg-slate-50 px-4 py-3 text-sm font-bold text-[var(--color-blue)] outline-none" />
                      </div>
                   ) : (
                      <div className="space-y-1.5 text-left">
-                        <label className="text-[10px] font-black uppercase tracking-wider text-slate-400 ml-1">Reset Password (Optional)</label>
+                        <label className="ml-1 text-xs font-black uppercase tracking-wide text-slate-400">Reset Password (Optional)</label>
                         <input type="password" value={form.newPassword} onChange={e => setForm(f => ({ ...f, newPassword: e.target.value }))} placeholder="Leave blank to keep current" className="w-full rounded-xl border border-slate-200 bg-slate-50 px-4 py-3 text-sm font-bold text-[var(--color-blue)] outline-none" />
                      </div>
                   )}
@@ -327,7 +327,7 @@ export default function AdminUsersPage() {
                   {formError && <p className="text-xs font-bold text-red-600 bg-red-50 p-3 rounded-lg border border-red-100">{formError}</p>}
 
                   <div className="pt-4 flex gap-4">
-                     <button type="submit" disabled={saving} className="flex-1 rounded-2xl bg-[var(--color-blue)] py-4 text-[10px] font-black uppercase tracking-[0.3em] text-white shadow-lg shadow-[var(--color-blue)]/20 transition-all hover:bg-[var(--color-blue)]/90">
+                     <button type="submit" disabled={saving} className="flex-1 rounded-2xl bg-[var(--color-blue)] py-4 text-xs font-black uppercase tracking-[0.2em] text-white shadow-lg shadow-[var(--color-blue)]/20 transition-all hover:bg-[var(--color-blue)]/90">
                         {saving ? 'Processing...' : 'Authorize Records'}
                      </button>
                   </div>

@@ -13,6 +13,14 @@ const navItems = [
   { href: "/how-it-works", label: "How It Works" },
 ];
 
+const mobileNavItems = [
+  { href: "/", label: "Home" },
+  { href: "/shop", label: "Shop" },
+  { href: "/orders", label: "Orders" },
+  { href: "/custom-order", label: "Custom" },
+  { href: "/cart", label: "Cart" },
+];
+
 const emptySubscribe = () => () => undefined;
 
 export function SiteHeader() {
@@ -20,6 +28,7 @@ export function SiteHeader() {
   const pathname = usePathname();
   const { itemCount } = useCart();
   const { user, isAdmin, logout, loading } = useAuth();
+  const hideMobileNav = pathname.startsWith("/checkout");
 
   return (
     <>
@@ -27,16 +36,16 @@ export function SiteHeader() {
         <div className="page-shell flex flex-col gap-4 py-4 md:flex-row md:items-center md:justify-between">
           <div className="flex items-center justify-between gap-3">
             <Link href="/" className="flex flex-col">
-              <span className="display-font text-2xl font-semibold text-primary">
+              <span className="display-font text-xl font-semibold text-primary sm:text-2xl">
                 LittleGenius LAB
               </span>
-              <span className="text-xs font-semibold uppercase tracking-[0.24em] text-ink-soft">
+              <span className="text-[0.68rem] font-semibold uppercase tracking-[0.2em] text-ink-soft sm:text-xs sm:tracking-[0.24em]">
                 Design. Print. Play.
               </span>
             </Link>
             <Link
               href="/cart"
-              className="rounded-full border border-border bg-white px-4 py-2 text-sm font-bold text-primary md:hidden"
+              className="rounded-full border border-border bg-white px-4 py-2.5 text-sm font-bold text-primary md:hidden"
             >
               Cart ({isClient ? itemCount : 0})
             </Link>
@@ -93,7 +102,7 @@ export function SiteHeader() {
                 </Link>
                 <button
                   onClick={logout}
-                  className="rounded-full border border-[var(--color-border)] bg-white px-4 py-2 text-sm font-bold text-[var(--color-blue)]"
+                  className="rounded-full border border-(--color-border) bg-white px-4 py-2 text-sm font-bold text-(--color-blue)"
                 >
                   Logout
                 </button>
@@ -102,13 +111,13 @@ export function SiteHeader() {
               <>
                 <Link
                   href="/login"
-                  className="rounded-full border border-[var(--color-border)] bg-white px-4 py-2 text-sm font-bold text-[var(--color-blue)]"
+                  className="rounded-full border border-(--color-border) bg-white px-4 py-2 text-sm font-bold text-(--color-blue)"
                 >
                   Login
                 </Link>
                 <Link
                   href="/signup"
-                  className="rounded-full bg-[var(--color-orange)] px-4 py-2 text-sm font-bold text-white"
+                  className="rounded-full bg-(--color-orange) px-4 py-2 text-sm font-bold text-white"
                 >
                   Sign up
                 </Link>
@@ -118,31 +127,38 @@ export function SiteHeader() {
         </div>
       </header>
 
-      <nav className="fixed inset-x-3 bottom-3 z-40 rounded-2xl border border-[var(--color-border)] bg-white/95 p-2 shadow-lg backdrop-blur md:hidden">
-        <div className="grid grid-cols-6 text-center text-[0.65rem] font-semibold leading-tight text-[var(--color-ink-soft)] sm:text-xs">
-          <Link href="/" className={pathname === "/" ? "text-[var(--color-blue)]" : ""}>
-            Home
-          </Link>
-          <Link href="/shop" className={pathname.startsWith("/shop") ? "text-[var(--color-blue)]" : ""}>
-            Shop
-          </Link>
-          <Link href="/orders" className={pathname === "/orders" ? "text-[var(--color-blue)]" : ""}>
-            Orders
-          </Link>
-          <Link href="/custom-order" className={pathname === "/custom-order" ? "text-[var(--color-blue)]" : ""}>
-            Custom
-          </Link>
-          <Link href="/cart" className={pathname === "/cart" ? "text-[var(--color-blue)]" : ""}>
-            Cart{isClient ? ` ${itemCount}` : ""}
-          </Link>
-          <Link
-            href={user ? "/account" : "/login"}
-            className={pathname === "/account" || pathname === "/login" ? "text-[var(--color-blue)]" : ""}
-          >
-            {user ? "You" : "Login"}
-          </Link>
-        </div>
-      </nav>
+      {!hideMobileNav ? (
+        <nav className="fixed inset-x-2 bottom-2 z-40 rounded-2xl border border-(--color-border) bg-white/95 p-1.5 shadow-lg backdrop-blur md:hidden">
+          <div className="grid grid-cols-6 gap-1 text-center text-[0.7rem] font-semibold leading-tight text-(--color-ink-soft)">
+            {mobileNavItems.map((item) => {
+              const isActive = item.href === "/" ? pathname === "/" : pathname.startsWith(item.href);
+              return (
+                <Link
+                  key={item.href}
+                  href={item.href}
+                  className={`inline-flex min-h-11 items-center justify-center rounded-xl px-1.5 py-2 transition-colors ${
+                    isActive
+                      ? "bg-(--color-blue)/10 text-(--color-blue)"
+                      : "text-(--color-ink-soft) hover:bg-slate-100"
+                  }`}
+                >
+                  {item.href === "/cart" ? `Cart${isClient ? ` ${itemCount}` : ""}` : item.label}
+                </Link>
+              );
+            })}
+            <Link
+              href={user ? "/account" : "/login"}
+              className={`inline-flex min-h-11 items-center justify-center rounded-xl px-1.5 py-2 transition-colors ${
+                pathname === "/account" || pathname === "/login"
+                  ? "bg-(--color-blue)/10 text-(--color-blue)"
+                  : "text-(--color-ink-soft) hover:bg-slate-100"
+              }`}
+            >
+              {user ? "You" : "Login"}
+            </Link>
+          </div>
+        </nav>
+      ) : null}
     </>
   );
 }

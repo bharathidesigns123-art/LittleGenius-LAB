@@ -24,7 +24,7 @@ export default function CartPage() {
             }
           />
         ) : (
-          <div className="grid gap-8 md:grid-cols-[1fr_360px]">
+          <div className="grid gap-6 lg:grid-cols-[1fr_360px] lg:gap-8">
             <div className="space-y-4">
               {items.map((item) => (
                 <div key={item.productId} className="surface-card rounded-[2rem] p-4">
@@ -43,27 +43,29 @@ export default function CartPage() {
                         <div className="flex items-center gap-2">
                           <button
                             onClick={() => updateQuantity(item.productId, item.quantity - 1)}
-                            className="rounded-full border border-[var(--color-border)] px-3 py-1"
+                            className="inline-flex h-11 w-11 items-center justify-center rounded-full border border-[var(--color-border)] text-lg font-bold"
+                            aria-label={`Decrease quantity for ${item.name}`}
                           >
                             -
                           </button>
                           <span className="min-w-8 text-center font-semibold">{item.quantity}</span>
                           <button
                             onClick={() => updateQuantity(item.productId, item.quantity + 1)}
-                            className="rounded-full border border-[var(--color-border)] px-3 py-1"
+                            className="inline-flex h-11 w-11 items-center justify-center rounded-full border border-[var(--color-border)] text-lg font-bold"
+                            aria-label={`Increase quantity for ${item.name}`}
                           >
                             +
                           </button>
                         </div>
                         <button
                           onClick={() => removeItem(item.productId)}
-                          className="text-sm font-semibold text-[var(--color-orange)]"
+                          className="rounded-full px-3 py-2 text-sm font-semibold text-[var(--color-orange)] hover:bg-orange-50"
                         >
                           Remove
                         </button>
                       </div>
                     </div>
-                    <div className="text-right">
+                    <div className="text-left md:text-right">
                       <p className="text-sm text-[var(--color-ink-soft)]">Line total</p>
                       <p className="text-lg font-bold text-[var(--color-blue)]">
                         Rs. {item.priceInr * item.quantity}

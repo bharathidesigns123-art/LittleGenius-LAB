@@ -38,41 +38,55 @@ export default function SignupPage() {
 
   return (
     <StorefrontShell>
-      <div className="page-shell py-16">
-        <div className="mx-auto max-w-xl surface-card card-shadow rounded-[2.5rem] p-8">
+      <div className="page-shell py-10 sm:py-16">
+        <div className="mx-auto max-w-xl surface-card card-shadow rounded-[2rem] p-5 sm:rounded-[2.5rem] sm:p-8">
           <p className="text-sm font-bold uppercase tracking-[0.24em] text-[var(--color-orange)]">
             New here
           </p>
-          <h1 className="display-font mt-3 text-4xl font-semibold text-[var(--color-blue)]">
+          <h1 className="display-font mt-3 text-3xl font-semibold text-[var(--color-blue)] sm:text-4xl">
             Create your account
           </h1>
           <form onSubmit={handleSubmit} className="mt-6 space-y-4">
-            <input
-              value={form.fullName}
-              onChange={(event) => setForm((current) => ({ ...current, fullName: event.target.value }))}
-              className="w-full rounded-[1.4rem] border border-[var(--color-border)] px-4 py-3 outline-none"
-              placeholder="Full name"
-            />
-            <input
-              type="email"
-              value={form.email}
-              onChange={(event) => setForm((current) => ({ ...current, email: event.target.value }))}
-              className="w-full rounded-[1.4rem] border border-[var(--color-border)] px-4 py-3 outline-none"
-              placeholder="Email"
-            />
-            <input
-              value={form.phone}
-              onChange={(event) => setForm((current) => ({ ...current, phone: event.target.value }))}
-              className="w-full rounded-[1.4rem] border border-[var(--color-border)] px-4 py-3 outline-none"
-              placeholder="Phone number"
-            />
+            <label className="flex flex-col gap-2 text-sm font-semibold text-[var(--color-blue)]">
+              Full name
+              <input
+                value={form.fullName}
+                onChange={(event) => setForm((current) => ({ ...current, fullName: event.target.value }))}
+                className="w-full rounded-[1.2rem] border border-[var(--color-border)] px-4 py-3 outline-none"
+                placeholder="Your full name"
+                autoComplete="name"
+              />
+            </label>
+            <label className="flex flex-col gap-2 text-sm font-semibold text-[var(--color-blue)]">
+              Email address
+              <input
+                type="email"
+                value={form.email}
+                onChange={(event) => setForm((current) => ({ ...current, email: event.target.value }))}
+                className="w-full rounded-[1.2rem] border border-[var(--color-border)] px-4 py-3 outline-none"
+                placeholder="you@example.com"
+                autoComplete="email"
+              />
+            </label>
+            <label className="flex flex-col gap-2 text-sm font-semibold text-[var(--color-blue)]">
+              Phone number
+              <input
+                value={form.phone}
+                onChange={(event) => setForm((current) => ({ ...current, phone: event.target.value }))}
+                className="w-full rounded-[1.2rem] border border-[var(--color-border)] px-4 py-3 outline-none"
+                placeholder="10-digit mobile number"
+                autoComplete="tel"
+              />
+            </label>
             <div className="relative">
+              <label className="mb-2 block text-sm font-semibold text-[var(--color-blue)]">Password</label>
               <input
                 type={showPassword ? "text" : "password"}
                 value={form.password}
                 onChange={(event) => setForm((current) => ({ ...current, password: event.target.value }))}
-                className="w-full rounded-[1.4rem] border border-[var(--color-border)] px-4 py-3 pr-12 outline-none"
+                className="w-full rounded-[1.2rem] border border-[var(--color-border)] px-4 py-3 pr-12 outline-none"
                 placeholder="Password"
+                autoComplete="new-password"
               />
               <button
                 type="button"

@@ -40,27 +40,34 @@ export default function AdminLoginPage() {
   };
 
   return (
-    <div className="page-shell py-16">
-      <div className="mx-auto max-w-xl surface-card card-shadow rounded-[2.5rem] p-8">
+    <div className="page-shell py-10 sm:py-16">
+      <div className="mx-auto max-w-xl surface-card card-shadow rounded-[2rem] p-5 sm:rounded-[2.5rem] sm:p-8">
         <p className="text-sm font-bold uppercase tracking-[0.24em] text-[var(--color-orange)]">
           Admin only
         </p>
-        <h1 className="display-font mt-3 text-4xl font-semibold text-[var(--color-blue)]">
+        <h1 className="display-font mt-3 text-3xl font-semibold text-[var(--color-blue)] sm:text-4xl">
           LittleGenius LAB dashboard
         </h1>
         <form onSubmit={handleSubmit} className="mt-6 space-y-4">
-          <input
-            value={email}
-            onChange={(event) => setEmail(event.target.value)}
-            className="w-full rounded-[1.4rem] border border-[var(--color-border)] px-4 py-3 outline-none"
-          />
+          <label className="flex flex-col gap-2 text-sm font-semibold text-[var(--color-blue)]">
+            Admin email
+            <input
+              value={email}
+              onChange={(event) => setEmail(event.target.value)}
+              className="w-full rounded-[1.2rem] border border-[var(--color-border)] px-4 py-3 outline-none"
+              placeholder="admin@littlegeniuslab.in"
+              autoComplete="email"
+            />
+          </label>
           <div className="relative">
+            <label className="mb-2 block text-sm font-semibold text-[var(--color-blue)]">Password</label>
             <input
               type={showPassword ? "text" : "password"}
               value={password}
               onChange={(event) => setPassword(event.target.value)}
-              className="w-full rounded-[1.4rem] border border-[var(--color-border)] px-4 py-3 pr-12 outline-none"
+              className="w-full rounded-[1.2rem] border border-[var(--color-border)] px-4 py-3 pr-12 outline-none"
               placeholder="Password"
+              autoComplete="current-password"
             />
             <button
               type="button"

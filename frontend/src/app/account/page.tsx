@@ -25,7 +25,8 @@ function OrderProgress({ status, orderType }: { status: string; orderType?: stri
   const steps = orderType === "custom" ? CUSTOM_ORDER_STEPS : ORDER_STEPS;
   const activeIndex = steps.indexOf(status);
   return (
-    <div className="mt-4 grid grid-cols-4 gap-2 md:grid-cols-8">
+    <div className="mt-4 overflow-x-auto pb-1">
+      <div className="grid min-w-[520px] grid-cols-4 gap-2 md:min-w-0 md:grid-cols-8">
       {steps.map((step, index) => (
         <div key={step} className="min-w-0">
           <div
@@ -37,9 +38,10 @@ function OrderProgress({ status, orderType }: { status: string; orderType?: stri
                   : "bg-[var(--color-border)]"
             }`}
           />
-          <p className="mt-2 truncate text-xs font-semibold text-[var(--color-ink-soft)]">{step}</p>
+          <p className="mt-2 text-xs font-semibold text-[var(--color-ink-soft)] md:truncate">{step}</p>
         </div>
       ))}
+      </div>
     </div>
   );
 }
@@ -137,7 +139,7 @@ export default function AccountPage() {
             }
           />
         ) : (
-          <div className="grid gap-8 md:grid-cols-[360px_1fr]">
+          <div className="grid gap-6 lg:grid-cols-[360px_1fr] lg:gap-8">
             <div className="surface-card card-shadow rounded-[1.5rem] p-6">
               <p className="text-sm font-bold uppercase tracking-[0.24em] text-[var(--color-orange)]">
                 Profile

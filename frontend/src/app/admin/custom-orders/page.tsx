@@ -167,9 +167,9 @@ export default function AdminCustomOrdersPage() {
     <AdminShell title="Custom Design Queue">
       <div className="space-y-6">
         {/* Filters */}
-        <div className="surface-card card-shadow rounded-[2rem] p-6">
+        <div className="surface-card card-shadow rounded-[2rem] p-4 sm:p-6">
            <div className="flex flex-wrap items-center gap-4">
-              <div className="relative flex-1 min-w-[280px]">
+              <div className="relative flex-1 min-w-0">
                  <Search size={18} className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400" />
                  <input
                    value={filters.customer}
@@ -230,24 +230,24 @@ export default function AdminCustomOrdersPage() {
 
                           <div className="mt-8 space-y-5">
                              <div>
-                                <p className="text-[10px] font-black uppercase tracking-widest text-slate-400">Status</p>
-                                <span className={`mt-2 inline-block rounded-full px-3 py-1 text-[10px] font-black uppercase tracking-widest ${statusClass(request.status)}`}>
+                                <p className="text-xs font-black uppercase tracking-wide text-slate-400">Status</p>
+                                <span className={`mt-2 inline-block rounded-full px-3 py-1 text-xs font-black uppercase tracking-wide ${statusClass(request.status)}`}>
                                    {request.status}
                                 </span>
                              </div>
 
                              <div className="flex items-center gap-3">
-                                <div className="h-10 w-10 flex items-center justify-center rounded-xl bg-white shadow-sm text-slate-400"><Calendar size={18} /></div>
+                                <div className="flex h-11 w-11 items-center justify-center rounded-xl bg-white shadow-sm text-slate-400"><Calendar size={18} /></div>
                                 <div>
-                                   <p className="text-[10px] font-black uppercase tracking-widest text-slate-400 leading-none">Created</p>
+                                   <p className="text-xs font-black uppercase tracking-wide text-slate-400 leading-none">Created</p>
                                    <p className="mt-1 text-sm font-bold text-[var(--color-blue)]">{date?.toLocaleString("en-IN", { day: '2-digit', month: 'short', hour: 'numeric', minute: '2-digit' }) ?? ""}</p>
                                 </div>
                              </div>
 
                              <div className="flex items-center gap-3">
-                                <div className="h-10 w-10 flex items-center justify-center rounded-xl bg-white shadow-sm text-slate-400"><IndianRupee size={18} /></div>
+                                <div className="flex h-11 w-11 items-center justify-center rounded-xl bg-white shadow-sm text-slate-400"><IndianRupee size={18} /></div>
                                 <div>
-                                   <p className="text-[10px] font-black uppercase tracking-widest text-slate-400 leading-none">Quote</p>
+                                   <p className="text-xs font-black uppercase tracking-wide text-slate-400 leading-none">Quote</p>
                                    <p className="mt-1 text-sm font-black text-[var(--color-orange)]">
                                       {request.quoteAmountInr ? `Rs. ${request.quoteAmountInr}` : "PENDING"}
                                    </p>
@@ -261,20 +261,20 @@ export default function AdminCustomOrdersPage() {
                           <div className="text-left">
                              <div className="flex items-center gap-2 mb-4">
                                 <User size={16} className="text-[var(--color-orange)]" />
-                                <h3 className="text-[10px] font-black uppercase tracking-[0.2em] text-[var(--color-blue)]">Requester</h3>
+                                <h3 className="text-xs font-black uppercase tracking-[0.16em] text-[var(--color-blue)]">Requester</h3>
                              </div>
                              <div className="rounded-[1.5rem] bg-slate-50 p-5">
                                 <p className="text-sm font-black text-[var(--color-blue)]">{request.name}</p>
                                 <p className="mt-1 text-xs font-medium text-slate-500">{request.email}</p>
                                 <p className="text-xs font-medium text-slate-500">{request.whatsAppNumber}</p>
-                                <p className="mt-2 text-[10px] font-bold text-slate-400 uppercase tracking-widest">Pincode: {request.pincode || "-"}</p>
+                                <p className="mt-2 text-xs font-bold uppercase tracking-wide text-slate-400">Pincode: {request.pincode || "-"}</p>
                              </div>
 
                              {request.photoUrl && (
                                 <a 
                                    href={resolveAssetUrl(request.photoUrl)} 
                                    target="_blank" 
-                                   className="mt-4 flex items-center gap-2 text-[10px] font-black uppercase tracking-widest text-[var(--color-blue)] hover:text-[var(--color-orange)] transition-colors"
+                                   className="mt-4 flex items-center gap-2 text-xs font-black uppercase tracking-wide text-[var(--color-blue)] transition-colors hover:text-[var(--color-orange)]"
                                 >
                                    <ImageIcon size={14} /> View Reference Image <ExternalLink size={12} />
                                 </a>
@@ -284,16 +284,16 @@ export default function AdminCustomOrdersPage() {
                           <div className="text-left">
                              <div className="flex items-center gap-2 mb-4">
                                 <MessageSquare size={16} className="text-[var(--color-orange)]" />
-                                <h3 className="text-[10px] font-black uppercase tracking-[0.2em] text-[var(--color-blue)]">Design Details</h3>
+                                <h3 className="text-xs font-black uppercase tracking-[0.16em] text-[var(--color-blue)]">Design Details</h3>
                              </div>
                              <div className="space-y-4">
                                 <div className="grid grid-cols-2 gap-4">
                                    <div className="bg-slate-50 rounded-xl px-4 py-2 border border-slate-100">
-                                      <p className="text-[8px] font-black text-slate-400 uppercase tracking-widest">Occasion</p>
+                                      <p className="text-[11px] font-black uppercase tracking-wide text-slate-400">Occasion</p>
                                       <p className="text-xs font-bold text-[var(--color-blue)] truncate">{request.occasion || "Generic"}</p>
                                    </div>
                                    <div className="bg-slate-50 rounded-xl px-4 py-2 border border-slate-100">
-                                      <p className="text-[8px] font-black text-slate-400 uppercase tracking-widest">Color Preference</p>
+                                      <p className="text-[11px] font-black uppercase tracking-wide text-slate-400">Color Preference</p>
                                       <p className="text-xs font-bold text-[var(--color-blue)] truncate">{request.colorPreference || "Default"}</p>
                                    </div>
                                 </div>
@@ -310,7 +310,7 @@ export default function AdminCustomOrdersPage() {
                        <div className="w-full lg:w-[460px] bg-slate-50/50 p-8 border-t lg:border-t-0 lg:border-l border-slate-200/60">
                           <div className="grid gap-3 sm:grid-cols-2">
                              <div className="space-y-1.5 text-left">
-                                <label className="text-[10px] font-black uppercase tracking-wider text-slate-400 ml-1">Lifecycle Status</label>
+                                <label className="ml-1 text-xs font-black uppercase tracking-wide text-slate-400">Lifecycle Status</label>
                                 <select
                                   value={draft.status}
                                   onChange={(e) => updateDraft(request, { status: e.target.value })}
@@ -321,7 +321,7 @@ export default function AdminCustomOrdersPage() {
                              </div>
 
                              <div className="space-y-1.5 text-left">
-                                <label className="text-[10px] font-black uppercase tracking-wider text-slate-400 ml-1">Quote (Rs.)</label>
+                                <label className="ml-1 text-xs font-black uppercase tracking-wide text-slate-400">Quote (Rs.)</label>
                                 <input
                                   value={draft.quoteAmountInr}
                                   onChange={(e) => updateDraft(request, { quoteAmountInr: e.target.value })}
@@ -331,7 +331,7 @@ export default function AdminCustomOrdersPage() {
                              </div>
 
                              <div className="space-y-1.5 text-left">
-                                <label className="text-[10px] font-black uppercase tracking-wider text-slate-400 ml-1">Courier Partner</label>
+                                <label className="ml-1 text-xs font-black uppercase tracking-wide text-slate-400">Courier Partner</label>
                                 <select
                                   value={draft.courierPartner}
                                   onChange={(e) => updateDraft(request, { courierPartner: e.target.value })}
@@ -343,7 +343,7 @@ export default function AdminCustomOrdersPage() {
                              </div>
 
                              <div className="space-y-1.5 text-left">
-                                <label className="text-[10px] font-black uppercase tracking-wider text-slate-400 ml-1">Tracking ID</label>
+                                <label className="ml-1 text-xs font-black uppercase tracking-wide text-slate-400">Tracking ID</label>
                                 <input
                                   value={draft.trackingNumber}
                                   onChange={(e) => updateDraft(request, { trackingNumber: e.target.value })}
@@ -352,7 +352,7 @@ export default function AdminCustomOrdersPage() {
                              </div>
 
                              <div className="sm:col-span-2 space-y-1.5 text-left">
-                                <label className="text-[10px] font-black uppercase tracking-wider text-slate-400 ml-1">Internal Notes</label>
+                                <label className="ml-1 text-xs font-black uppercase tracking-wide text-slate-400">Internal Notes</label>
                                 <textarea
                                   value={draft.adminNotes}
                                   onChange={(e) => updateDraft(request, { adminNotes: e.target.value })}
@@ -365,7 +365,7 @@ export default function AdminCustomOrdersPage() {
                           <div className="mt-6 flex gap-3">
                              <button 
                                 onClick={() => saveRequest(request)}
-                                className="flex-1 flex items-center justify-center gap-2 rounded-xl bg-[var(--color-blue)] py-4 text-[10px] font-black uppercase tracking-[0.2em] text-white shadow-lg transition-all hover:bg-[var(--color-blue)]/90"
+                                className="flex flex-1 items-center justify-center gap-2 rounded-xl bg-[var(--color-blue)] py-4 text-xs font-black uppercase tracking-[0.15em] text-white shadow-lg transition-all hover:bg-[var(--color-blue)]/90"
                              >
                                 <Save size={16} /> Save Record
                              </button>

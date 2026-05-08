@@ -3,7 +3,7 @@ import Link from "next/link";
 export function SiteFooter() {
   return (
     <footer className="mt-20 border-t border-[var(--color-border)] bg-[var(--color-blue)] text-white">
-      <div className="page-shell grid gap-10 py-12 md:grid-cols-4">
+      <div className="page-shell grid gap-8 py-10 sm:grid-cols-2 lg:grid-cols-5 lg:gap-10 lg:py-12">
         <div>
           <p className="display-font text-2xl font-semibold">LittleGenius LAB</p>
           <p className="mt-3 text-sm leading-7 text-white/80">

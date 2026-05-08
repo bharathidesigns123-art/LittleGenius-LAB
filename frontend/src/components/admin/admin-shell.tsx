@@ -63,7 +63,7 @@ export function AdminShell({
   }
 
   return (
-    <div className="flex min-h-screen bg-slate-50 overflow-hidden">
+    <div className="flex min-h-screen overflow-hidden bg-slate-50">
       {/* Desktop Sidebar */}
       <aside className="hidden lg:flex w-72 flex-col bg-[var(--color-blue)] text-white shadow-xl">
         <div className="p-8">
@@ -71,7 +71,7 @@ export function AdminShell({
             <span className="display-font text-2xl font-bold text-white">
               LittleGenius
             </span>
-            <span className="text-[10px] font-bold uppercase tracking-[0.3em] text-[var(--color-orange)]">
+            <span className="text-xs font-bold uppercase tracking-[0.22em] text-[var(--color-orange)]">
               Admin Dashboard
             </span>
           </Link>
@@ -131,14 +131,14 @@ export function AdminShell({
       )}
 
       {/* Mobile Sidebar */}
-      <aside className={`fixed inset-y-0 left-0 z-50 w-72 transform bg-[var(--color-blue)] text-white transition-transform duration-300 ease-in-out lg:hidden ${isMobileMenuOpen ? "translate-x-0" : "-translate-x-full"}`}>
-        <div className="flex items-center justify-between p-8">
+      <aside className={`fixed inset-y-0 left-0 z-50 w-[min(86vw,20rem)] transform bg-[var(--color-blue)] text-white transition-transform duration-300 ease-in-out lg:hidden ${isMobileMenuOpen ? "translate-x-0" : "-translate-x-full"}`}>
+        <div className="flex items-center justify-between p-6">
           <span className="display-font text-xl font-bold">LittleGenius</span>
-          <button onClick={() => setIsMobileMenuOpen(false)} className="text-white/60">
+          <button onClick={() => setIsMobileMenuOpen(false)} className="rounded-lg p-2 text-white/70 hover:bg-white/10">
             <X size={24} />
           </button>
         </div>
-        <nav className="space-y-1 px-4">
+        <nav className="space-y-1 px-4 pb-6">
           {links.map((link) => {
             const Icon = link.icon;
             const isActive = pathname === link.href;
@@ -159,21 +159,21 @@ export function AdminShell({
       </aside>
 
       {/* Main Content Area */}
-      <div className="flex flex-1 flex-col h-screen overflow-hidden">
+      <div className="flex h-screen flex-1 flex-col overflow-hidden">
         {/* Top Header Bar */}
-        <header className="flex h-20 items-center justify-between border-b border-slate-200 bg-white px-8 flex-shrink-0">
+        <header className="flex h-16 shrink-0 items-center justify-between border-b border-slate-200 bg-white px-4 sm:h-20 sm:px-6 lg:px-8">
           <div className="flex items-center gap-4">
             <button 
               onClick={() => setIsMobileMenuOpen(true)}
-              className="rounded-lg p-2 text-slate-500 hover:bg-slate-100 lg:hidden"
+              className="rounded-lg p-2.5 text-slate-500 hover:bg-slate-100 lg:hidden"
             >
               <Menu size={24} />
             </button>
             <div>
-              <h1 className="display-font text-2xl font-bold text-[var(--color-blue)]">
+              <h1 className="display-font text-xl font-bold text-[var(--color-blue)] sm:text-2xl">
                 {title}
               </h1>
-              <div className="flex items-center gap-2 text-[10px] font-bold uppercase tracking-wider text-slate-400 mt-0.5">
+              <div className="mt-0.5 hidden items-center gap-2 text-xs font-bold uppercase tracking-wide text-slate-400 sm:flex">
                 <Link href="/admin">Dashboard</Link>
                 {pathname !== "/admin" && (
                   <>
@@ -185,13 +185,13 @@ export function AdminShell({
             </div>
           </div>
 
-          <div className="flex items-center gap-4">
-             <div className="hidden md:flex relative mr-4">
+           <div className="flex items-center gap-2 sm:gap-3 lg:gap-4">
+             <div className="relative mr-0 hidden md:flex lg:mr-4">
                 <Search size={18} className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400" />
                 <input 
                    type="text" 
                    placeholder="Search..." 
-                   className="h-10 w-64 rounded-xl bg-slate-100 pl-10 pr-4 text-sm outline-none focus:ring-2 focus:ring-[var(--color-blue)]/20"
+                 className="h-10 w-56 rounded-xl bg-slate-100 pl-10 pr-4 text-sm outline-none focus:ring-2 focus:ring-[var(--color-blue)]/20 lg:w-64"
                 />
              </div>
              <button className="relative rounded-xl bg-slate-100 p-2.5 text-slate-600 hover:bg-slate-200">
@@ -200,7 +200,7 @@ export function AdminShell({
              </button>
              <Link 
                 href="/account" 
-                className="hidden sm:flex h-10 w-10 items-center justify-center rounded-xl bg-[var(--color-orange)] text-white shadow-lg shadow-[var(--color-orange)]/20"
+               className="hidden h-11 w-11 items-center justify-center rounded-xl bg-[var(--color-orange)] text-white shadow-lg shadow-[var(--color-orange)]/20 sm:flex"
              >
                 <User size={20} />
              </Link>
@@ -208,8 +208,8 @@ export function AdminShell({
         </header>
 
         {/* Scrollable Page Content */}
-        <main className="flex-1 overflow-y-auto p-8 custom-scrollbar">
-          <div className="max-w-[1600px] mx-auto space-y-8">
+          <main className="custom-scrollbar flex-1 overflow-y-auto p-4 sm:p-6 lg:p-8">
+           <div className="mx-auto max-w-[1600px] space-y-6 sm:space-y-8">
             {children}
           </div>
         </main>

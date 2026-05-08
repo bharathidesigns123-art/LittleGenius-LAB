@@ -27,8 +27,8 @@ export function QuantityStepper({
 
   return (
     <div 
-      className={`flex items-center justify-between overflow-hidden rounded-full border-2 border-[var(--color-blue)] bg-white p-1 shadow-sm ${cleanClassName} ${disabled ? "opacity-60 grayscale" : ""}`}
-      style={{ minHeight: '3.5rem' }}
+      className={`flex items-center justify-between overflow-hidden rounded-full border-2 border-[var(--color-blue)] bg-white p-1.5 shadow-sm ${cleanClassName} ${disabled ? "opacity-60 grayscale" : ""}`}
+      style={{ minHeight: "3.75rem" }}
     >
       <button
         type="button"
@@ -37,7 +37,7 @@ export function QuantityStepper({
           e.preventDefault();
           updateQuantity(productId, quantity - 1);
         }}
-        className="flex h-10 w-10 items-center justify-center rounded-full transition-all hover:bg-red-50 hover:text-red-600 disabled:cursor-not-allowed disabled:hover:bg-transparent disabled:hover:text-inherit"
+        className="flex h-11 w-11 items-center justify-center rounded-full transition-all hover:bg-red-50 hover:text-red-600 disabled:cursor-not-allowed disabled:hover:bg-transparent disabled:hover:text-inherit"
         aria-label="Decrease quantity"
       >
         {quantity === 1 ? (
@@ -48,10 +48,10 @@ export function QuantityStepper({
       </button>
       
       <div className="flex flex-1 flex-col items-center justify-center px-2">
-        <span className="text-[0.65rem] font-bold uppercase tracking-widest text-[var(--color-ink-soft)] leading-none">
+        <span className="text-[0.7rem] font-bold uppercase tracking-wider text-[var(--color-ink-soft)] leading-none">
           Quantity
         </span>
-        <span className="text-lg font-extrabold text-[var(--color-blue)] leading-tight">
+        <span className="text-xl font-extrabold text-[var(--color-blue)] leading-tight">
           {quantity}
         </span>
       </div>
@@ -63,7 +63,7 @@ export function QuantityStepper({
           e.preventDefault();
           updateQuantity(productId, quantity + 1);
         }}
-        className="flex h-10 w-10 items-center justify-center rounded-full transition-all hover:bg-emerald-50 hover:text-emerald-600 disabled:cursor-not-allowed disabled:hover:bg-transparent disabled:hover:text-inherit"
+        className="flex h-11 w-11 items-center justify-center rounded-full transition-all hover:bg-emerald-50 hover:text-emerald-600 disabled:cursor-not-allowed disabled:hover:bg-transparent disabled:hover:text-inherit"
         aria-label="Increase quantity"
       >
         <Plus className="h-4 w-4" />
