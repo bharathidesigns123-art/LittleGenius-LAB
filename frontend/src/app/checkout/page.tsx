@@ -472,7 +472,7 @@ export default function CheckoutPage() {
   return (
     <StorefrontShell>
       <Script src="https://checkout.razorpay.com/v1/checkout.js" strategy="afterInteractive" />
-      <div className="page-shell py-10 pb-28 md:pb-10">
+      <div className="page-shell py-8 pb-32 sm:py-10 md:pb-10">
         {items.length === 0 ? (
           <EmptyState
             title="Your checkout is empty"
@@ -488,7 +488,7 @@ export default function CheckoutPage() {
             <p className="text-sm font-semibold text-[var(--color-ink-soft)]">Redirecting to your orders...</p>
           </div>
         ) : (
-          <div className="grid gap-8 md:grid-cols-[minmax(0,1fr)_360px]">
+          <div className="grid gap-6 lg:grid-cols-[minmax(0,1fr)_360px] lg:gap-8">
             <form id="checkout-form" onSubmit={handleSubmit} className="surface-card card-shadow rounded-[2rem] p-5 sm:p-8">
               <p className="text-sm font-bold uppercase tracking-[0.24em] text-[var(--color-orange)]">
                 Checkout
@@ -500,13 +500,13 @@ export default function CheckoutPage() {
                 Faster address entry with search, pincode auto-fill, and saved addresses.
               </p>
 
-              <section className="mt-7 rounded-[1.75rem] bg-brand-primary/10 p-4">
+              <section className="mt-7 rounded-[1.75rem] bg-brand-primary/10 p-4 sm:p-5">
                 <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
                   <div>
                     <p className="text-xs font-extrabold uppercase tracking-[0.2em] text-brand-primary-dark">
                       Step 1
                     </p>
-                    <h2 className="mt-1 text-xl font-extrabold text-[var(--color-blue)]">
+                    <h2 className="mt-1 text-lg font-extrabold text-[var(--color-blue)] sm:text-xl">
                       Where should we deliver?
                     </h2>
                   </div>
@@ -765,10 +765,10 @@ export default function CheckoutPage() {
               <div className="mt-5 space-y-4">
                 {items.map((item) => (
                   <div key={item.productId} className="flex items-center justify-between gap-3 text-sm">
-                    <span>
+                    <span className="min-w-0 truncate">
                       {item.name} x {item.quantity}
                     </span>
-                    <span>Rs. {item.priceInr * item.quantity}</span>
+                    <span className="shrink-0">Rs. {item.priceInr * item.quantity}</span>
                   </div>
                 ))}
               </div>
@@ -794,9 +794,9 @@ export default function CheckoutPage() {
         )}
       </div>
       {items.length > 0 && !successOrderCode ? (
-        <div className="fixed inset-x-0 bottom-0 z-50 border-t border-[var(--color-border)] bg-white/95 px-3 pb-[calc(0.75rem+env(safe-area-inset-bottom))] pt-3 backdrop-blur md:hidden">
-          <div className="page-shell flex items-center justify-between gap-3">
-            <div>
+        <div className="fixed inset-x-0 bottom-0 z-50 border-t border-[var(--color-border)] bg-white/95 px-3 pb-[calc(0.75rem+env(safe-area-inset-bottom))] pt-3 shadow-[0_-8px_30px_rgba(15,23,42,0.1)] backdrop-blur md:hidden">
+          <div className="page-shell flex items-center gap-3">
+            <div className="min-w-0">
               <p className="text-xs text-[var(--color-ink-soft)]">Payable</p>
               <p className="text-lg font-bold text-[var(--color-blue)]">Rs. {total}</p>
             </div>
@@ -804,10 +804,10 @@ export default function CheckoutPage() {
               type="submit"
               form="checkout-form"
               disabled={submitting || isFetchingPincode}
-              className="site-button site-button-primary px-5 py-3 text-sm disabled:cursor-wait disabled:opacity-70"
+              className="site-button site-button-primary ml-auto min-w-0 flex-1 px-4 py-3 text-sm disabled:cursor-wait disabled:opacity-70"
             >
               <LoadingButtonContent loading={submitting} loadingText="Placing...">
-                Place Order
+                Place order
               </LoadingButtonContent>
             </button>
           </div>
