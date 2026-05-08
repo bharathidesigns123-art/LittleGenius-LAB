@@ -21,7 +21,8 @@ function OrderProgress({ status, orderType }: { status: string; orderType?: stri
   const steps = orderType === "custom" ? CUSTOM_ORDER_STEPS : ORDER_STEPS;
   const activeIndex = steps.indexOf(status);
   return (
-    <div className="mt-5 grid grid-cols-4 gap-2 md:grid-cols-8">
+    <div className="mt-5 overflow-x-auto pb-1">
+      <div className="grid min-w-130 grid-cols-4 gap-2 md:min-w-0 md:grid-cols-8">
       {steps.map((step, index) => (
         <div key={step}>
           <div
@@ -29,13 +30,14 @@ function OrderProgress({ status, orderType }: { status: string; orderType?: stri
               status === "Cancelled"
                 ? "bg-red-100"
                 : index <= activeIndex
-                  ? "bg-[var(--color-orange)]"
-                  : "bg-[var(--color-border)]"
+                  ? "bg-(--color-orange)"
+                  : "bg-(--color-border)"
             }`}
           />
-          <p className="mt-2 truncate text-xs font-semibold text-[var(--color-ink-soft)]">{step}</p>
+          <p className="mt-2 text-xs font-semibold text-(--color-ink-soft) md:truncate">{step}</p>
         </div>
       ))}
+      </div>
     </div>
   );
 }
@@ -91,26 +93,26 @@ export default function TrackOrderPage() {
 
   return (
     <StorefrontShell>
-      <div className="page-shell py-16">
-        <div className="mx-auto max-w-2xl surface-card card-shadow rounded-[1.5rem] p-8">
-          <p className="text-sm font-bold uppercase tracking-[0.24em] text-[var(--color-orange)]">
+      <div className="page-shell py-10 sm:py-16">
+        <div className="mx-auto max-w-2xl surface-card card-shadow rounded-3xl p-5 sm:p-8">
+          <p className="text-sm font-bold uppercase tracking-[0.24em] text-(--color-orange)">
             Guest tracking
           </p>
-          <h1 className="display-font mt-2 text-4xl font-semibold text-[var(--color-blue)]">
+          <h1 className="display-font mt-2 text-3xl font-semibold text-(--color-blue) sm:text-4xl">
             Track your order
           </h1>
           <form onSubmit={handleSubmit} className="mt-6 grid gap-4 md:grid-cols-2">
             <input
               value={orderCode}
               onChange={(event) => setOrderCode(event.target.value)}
-              className="rounded-[1rem] border border-[var(--color-border)] px-4 py-3 outline-none"
+              className="rounded-2xl border border-(--color-border) px-4 py-3 outline-none"
               placeholder="LGL-ORD-10001"
               required
             />
             <input
               value={phone}
               onChange={(event) => setPhone(event.target.value)}
-              className="rounded-[1rem] border border-[var(--color-border)] px-4 py-3 outline-none"
+              className="rounded-2xl border border-(--color-border) px-4 py-3 outline-none"
               placeholder="Phone number"
               required
             />
@@ -123,8 +125,8 @@ export default function TrackOrderPage() {
           {error ? <p className="mt-4 text-sm font-semibold text-red-700">{error}</p> : null}
           {message ? <p className="mt-4 text-sm font-semibold text-emerald-700">{message}</p> : null}
           {result ? (
-            <div className="mt-6 rounded-[1.5rem] bg-[var(--color-surface)] p-6">
-              <p className="text-sm font-bold uppercase tracking-[0.24em] text-[var(--color-orange)]">
+            <div className="mt-6 rounded-3xl bg-(--color-surface) p-6">
+              <p className="text-sm font-bold uppercase tracking-[0.24em] text-(--color-orange)">
                 {result.orderCode}
               </p>
               <div className="mt-3 flex flex-wrap gap-2">
@@ -138,14 +140,14 @@ export default function TrackOrderPage() {
                 ) : null}
               </div>
               <OrderProgress status={result.status} orderType={result.orderType} />
-              <div className="mt-4 space-y-2 text-sm text-[var(--color-ink-soft)]">
+              <div className="mt-4 space-y-2 text-sm text-(--color-ink-soft)">
                 {result.items.map((item) => (
                   <p key={item.productName}>
                     {item.productName} x {item.quantity} | Rs. {item.totalPriceInr}
                   </p>
                 ))}
                 {result.orderType === "custom" ? (
-                  <div className="grid gap-2 rounded-[1rem] bg-white/70 p-4 md:grid-cols-2">
+                  <div className="grid gap-2 rounded-2xl bg-white/70 p-4 md:grid-cols-2">
                     {result.occasion ? <p>Occasion: {result.occasion}</p> : null}
                     {result.size ? <p>Size: {result.size}</p> : null}
                     {result.colorPreference ? <p>Colour: {result.colorPreference}</p> : null}
@@ -175,7 +177,7 @@ export default function TrackOrderPage() {
                     </LoadingButtonContent>
                   </button>
                 ) : null}
-                <p className="text-sm font-semibold text-[var(--color-ink-soft)]">
+                <p className="text-sm font-semibold text-(--color-ink-soft)">
                   {result.cancellationEligible
                     ? "Eligible for cancellation before shipment."
                     : "Cancellation is unavailable once shipped or delivered."}

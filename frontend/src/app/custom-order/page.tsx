@@ -90,12 +90,12 @@ export default function CustomOrderPage() {
   return (
     <StorefrontShell>
       <section className="page-shell py-12">
-        <div className="grid items-start gap-8 rounded-[3rem] bg-[linear-gradient(135deg,#1a3c6e_0%,#264b82_55%,#e05c1a_180%)] p-6 text-white md:grid-cols-[1.1fr_0.9fr] md:p-10">
+        <div className="grid items-start gap-6 rounded-[2rem] bg-[linear-gradient(135deg,#1a3c6e_0%,#264b82_55%,#e05c1a_180%)] p-5 text-white md:grid-cols-[1.1fr_0.9fr] md:gap-8 md:rounded-[3rem] md:p-10">
           <div>
             <p className="mb-4 text-sm font-bold uppercase tracking-[0.24em] text-[var(--color-yellow)]">
               Custom Toy Studio
             </p>
-            <h1 className="display-font text-5xl md:text-6xl font-semibold leading-tight">
+            <h1 className="display-font text-4xl font-semibold leading-tight md:text-6xl">
               Turn your memory into a premium keepsake
             </h1>
             <p className="mt-4 max-w-lg text-base leading-8 text-white/80 md:text-lg">
@@ -109,7 +109,7 @@ export default function CustomOrderPage() {
               ))}
             </div>
           </div>
-          <div className="rounded-[2.5rem] border border-white/15 bg-white/10 p-6 backdrop-blur-md">
+            <div className="rounded-[1.8rem] border border-white/15 bg-white/10 p-5 backdrop-blur-md md:rounded-[2.5rem] md:p-6">
             <p className="text-sm font-bold uppercase tracking-[0.24em] text-[var(--color-yellow)]">Progress tracker</p>
             <div className="mt-4 h-2 rounded-full bg-white/20">
               <div className="h-full rounded-full bg-[var(--color-yellow)] transition-all" style={{ width: `${progress}%` }} />
@@ -119,7 +119,7 @@ export default function CustomOrderPage() {
               {flowSteps.map((step, index) => (
                 <div key={step} className="flex items-center gap-3">
                   <div
-                    className={`flex h-7 w-7 items-center justify-center rounded-full text-xs font-bold ${
+                    className={`flex h-8 w-8 items-center justify-center rounded-full text-xs font-bold ${
                       index + 1 <= activeStep ? "bg-[var(--color-yellow)] text-[var(--color-blue)]" : "bg-white/20 text-white"
                     }`}
                   >
@@ -134,11 +134,11 @@ export default function CustomOrderPage() {
       </section>
 
       <section className="page-shell pb-20">
-        <div className="surface-card card-shadow rounded-[3rem] p-8 md:p-12">
+        <div className="surface-card card-shadow rounded-[2rem] p-5 md:rounded-[3rem] md:p-12">
           {success ? (
             <div className="max-w-xl mx-auto text-center py-10">
-              <div className="text-6xl mb-6">🎉</div>
-              <h2 className="display-font text-4xl font-bold text-[var(--color-blue)] mb-4">
+              <div className="mb-6 text-5xl sm:text-6xl">🎉</div>
+              <h2 className="display-font mb-4 text-3xl font-bold text-[var(--color-blue)] sm:text-4xl">
                 We&apos;ve Got Your Request!
               </h2>
               <p className="text-lg text-[var(--color-ink-soft)] mb-8">
@@ -173,7 +173,7 @@ export default function CustomOrderPage() {
               <form onSubmit={handleSubmit} className="grid gap-8 md:grid-cols-2">
                 <div className="md:col-span-2">
                   <div className="flex items-center gap-3 mb-4">
-                    <span className="w-8 h-8 rounded-full bg-blue-100 text-blue-600 flex items-center justify-center text-xs font-bold">1</span>
+                    <span className="flex h-9 w-9 items-center justify-center rounded-full bg-blue-100 text-xs font-bold text-blue-600">1</span>
                     <h4 className="font-bold text-[var(--color-ink)] uppercase tracking-wider text-sm">Upload reference</h4>
                   </div>
                   
@@ -197,7 +197,7 @@ export default function CustomOrderPage() {
                           </>
                         ) : (
                           <>
-                            <div className="text-4xl mb-3">Upload</div>
+                            <div className="mb-3 text-3xl sm:text-4xl">Upload</div>
                             <p className="text-sm font-semibold text-[var(--color-blue)] mb-1">Upload Your Photo</p>
                             <p className="text-xs text-[var(--color-ink-soft)] mb-4">Front-facing works best (JPG, PNG under 10MB)</p>
                             <input
@@ -232,7 +232,7 @@ export default function CustomOrderPage() {
 
                 <div className="md:col-span-2 pt-4">
                   <div className="flex items-center gap-3 mb-4">
-                    <span className="w-8 h-8 rounded-full bg-orange-100 text-orange-600 flex items-center justify-center text-xs font-bold">2</span>
+                    <span className="flex h-9 w-9 items-center justify-center rounded-full bg-orange-100 text-xs font-bold text-orange-600">2</span>
                     <h4 className="font-bold text-[var(--color-ink)] uppercase tracking-wider text-sm">Customize Your Order</h4>
                   </div>
                   
@@ -280,7 +280,7 @@ export default function CustomOrderPage() {
 
                 <div className="md:col-span-2 pt-4">
                   <div className="flex items-center gap-3 mb-4">
-                    <span className="w-8 h-8 rounded-full bg-yellow-100 text-yellow-700 flex items-center justify-center text-xs font-bold">3</span>
+                    <span className="flex h-9 w-9 items-center justify-center rounded-full bg-yellow-100 text-xs font-bold text-yellow-700">3</span>
                     <h4 className="font-bold text-[var(--color-ink)] uppercase tracking-wider text-sm">Contact Details</h4>
                   </div>
                   
@@ -382,9 +382,9 @@ export default function CustomOrderPage() {
              { label: "Anniversary couple figurine", icon: "💍" },
              { label: "Corporate gifting — 20 units", icon: "🏢" }
            ].map((item, i) => (
-             <div key={i} className="surface-card rounded-[2rem] p-6 text-center border-dashed border-2">
+             <div key={i} className="surface-card rounded-[1.6rem] border-2 border-dashed p-5 text-center sm:rounded-[2rem] sm:p-6">
                <div className="text-4xl mb-3">{item.icon}</div>
-               <p className="text-xs font-bold text-[var(--color-ink-soft)] uppercase tracking-tighter">
+               <p className="text-[11px] font-bold uppercase tracking-tight text-[var(--color-ink-soft)] sm:text-xs">
                  {item.label}
                </p>
              </div>

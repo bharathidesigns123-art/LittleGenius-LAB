@@ -794,7 +794,7 @@ export default function CheckoutPage() {
         )}
       </div>
       {items.length > 0 && !successOrderCode ? (
-        <div className="fixed inset-x-0 bottom-0 z-40 border-t border-[var(--color-border)] bg-white/95 p-3 backdrop-blur md:hidden">
+        <div className="fixed inset-x-0 bottom-0 z-50 border-t border-[var(--color-border)] bg-white/95 px-3 pb-[calc(0.75rem+env(safe-area-inset-bottom))] pt-3 backdrop-blur md:hidden">
           <div className="page-shell flex items-center justify-between gap-3">
             <div>
               <p className="text-xs text-[var(--color-ink-soft)]">Payable</p>
@@ -804,7 +804,7 @@ export default function CheckoutPage() {
               type="submit"
               form="checkout-form"
               disabled={submitting || isFetchingPincode}
-              className="site-button site-button-primary min-w-44 disabled:cursor-wait disabled:opacity-70"
+              className="site-button site-button-primary px-5 py-3 text-sm disabled:cursor-wait disabled:opacity-70"
             >
               <LoadingButtonContent loading={submitting} loadingText="Placing...">
                 Place Order

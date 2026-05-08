@@ -414,9 +414,9 @@ export default function AdminOrdersPage() {
     <AdminShell title="Order management">
       <div className="space-y-6">
         {/* Filters Bar */}
-        <div className="surface-card card-shadow rounded-[2rem] p-6">
+          <div className="surface-card card-shadow rounded-[2rem] p-4 sm:p-6">
           <div className="flex flex-wrap items-center gap-4">
-             <div className="relative flex-1 min-w-[240px]">
+             <div className="relative flex-1 min-w-0">
                 <Search size={18} className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400" />
                 <input
                   value={filters.customer}
@@ -511,11 +511,11 @@ export default function AdminOrdersPage() {
                     
                     <div className="mt-6 space-y-4">
                       <div className="flex items-center gap-3">
-                         <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-white shadow-sm text-slate-400">
+                         <div className="flex h-11 w-11 items-center justify-center rounded-xl bg-white shadow-sm text-slate-400">
                             <Calendar size={18} />
                          </div>
                          <div>
-                            <p className="text-[10px] font-bold uppercase tracking-wider text-slate-400 leading-none">Placed on</p>
+                           <p className="text-xs font-bold uppercase tracking-wide text-slate-400 leading-none">Placed on</p>
                             <p className="mt-1 text-sm font-bold text-[var(--color-blue)]">
                               {date?.toLocaleString("en-IN", {
                                 day: "2-digit",
@@ -529,19 +529,19 @@ export default function AdminOrdersPage() {
                       </div>
 
                       <div className="flex items-center gap-3">
-                         <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-white shadow-sm text-slate-400">
+                         <div className="flex h-11 w-11 items-center justify-center rounded-xl bg-white shadow-sm text-slate-400">
                             <ShoppingBag size={18} />
                          </div>
                          <div>
-                            <p className="text-[10px] font-bold uppercase tracking-wider text-slate-400 leading-none">Status</p>
-                            <span className={`mt-1.5 inline-block rounded-full px-3 py-1 text-[10px] font-black uppercase tracking-wider ${statusClass(order.status)}`}>
+                           <p className="text-xs font-bold uppercase tracking-wide text-slate-400 leading-none">Status</p>
+                           <span className={`mt-1.5 inline-block rounded-full px-3 py-1 text-xs font-black uppercase tracking-wide ${statusClass(order.status)}`}>
                               {order.status}
                             </span>
                          </div>
                       </div>
 
                       <div className="pt-4 mt-4 border-t border-slate-200/60">
-                         <p className="text-[10px] font-bold uppercase tracking-wider text-slate-400">Payment</p>
+                         <p className="text-xs font-bold uppercase tracking-wide text-slate-400">Payment</p>
                          <p className="mt-2 text-sm font-bold text-[var(--color-blue)]">{order.paymentMethod}</p>
                          <p className="mt-1 text-xs font-semibold text-emerald-600">{order.paymentStatus}</p>
                       </div>
@@ -589,7 +589,7 @@ export default function AdminOrdersPage() {
                   <div className="w-full lg:w-[440px] bg-slate-50/50 p-8 border-t lg:border-t-0 lg:border-l border-slate-200/60">
                     <div className="grid gap-3 sm:grid-cols-2">
                       <div className="space-y-1.5">
-                        <label className="text-[10px] font-black uppercase tracking-wider text-slate-400 ml-1">Update Status</label>
+                        <label className="ml-1 text-xs font-black uppercase tracking-wide text-slate-400">Update Status</label>
                         <select
                           value={draft?.status ?? order.status}
                           onChange={(event) => updateDraft(order, { status: event.target.value })}
@@ -602,7 +602,7 @@ export default function AdminOrdersPage() {
                       </div>
 
                       <div className="space-y-1.5">
-                        <label className="text-[10px] font-black uppercase tracking-wider text-slate-400 ml-1">Courier</label>
+                        <label className="ml-1 text-xs font-black uppercase tracking-wide text-slate-400">Courier</label>
                         <select
                           value={draft?.courierPartner ?? ""}
                           onChange={(event) => updateDraft(order, { courierPartner: event.target.value })}
@@ -616,7 +616,7 @@ export default function AdminOrdersPage() {
                       </div>
 
                       <div className="space-y-1.5">
-                        <label className="text-[10px] font-black uppercase tracking-wider text-slate-400 ml-1">Tracking ID</label>
+                        <label className="ml-1 text-xs font-black uppercase tracking-wide text-slate-400">Tracking ID</label>
                         <input
                           value={draft?.trackingNumber ?? ""}
                           onChange={(event) => updateDraft(order, { trackingNumber: event.target.value })}
@@ -626,7 +626,7 @@ export default function AdminOrdersPage() {
                       </div>
 
                       <div className="space-y-1.5">
-                        <label className="text-[10px] font-black uppercase tracking-wider text-slate-400 ml-1">Weight (kg)</label>
+                        <label className="ml-1 text-xs font-black uppercase tracking-wide text-slate-400">Weight (kg)</label>
                         <input
                           value={draft?.packageWeightKg ?? ""}
                           onChange={(event) => updateDraft(order, { packageWeightKg: event.target.value })}
@@ -636,7 +636,7 @@ export default function AdminOrdersPage() {
                       </div>
 
                       <div className="space-y-1.5 sm:col-span-2">
-                        <label className="text-[10px] font-black uppercase tracking-wider text-slate-400 ml-1">Package Dimensions</label>
+                        <label className="ml-1 text-xs font-black uppercase tracking-wide text-slate-400">Package Dimensions</label>
                         <input
                           value={draft?.packageDimensionsCm ?? ""}
                           onChange={(event) => updateDraft(order, { packageDimensionsCm: event.target.value })}
