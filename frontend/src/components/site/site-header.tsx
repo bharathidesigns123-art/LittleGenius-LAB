@@ -5,6 +5,7 @@ import { usePathname } from "next/navigation";
 import { useSyncExternalStore } from "react";
 import { useAuth } from "@/components/providers/auth-provider";
 import { useCart } from "@/components/providers/cart-provider";
+import { SearchBar } from "@/components/site/search-bar";
 
 const navItems = [
   { href: "/shop", label: "Shop" },
@@ -49,6 +50,10 @@ export function SiteHeader() {
             >
               Cart ({isClient ? itemCount : 0})
             </Link>
+          </div>
+
+          <div className="flex-1 md:mx-8">
+            <SearchBar />
           </div>
 
           <nav className="hidden flex-wrap items-center gap-1 text-sm font-semibold md:flex">
