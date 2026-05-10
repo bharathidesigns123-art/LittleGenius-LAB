@@ -64,13 +64,13 @@ export function ProductCard({ product }: { product: ProductSummary }) {
             ? `${product.averageRating?.toFixed(1) ?? "0.0"}/5 rating (${product.reviewCount} review${product.reviewCount === 1 ? "" : "s"})`
             : "No ratings yet"}
         </p>
-        <p className="mt-3 flex-1 text-sm leading-7 text-ink-soft">
+        {/* <p className="mt-3 flex-1 text-sm leading-7 text-ink-soft">
           {product.shortDescription}
         </p>
         <div className="mt-4 rounded-2xl bg-[var(--color-surface)] p-3 text-xs text-[var(--color-ink-soft)]">
           <p className="font-semibold text-[var(--color-blue)]">Delivery in {product.shipsIn || "2-4 days"}</p>
           <p className="mt-1">Made in India | Safe material | BIS compliant finish</p>
-        </div>
+        </div> */}
         <div className="mt-5">
           <AddToCartButton
             product={{
