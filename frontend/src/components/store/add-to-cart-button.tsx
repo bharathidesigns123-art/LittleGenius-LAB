@@ -42,7 +42,12 @@ export function AddToCartButton({
       }}
       className={`${className ?? "site-button site-button-primary"} ${disabled ? "cursor-not-allowed opacity-60" : ""}`}
     >
-      {disabled ? "Out of Stock" : `Add to Cart - Rs. ${product.priceInr}`}
+      {disabled ? "Out of Stock" : (
+        <>
+          <span className="sm:hidden">Add to Cart</span>
+          <span className="hidden sm:inline">Add to Cart - Rs. {product.priceInr}</span>
+        </>
+      )}
     </button>
   );
 }
