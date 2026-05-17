@@ -26,6 +26,7 @@ public static class DatabaseSchemaUpdater
         if (db.Database.IsSqlite())
         {
             await ApplySqlitePaymentTransactionUpgradeAsync(db, cancellationToken);
+            await ApplySqliteUsersPasswordResetUpgradeAsync(db, cancellationToken);
         }
     }
 
@@ -369,6 +370,53 @@ public static class DatabaseSchemaUpdater
             await db.Database.ExecuteSqlRawAsync(
                 "ALTER TABLE [Users] ADD [DeletedAtUtc] datetime2 NULL;",
                 cancellationToken);
+        }
+
+        if (!columns.Contains("PasswordResetTokenHash"))
+        {
+            await db.Database.ExecuteSqlRawAsync(
+                "ALTER TABLE [Users] ADD [PasswordResetTokenHash] nvarchar(256) NULL;",
+                cancellationToken);
+        }
+
+        if (!columns.Contains("PasswordResetRequestedAtUtc"))
+        {
+            await db.Database.ExecuteSqlRawAsync(
+                "ALTER TABLE [Users] ADD [PasswordResetRequestedAtUtc] datetime2 NULL;",
+                cancellationToken);
+        }
+
+        if (!columns.Contains("PasswordResetExpiresAtUtc"))
+        {
+            await db.Database.ExecuteSqlRawAsync(
+                "ALTER TABLE [Users] ADD [PasswordResetExpiresAtUtc] datetime2 NULL;",
+                cancellationToken);
+        }
+    }
+
+    private static async Task ApplySqliteUsersPasswordResetUpgradeAsync(
+        AppDbContext db,
+        CancellationToken cancellationToken)
+    {
+        var columns = await GetSqliteColumnsAsync(db, "Users", cancellationToken);
+        if (columns.Count == 0)
+        {
+            return;
+        }
+
+        var statements = new Dictionary<string, string>(StringComparer.OrdinalIgnoreCase)
+        {
+            ["PasswordResetTokenHash"] = "ALTER TABLE Users ADD COLUMN PasswordResetTokenHash TEXT NULL;",
+            ["PasswordResetRequestedAtUtc"] = "ALTER TABLE Users ADD COLUMN PasswordResetRequestedAtUtc TEXT NULL;",
+            ["PasswordResetExpiresAtUtc"] = "ALTER TABLE Users ADD COLUMN PasswordResetExpiresAtUtc TEXT NULL;"
+        };
+
+        foreach (var statement in statements)
+        {
+            if (!columns.Contains(statement.Key))
+            {
+                await db.Database.ExecuteSqlRawAsync(statement.Value, cancellationToken);
+            }
         }
     }
 

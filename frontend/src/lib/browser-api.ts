@@ -107,6 +107,18 @@ export const browserApi = {
   login: (payload: { email: string; password: string }) =>
     apiRequest<AuthResponse>("/api/auth/login", { method: "POST", body: payload }),
 
+  forgotPassword: (payload: { email: string }) =>
+    apiRequest<{ message: string }>("/api/auth/forgot-password", { method: "POST", body: payload }),
+
+  validatePasswordResetToken: (payload: { token: string }) =>
+    apiRequest<{ isValid: boolean }>("/api/auth/reset-password/validate", {
+      method: "POST",
+      body: payload,
+    }),
+
+  resetPassword: (payload: { token: string; password: string }) =>
+    apiRequest<{ message: string }>("/api/auth/reset-password", { method: "POST", body: payload }),
+
   getMe: (token: string) => apiRequest<AccountProfile>("/api/auth/me", { token }),
 
   getProfile: (token: string) => apiRequest<AccountProfile>("/api/account/profile", { token }),

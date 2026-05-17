@@ -25,6 +25,18 @@ public static class EmailTemplates
             <p>If this was not you, please change your password or contact support.</p>
             """));
 
+    public static EmailContent PasswordReset(AppUser user, string resetUrl) => new(
+        "Reset your LittleGenius LAB password",
+        HtmlLayout(
+            "Reset your password",
+            $"""
+            <p>Hi {Encode(user.FullName)},</p>
+            <p>We received a request to reset your LittleGenius LAB password.</p>
+            <p><a href="{Encode(resetUrl)}" style="display:inline-block;background:#1A3C6E;color:#ffffff;text-decoration:none;padding:12px 20px;border-radius:999px;font-weight:700">Reset password</a></p>
+            <p>This link expires in 30 minutes and can only be used once.</p>
+            <p>If you did not request this, you can safely ignore this email.</p>
+            """));
+
     public static EmailContent OrderConfirmation(Order order) => new(
         $"Order Confirmed: {order.OrderCode}",
         HtmlLayout(
