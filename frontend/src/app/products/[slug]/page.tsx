@@ -7,6 +7,8 @@ import { ProductGallery } from "@/components/store/product-gallery";
 import { ProductReviewsSection } from "@/components/store/product-reviews-section";
 import { StorefrontShell } from "@/components/site/storefront-shell";
 import { EmptyState } from "@/components/ui/empty-state";
+import { PageSection } from "@/components/ui/page-section";
+import { SurfaceCard } from "@/components/ui/surface-card";
 import { getProductDetail, getProductReviews } from "@/lib/api";
 import { resolveAssetUrl } from "@/lib/asset-url";
 
@@ -145,17 +147,17 @@ export default async function ProductPage({ params }: ProductPageProps) {
     <StorefrontShell>
       <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(productSchema) }} />
       <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(breadcrumbSchema) }} />
-      <section className="page-shell py-10">
+      <PageSection>
         <div className="grid gap-10 md:grid-cols-[1fr_0.9fr]">
           <ProductGallery images={images} productName={product.name} />
 
-          <div className="space-y-5">
+          <div className="space-y-5 lg:space-y-6">
             <span className="status-pill status-pill-yellow">{product.badge}</span>
             <div>
-              <h1 className="display-font text-5xl font-semibold leading-tight text-primary">
+              <h1 className="display-font text-4xl font-semibold leading-[0.96] text-primary sm:text-5xl lg:text-6xl">
                 {product.name}
               </h1>
-              <p className="mt-3 text-sm font-semibold uppercase tracking-[0.18em] text-secondary">
+              <p className="mt-4 text-[11px] font-semibold uppercase tracking-[0.22em] text-secondary sm:text-xs">
                 {(product.reviewCount ?? 0) > 0
                   ? `${product.averageRating?.toFixed(1) ?? "0.0"}/5 rating from ${product.reviewCount} review${product.reviewCount === 1 ? "" : "s"}`
                   : "No ratings yet"}
@@ -164,37 +166,37 @@ export default async function ProductPage({ params }: ProductPageProps) {
                 {product.shortDescription}
               </p>
             </div>
-            <div className="surface-card card-shadow rounded-[2rem] p-6">
+            <SurfaceCard className="p-6 sm:p-7" tone="elevated">
               <div className="flex items-center justify-between gap-3">
-                <span className="text-3xl font-bold text-primary">
+                <span className="text-3xl font-semibold text-primary sm:text-4xl">
                   Rs. {product.priceInr}
                 </span>
                 <span className="status-pill status-pill-blue">{product.shipsIn}</span>
               </div>
-              <div className="mt-5 grid gap-3 sm:grid-cols-2">
-                <div className="rounded-[1.4rem] bg-[var(--color-surface)] p-4">
-                  <p className="text-xs font-bold uppercase tracking-[0.2em] text-[var(--color-ink-soft)]">
+              <div className="mt-6 grid gap-3 sm:grid-cols-2">
+                <div className="rounded-[1.4rem] border border-[var(--color-border)]/70 bg-[rgba(248,244,238,0.72)] p-4">
+                  <p className="text-[11px] font-bold uppercase tracking-[0.2em] text-[var(--color-ink-soft)]">
                     Material
                   </p>
-                  <p className="mt-2 font-semibold text-[var(--color-blue)]">{product.material}</p>
+                  <p className="mt-3 font-semibold text-[var(--color-blue)]">{product.material}</p>
                 </div>
-                <div className="rounded-[1.4rem] bg-[var(--color-surface)] p-4">
-                  <p className="text-xs font-bold uppercase tracking-[0.2em] text-[var(--color-ink-soft)]">
+                <div className="rounded-[1.4rem] border border-[var(--color-border)]/70 bg-[rgba(248,244,238,0.72)] p-4">
+                  <p className="text-[11px] font-bold uppercase tracking-[0.2em] text-[var(--color-ink-soft)]">
                     Size
                   </p>
-                  <p className="mt-2 font-semibold text-[var(--color-blue)]">{product.sizeMm}mm</p>
+                  <p className="mt-3 font-semibold text-[var(--color-blue)]">{product.sizeMm}mm</p>
                 </div>
-                <div className="rounded-[1.4rem] bg-[var(--color-surface)] p-4">
-                  <p className="text-xs font-bold uppercase tracking-[0.2em] text-[var(--color-ink-soft)]">
+                <div className="rounded-[1.4rem] border border-[var(--color-border)]/70 bg-[rgba(248,244,238,0.72)] p-4">
+                  <p className="text-[11px] font-bold uppercase tracking-[0.2em] text-[var(--color-ink-soft)]">
                     Colourway
                   </p>
-                  <p className="mt-2 font-semibold text-[var(--color-blue)]">{product.colourway}</p>
+                  <p className="mt-3 font-semibold text-[var(--color-blue)]">{product.colourway}</p>
                 </div>
-                <div className="rounded-[1.4rem] bg-[var(--color-surface)] p-4">
-                  <p className="text-xs font-bold uppercase tracking-[0.2em] text-[var(--color-ink-soft)]">
+                <div className="rounded-[1.4rem] border border-[var(--color-border)]/70 bg-[rgba(248,244,238,0.72)] p-4">
+                  <p className="text-[11px] font-bold uppercase tracking-[0.2em] text-[var(--color-ink-soft)]">
                     Stock
                   </p>
-                  <p className="mt-2 font-semibold text-[var(--color-blue)]">
+                  <p className="mt-3 font-semibold text-[var(--color-blue)]">
                     {product.stockQuantity} available
                   </p>
                 </div>
@@ -221,16 +223,16 @@ export default async function ProductPage({ params }: ProductPageProps) {
                   className="site-button site-button-secondary"
                 />
               </div>
-            </div>
-            <div className="surface-card rounded-[2rem] p-6">
+            </SurfaceCard>
+            <SurfaceCard className="p-6 sm:p-7" tone="muted">
               <h2 className="text-2xl font-semibold text-primary">The Details</h2>
               <p className="mt-4 text-sm leading-8 text-[var(--color-ink-soft)]">
                 {product.fullDescription}
               </p>
-            </div>
+            </SurfaceCard>
           </div>
         </div>
-      </section>
+      </PageSection>
 
       <ProductReviewsSection
         productId={product.id}
@@ -239,8 +241,8 @@ export default async function ProductPage({ params }: ProductPageProps) {
         initialSummary={reviewSummary}
       />
 
-      <section className="page-shell py-10">
-        <h2 className="display-font text-4xl font-semibold text-[var(--color-blue)]">
+      <PageSection>
+        <h2 className="display-font text-4xl font-semibold leading-tight text-[var(--color-blue)] sm:text-5xl">
           You might also like
         </h2>
         <div className="mt-6 grid gap-5 md:grid-cols-4">
@@ -248,21 +250,21 @@ export default async function ProductPage({ params }: ProductPageProps) {
             <Link
               key={item.slug}
               href={`/products/${item.slug}`}
-              className="bg-card rounded-2xl p-4 shadow-card-lg"
+              className="category-card p-4"
             >
               <Image
                 src={resolveAssetUrl(item.heroImageUrl)}
-            alt={`${item.name} related 3D printed toy or keychain`}
+                alt={`${item.name} related 3D printed toy or keychain`}
                 width={900}
                 height={900}
-                className="h-52 w-full rounded-xl object-cover"
+                className="h-52 w-full rounded-[1.2rem] object-cover"
               />
-              <h3 className="mt-4 text-lg font-semibold text-[var(--color-blue)]">{item.name}</h3>
-              <p className="mt-2 text-sm font-semibold text-[var(--color-ink-soft)]">Rs. {item.priceInr}</p>
+              <h3 className="mt-4 text-lg font-semibold leading-snug text-[var(--color-blue)]">{item.name}</h3>
+              <p className="mt-2 text-sm font-semibold text-brand-secondary">Rs. {item.priceInr}</p>
             </Link>
           ))}
         </div>
-      </section>
+      </PageSection>
     </StorefrontShell>
   );
 }

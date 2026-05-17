@@ -2,6 +2,7 @@
 
 import Image from "next/image";
 import { useEffect, useState } from "react";
+import { SurfaceCard } from "@/components/ui/surface-card";
 import { resolveAssetUrl } from "@/lib/asset-url";
 import type { ProductImage } from "@/lib/types";
 
@@ -36,11 +37,11 @@ export function ProductGallery({ images, productName }: ProductGalleryProps) {
 
   if (images.length === 0) {
     return (
-      <div className="surface-card card-shadow flex min-h-80 items-center justify-center rounded-4xl p-6 text-center sm:min-h-105 sm:rounded-[2.4rem]">
-        <p className="max-w-sm text-sm leading-7 text-(--color-ink-soft)">
+      <SurfaceCard className="flex min-h-80 items-center justify-center rounded-4xl p-6 text-center sm:min-h-105 sm:rounded-[2.4rem]">
+        <p className="max-w-sm text-sm leading-7 text-[var(--color-ink-soft)]">
           Product imagery will appear here once the catalog is updated.
         </p>
-      </div>
+      </SurfaceCard>
     );
   }
 
@@ -56,8 +57,8 @@ export function ProductGallery({ images, productName }: ProductGalleryProps) {
 
   return (
     <>
-      <div className="surface-card card-shadow rounded-4xl p-3 sm:rounded-[2.4rem] sm:p-5">
-        <div className="relative overflow-hidden rounded-[1.8rem] bg-white">
+      <SurfaceCard className="rounded-4xl p-3 sm:rounded-[2.4rem] sm:p-5" tone="elevated">
+        <div className="relative overflow-hidden rounded-[1.8rem] bg-[linear-gradient(180deg,#fcfaf6_0%,#f3ede4_100%)]">
           <button
             type="button"
             onClick={() => setIsZoomOpen(true)}
@@ -71,7 +72,7 @@ export function ProductGallery({ images, productName }: ProductGalleryProps) {
               height={activeHeight}
               priority
               sizes="(min-width: 1024px) 52vw, 100vw"
-              className="h-75 w-full object-contain sm:h-105 lg:h-130"
+              className="h-75 w-full object-contain p-3 sm:h-105 sm:p-5 lg:h-130"
             />
           </button>
           {images.length > 1 ? (
@@ -79,7 +80,7 @@ export function ProductGallery({ images, productName }: ProductGalleryProps) {
               <button
                 type="button"
                 onClick={() => moveSelection(-1)}
-                className="absolute left-2 top-1/2 -translate-y-1/2 rounded-full bg-white/90 px-3 py-2 text-xs font-semibold text-(--color-blue) shadow-sm sm:left-4 sm:text-sm"
+                className="absolute left-2 top-1/2 -translate-y-1/2 rounded-full bg-white/92 px-3 py-2 text-xs font-semibold text-[var(--color-blue)] shadow-[0_12px_26px_rgba(30,41,73,0.12)] sm:left-4 sm:text-sm"
                 aria-label="Show previous image"
               >
                 Prev
@@ -87,12 +88,12 @@ export function ProductGallery({ images, productName }: ProductGalleryProps) {
               <button
                 type="button"
                 onClick={() => moveSelection(1)}
-                className="absolute right-2 top-1/2 -translate-y-1/2 rounded-full bg-white/90 px-3 py-2 text-xs font-semibold text-(--color-blue) shadow-sm sm:right-4 sm:text-sm"
+                className="absolute right-2 top-1/2 -translate-y-1/2 rounded-full bg-white/92 px-3 py-2 text-xs font-semibold text-[var(--color-blue)] shadow-[0_12px_26px_rgba(30,41,73,0.12)] sm:right-4 sm:text-sm"
                 aria-label="Show next image"
               >
                 Next
               </button>
-              <div className="absolute bottom-4 right-4 rounded-full bg-(--color-blue)/90 px-3 py-1 text-xs font-semibold tracking-[0.18em] text-white">
+              <div className="absolute bottom-4 right-4 rounded-full bg-[var(--color-blue)] px-3 py-1 text-[11px] font-semibold uppercase tracking-[0.18em] text-white">
                 {activeIndex + 1} / {images.length}
               </div>
             </>
@@ -113,8 +114,8 @@ export function ProductGallery({ images, productName }: ProductGalleryProps) {
                   aria-label={`Show ${productName} thumbnail ${index + 1}`}
                   className={`overflow-hidden rounded-[1.2rem] border bg-white p-1 transition ${
                     index === activeIndex
-                      ? "border-(--color-orange) shadow-sm"
-                      : "border-(--color-border)"
+                      ? "border-[var(--color-orange)] shadow-[0_12px_24px_rgba(208,125,85,0.16)]"
+                      : "border-[var(--color-border)]"
                   }`}
                 >
                   <Image
@@ -130,7 +131,7 @@ export function ProductGallery({ images, productName }: ProductGalleryProps) {
             })}
           </div>
         ) : null}
-      </div>
+      </SurfaceCard>
 
       {isZoomOpen ? (
         <div className="fixed inset-0 z-50 bg-slate-950/80 p-3 sm:p-4" role="dialog" aria-modal="true" aria-label={`${productName} image preview`}>
@@ -143,13 +144,13 @@ export function ProductGallery({ images, productName }: ProductGalleryProps) {
           <div className="relative z-10 mx-auto flex h-full max-w-5xl items-center justify-center">
             <div className="w-full rounded-3xl bg-white p-3 shadow-2xl sm:rounded-4xl sm:p-4">
               <div className="mb-4 flex items-center justify-between gap-3">
-                <p className="text-sm font-semibold text-(--color-blue)">
+                <p className="text-sm font-semibold text-[var(--color-blue)]">
                   {productName} image {activeIndex + 1}
                 </p>
                 <button
                   type="button"
                   onClick={() => setIsZoomOpen(false)}
-                  className="rounded-full border border-(--color-border) px-3 py-2 text-sm font-semibold text-(--color-blue)"
+                  className="rounded-full border border-[var(--color-border)] bg-white/86 px-3 py-2 text-sm font-semibold text-[var(--color-blue)]"
                 >
                   Close
                 </button>

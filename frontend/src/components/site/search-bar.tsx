@@ -35,7 +35,6 @@ export function SearchBar() {
 
   return (
     <div className="relative w-full max-w-md lg:mx-auto">
-      {/* Desktop & Mobile Search Bar */}
       <form
         onSubmit={handleSearch}
         className={`relative flex items-center transition-all duration-300 ${
@@ -56,13 +55,13 @@ export function SearchBar() {
             value={query}
             onChange={(e) => setQuery(e.target.value)}
             placeholder="Search toys..."
-            className="h-10 w-full rounded-full border border-transparent bg-gray-100 pl-10 pr-10 text-sm font-medium text-ink transition-all placeholder:text-ink-soft focus:border-brand-primary focus:bg-white focus:outline-none focus:ring-2 focus:ring-brand-primary/20 md:h-11"
+            className="h-11 w-full rounded-full border border-[rgba(20,49,82,0.14)] bg-white/95 pl-10 pr-10 text-sm font-semibold text-ink shadow-[0_10px_24px_rgba(20,49,82,0.07),inset_0_1px_0_rgba(255,255,255,0.7)] transition-all placeholder:text-ink-soft focus:border-brand-secondary/50 focus:bg-white focus:outline-none focus:ring-4 focus:ring-brand-secondary/15 md:h-12"
           />
           {query && (
             <button
               type="button"
               onClick={clearSearch}
-              className="absolute right-2 top-1/2 -translate-y-1/2 rounded-full p-1 text-ink-soft hover:bg-gray-200 hover:text-ink"
+              className="absolute right-2 top-1/2 -translate-y-1/2 rounded-full p-1 text-ink-soft hover:bg-[var(--color-surface-2)] hover:text-ink"
             >
               <X size={16} />
             </button>

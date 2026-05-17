@@ -1,6 +1,9 @@
 import { ProductCard } from "@/components/store/product-card";
 import type { Metadata } from "next";
 import { StorefrontShell } from "@/components/site/storefront-shell";
+import { PageSection } from "@/components/ui/page-section";
+import { SectionHeading } from "@/components/ui/section-heading";
+import { SurfaceCard } from "@/components/ui/surface-card";
 import { getProducts } from "@/lib/api";
 import { filterProductsByQuery, normalizeProductQuery } from "@/lib/product-search";
 import Link from "next/link";
@@ -26,7 +29,16 @@ export default async function ShopPage({ searchParams }: ShopPageProps) {
 
   return (
     <StorefrontShell>
-      <section className="page-shell py-8">
+      <PageSection>
+        <SectionHeading
+          eyebrow={query ? "Search Results" : "Shop All"}
+          title={query ? `Results for "${query}"` : "Ready-to-ship toys, gifts, and collectibles"}
+          description={
+            query
+              ? "Browse matching products with the refreshed card system and cleaner mobile browsing."
+              : "Explore curated 3D printed creations with calmer cards, clearer pricing, and a more premium product-first layout."
+          }
+        />
         {filteredProducts.length > 0 ? (
           <div className="grid grid-cols-2 gap-x-3 gap-y-6 md:grid-cols-3 md:gap-x-4 md:gap-y-10 lg:grid-cols-4">
             {filteredProducts.map((product) => (
@@ -34,7 +46,7 @@ export default async function ShopPage({ searchParams }: ShopPageProps) {
             ))}
           </div>
         ) : (
-          <div className="flex flex-col items-center justify-center py-24 text-center">
+          <SurfaceCard className="flex flex-col items-center justify-center py-24 text-center" tone="elevated">
             <h2 className="display-font text-2xl font-semibold text-primary">
               No products found for "{query}"
             </h2>
@@ -43,13 +55,13 @@ export default async function ShopPage({ searchParams }: ShopPageProps) {
             </p>
             <Link
               href="/shop"
-              className="mt-8 rounded-full bg-primary px-8 py-3 text-sm font-bold text-white transition-all hover:bg-primary/90"
+              className="site-button site-button-primary mt-8"
             >
               Clear Search
             </Link>
-          </div>
+          </SurfaceCard>
         )}
-      </section>
+      </PageSection>
     </StorefrontShell>
   );
 }
