@@ -76,6 +76,18 @@ public sealed class NotificationService(
         await SendEmailInternalAsync(user.Email, content.Subject, content.HtmlBody, "user.login", cancellationToken);
     }
 
+    public async Task SendPasswordResetEmailAsync(int userId, string resetUrl, CancellationToken cancellationToken = default)
+    {
+        var user = await db.Users.AsNoTracking().FirstOrDefaultAsync(item => item.Id == userId, cancellationToken);
+        if (user is null || string.IsNullOrWhiteSpace(resetUrl))
+        {
+            return;
+        }
+
+        var content = EmailTemplates.PasswordReset(user, resetUrl);
+        await SendEmailInternalAsync(user.Email, content.Subject, content.HtmlBody, "user.password-reset", cancellationToken);
+    }
+
     public async Task SendOrderPlacedAsync(int orderId, CancellationToken cancellationToken = default)
     {
         var order = await GetOrderAsync(orderId, cancellationToken);

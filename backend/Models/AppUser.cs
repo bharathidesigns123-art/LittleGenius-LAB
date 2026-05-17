@@ -6,6 +6,9 @@ public sealed class AppUser
     public string FullName { get; set; } = string.Empty;
     public string Email { get; set; } = string.Empty;
     public string PasswordHash { get; set; } = string.Empty;
+    public string? PasswordResetTokenHash { get; set; }
+    public DateTime? PasswordResetRequestedAtUtc { get; set; }
+    public DateTime? PasswordResetExpiresAtUtc { get; set; }
     public string Phone { get; set; } = string.Empty;
     public string Role { get; set; } = AppRoles.Customer;
     public bool IsActive { get; set; } = true;

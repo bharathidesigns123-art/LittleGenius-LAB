@@ -10,6 +10,7 @@ import { StorefrontShell } from "@/components/site/storefront-shell";
 import { NominatimAddressLine1Input } from "@/components/store/NominatimAddressLine1Input";
 import { EmptyState } from "@/components/ui/empty-state";
 import { LoadingButtonContent, LoadingSpinner } from "@/components/ui/loading-indicator";
+import { PageSection } from "@/components/ui/page-section";
 import { browserApi } from "@/lib/browser-api";
 import type { Address } from "@/lib/types";
 import { getCurrentUserIdentifier } from "@/lib/user-identifier";
@@ -472,7 +473,7 @@ export default function CheckoutPage() {
   return (
     <StorefrontShell>
       <Script src="https://checkout.razorpay.com/v1/checkout.js" strategy="afterInteractive" />
-      <div className="page-shell py-8 pb-36 sm:py-10 md:pb-10">
+      <PageSection className="pb-36 md:pb-10">
         {items.length === 0 ? (
           <EmptyState
             title="Your checkout is empty"
@@ -490,23 +491,23 @@ export default function CheckoutPage() {
         ) : (
           <div className="grid gap-6 lg:grid-cols-[minmax(0,1fr)_360px] lg:gap-8">
             <form id="checkout-form" onSubmit={handleSubmit} className="surface-card card-shadow max-w-full overflow-hidden rounded-[2rem] p-4 sm:p-6 md:p-8">
-              <p className="text-sm font-bold uppercase tracking-[0.24em] text-[var(--color-orange)]">
+              <p className="eyebrow">
                 Checkout
               </p>
-              <h1 className="display-font mt-2 text-3xl font-semibold text-[var(--color-blue)] sm:text-4xl">
+              <h1 className="display-font mt-3 text-3xl font-semibold leading-tight text-[var(--color-blue)] sm:text-4xl">
                 Shipping and payment
               </h1>
-              <p className="mt-3 text-sm text-[var(--color-ink-soft)]">
+              <p className="mt-4 text-sm leading-7 text-[var(--color-ink-soft)]">
                 Faster address entry with search, pincode auto-fill, and saved addresses.
               </p>
 
-              <section className="mt-7 rounded-[1.75rem] bg-brand-primary/10 p-4 sm:p-5">
+              <section className="mt-7 rounded-[1.75rem] border border-[var(--color-border)]/75 bg-[rgba(246,241,235,0.74)] p-4 sm:p-5">
                 <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
                   <div>
-                    <p className="text-xs font-extrabold uppercase tracking-[0.2em] text-brand-primary-dark">
+                    <p className="text-[11px] font-bold uppercase tracking-[0.2em] text-brand-primary-dark">
                       Step 1
                     </p>
-                    <h2 className="mt-1 text-lg font-extrabold text-[var(--color-blue)] sm:text-xl">
+                    <h2 className="mt-2 text-lg font-semibold text-[var(--color-blue)] sm:text-xl">
                       Where should we deliver?
                     </h2>
                   </div>
@@ -536,7 +537,7 @@ export default function CheckoutPage() {
                           type="button"
                           key={`${address.id}-${address.pincode}`}
                           onClick={() => applyAddress(address)}
-                          className="rounded-2xl border border-white/80 bg-white/90 p-3 text-left text-sm shadow-sm transition hover:-translate-y-0.5 hover:border-brand-primary/40 hover:shadow-brand-card"
+                          className="rounded-2xl border border-[var(--color-border)]/70 bg-white/90 p-3 text-left text-sm shadow-[0_10px_24px_rgba(30,41,73,0.06)] transition hover:-translate-y-0.5 hover:border-brand-primary/30 hover:shadow-brand-card"
                         >
                           <span className="font-bold text-[var(--color-blue)]">
                             {address.label || (address.isDefault ? "Default address" : "Saved address")}
@@ -759,7 +760,7 @@ export default function CheckoutPage() {
             </form>
 
             <aside className="surface-card card-shadow h-fit rounded-[2rem] p-4 sm:p-6">
-              <p className="text-sm font-bold uppercase tracking-[0.24em] text-[var(--color-orange)]">
+              <p className="eyebrow">
                 Order summary
               </p>
               <div className="mt-5 space-y-4">
@@ -792,9 +793,9 @@ export default function CheckoutPage() {
             </aside>
           </div>
         )}
-      </div>
+      </PageSection>
       {items.length > 0 && !successOrderCode ? (
-        <div className="fixed inset-x-0 bottom-0 z-50 border-t border-[var(--color-border)] bg-white/95 px-3 pb-[calc(0.75rem+env(safe-area-inset-bottom))] pt-3 shadow-[0_-8px_30px_rgba(15,23,42,0.1)] backdrop-blur md:hidden">
+        <div className="fixed inset-x-0 bottom-0 z-50 border-t border-[var(--color-border)] bg-[rgba(255,252,248,0.96)] px-3 pb-[calc(0.75rem+env(safe-area-inset-bottom))] pt-3 shadow-[0_-12px_32px_rgba(30,41,73,0.12)] backdrop-blur md:hidden">
           <div className="page-shell flex flex-col items-stretch gap-2 min-[390px]:flex-row min-[390px]:items-center min-[390px]:gap-3">
             <div className="min-w-0">
               <p className="text-xs text-[var(--color-ink-soft)]">Payable</p>

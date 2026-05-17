@@ -2,17 +2,17 @@ import Link from "next/link";
 
 export function SiteFooter() {
   return (
-    <footer className="mt-20 border-t border-[var(--color-border)] bg-[var(--color-blue)] text-white">
-      <div className="page-shell grid gap-8 py-10 sm:grid-cols-2 lg:grid-cols-5 lg:gap-10 lg:py-12">
+    <footer className="mt-20 border-t border-[var(--color-border)] bg-[linear-gradient(180deg,#25415d_0%,#2b6070_42%,#4cb59c_100%)] text-white">
+      <div className="page-shell grid gap-8 py-10 sm:grid-cols-2 lg:grid-cols-5 lg:gap-10 lg:py-14">
         <div>
           <p className="display-font text-2xl font-semibold">LittleGenius LAB</p>
-          <p className="mt-3 text-sm leading-7 text-white/80">
+          <p className="mt-4 text-sm leading-7 text-white/80">
             3D printed toys and custom figurines crafted in Tamil Nadu for playful homes across India.
           </p>
         </div>
         <div>
-          <p className="text-sm font-bold uppercase tracking-[0.24em] text-white/70">Shop</p>
-          <div className="mt-4 flex flex-col gap-3 text-sm text-white/85">
+          <p className="text-xs font-bold uppercase tracking-[0.24em] text-white/55">Shop</p>
+          <div className="mt-4 flex flex-col gap-3 text-sm text-white/82">
             <Link href="/shop">Shop All Toys</Link>
             <Link href="/shop/animals">Animals</Link>
             <Link href="/shop/robots">Robots</Link>
@@ -21,8 +21,8 @@ export function SiteFooter() {
           </div>
         </div>
         <div>
-          <p className="text-sm font-bold uppercase tracking-[0.24em] text-white/70">Support</p>
-          <div className="mt-4 flex flex-col gap-3 text-sm text-white/85">
+          <p className="text-xs font-bold uppercase tracking-[0.24em] text-white/55">Support</p>
+          <div className="mt-4 flex flex-col gap-3 text-sm text-white/82">
             <Link href="/custom-order">Custom Orders</Link>
             <Link href="/how-it-works">How It Works</Link>
             <Link href="/about">About Us</Link>
@@ -30,8 +30,8 @@ export function SiteFooter() {
           </div>
         </div>
         <div>
-          <p className="text-sm font-bold uppercase tracking-[0.24em] text-white/70">Legal</p>
-          <div className="mt-4 flex flex-col gap-3 text-sm text-white/85">
+          <p className="text-xs font-bold uppercase tracking-[0.24em] text-white/55">Legal</p>
+          <div className="mt-4 flex flex-col gap-3 text-sm text-white/82">
             <Link href="/privacy-policy">Privacy Policy</Link>
             <Link href="/terms-of-service">Terms of Service</Link>
             <Link href="/shipping-policy">Shipping Policy</Link>
@@ -39,8 +39,8 @@ export function SiteFooter() {
           </div>
         </div>
         <div>
-          <p className="text-sm font-bold uppercase tracking-[0.24em] text-white/70">Connect</p>
-          <div className="mt-4 flex flex-col gap-3 text-sm text-white/85">
+          <p className="text-xs font-bold uppercase tracking-[0.24em] text-white/55">Connect</p>
+          <div className="mt-4 flex flex-col gap-3 text-sm text-white/82">
             <a href="https://wa.me/919876543210">WhatsApp</a>
             <a href="mailto:hello@littlegeniuslab.in">hello@littlegeniuslab.in</a>
             <span>India-wide shipping</span>

@@ -1,7 +1,7 @@
 "use client";
 
 import Link from "next/link";
-import { useRouter } from "next/navigation";
+import { useRouter, useSearchParams } from "next/navigation";
 import { useEffect, useState } from "react";
 import { Eye, EyeOff } from "lucide-react";
 import { StorefrontShell } from "@/components/site/storefront-shell";
@@ -10,6 +10,7 @@ import { LoadingButtonContent } from "@/components/ui/loading-indicator";
 
 export default function LoginPage() {
   const router = useRouter();
+  const searchParams = useSearchParams();
   const { login, loading: authLoading, isAuthenticated, isAdmin } = useAuth();
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
@@ -51,6 +52,11 @@ export default function LoginPage() {
           <p className="mt-4 text-sm leading-7 text-[var(--color-ink-soft)]">
             Customer logins, admin logins, and JWT-based session handling all run through the same secure backend auth service.
           </p>
+          {searchParams.get("reset") === "success" ? (
+            <div className="mt-6 rounded-[1.4rem] bg-emerald-50 px-4 py-3 text-sm text-emerald-800">
+              Password reset complete. Sign in with your new password.
+            </div>
+          ) : null}
           <form onSubmit={handleSubmit} className="mt-6 space-y-4">
             <label className="flex flex-col gap-2 text-sm font-semibold text-[var(--color-blue)]">
               Email address
@@ -81,6 +87,11 @@ export default function LoginPage() {
               >
                 {showPassword ? <EyeOff className="h-5 w-5" /> : <Eye className="h-5 w-5" />}
               </button>
+            </div>
+            <div className="flex justify-end">
+              <Link href="/forgot-password" className="text-sm font-semibold text-[var(--color-orange)] underline">
+                Forgot password?
+              </Link>
             </div>
             {error ? (
               <div className="rounded-[1.4rem] bg-red-50 px-4 py-3 text-sm text-red-700">{error}</div>

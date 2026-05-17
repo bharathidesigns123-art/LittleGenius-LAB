@@ -17,54 +17,58 @@ export function ProductCard({ product }: { product: ProductSummary }) {
     product.stockQuantity <= 0 ? "Out of stock" : product.stockQuantity <= 5 ? `Only ${product.stockQuantity} left` : "In stock";
   const stockClass =
     product.stockQuantity <= 0
-      ? "bg-red-100 text-red-700"
+      ? "bg-rose-100 text-rose-700 ring-1 ring-rose-200"
       : product.stockQuantity <= 5
-        ? "bg-yellow-100 text-yellow-800"
-        : "bg-emerald-100 text-emerald-700";
+        ? "bg-brand-sunshine text-[var(--color-blue)] ring-1 ring-amber-200"
+        : "bg-emerald-100 text-emerald-800 ring-1 ring-emerald-200";
 
   return (
     <div className="product-card !p-3 sm:!p-4">
       <Link href={`/products/${product.slug}`} aria-label={`View details for ${product.name}`} className="group block">
-        <div className="relative">
+        <div className="product-media">
           <Image
             src={resolveAssetUrl(product.heroImageUrl)}
             alt={`${product.name} 3D printed toy or keychain`}
             width={600}
             height={600}
             sizes="(min-width: 1024px) 30vw, (min-width: 768px) 45vw, 50vw"
-            className="h-40 w-full rounded-2xl object-cover transition duration-200 group-hover:scale-[1.02] sm:h-56 sm:rounded-[1.6rem]"
+            className="h-44 w-full object-cover transition duration-300 group-hover:scale-[1.03] sm:h-60"
           />
           {discountPercentage > 0 ? (
-            <span className="absolute left-2 top-2 rounded-full bg-[var(--color-orange)] px-2 py-0.5 text-[10px] font-bold text-white sm:left-3 sm:top-3 sm:px-3 sm:py-1 sm:text-xs">
-              {discountPercentage}% off
+            <span className="absolute left-3 top-3 z-[1] rounded-full bg-[linear-gradient(135deg,#f04416,#ff8b1f)] px-2.5 py-1 text-[10px] font-bold uppercase tracking-[0.12em] text-white shadow-[0_10px_20px_rgba(241,83,28,0.24)] sm:px-3 sm:text-[11px]">
+              Save {discountPercentage}%
             </span>
           ) : null}
-          <span className={`absolute right-2 top-2 rounded-full px-2 py-0.5 text-[10px] font-bold sm:right-3 sm:top-3 sm:px-3 sm:py-1 sm:text-xs ${stockClass}`}>
+          <span className={`absolute right-3 top-3 z-[1] rounded-full px-2.5 py-1 text-[10px] font-bold uppercase tracking-[0.08em] shadow-[0_10px_20px_rgba(20,49,82,0.1)] sm:px-3 sm:text-[11px] ${stockClass}`}>
             {stockLabel}
           </span>
         </div>
       </Link>
-      <div className="mt-3 flex flex-1 flex-col sm:mt-5">
-        <div className="flex items-center justify-between gap-2">
-          <span className="status-pill status-pill-yellow px-2 py-0.5 text-[10px] sm:px-3 sm:py-1 sm:text-xs">{product.badge}</span>
-          <p className="text-right text-xs font-bold text-primary sm:text-sm">
+      <div className="mt-4 flex flex-1 flex-col sm:mt-5">
+        <div className="flex items-start justify-between gap-3">
+          <span className="status-pill status-pill-yellow px-2 py-0.5 text-[10px] shadow-[0_8px_18px_rgba(255,206,47,0.18)] sm:text-xs">{product.badge}</span>
+          <p className="rounded-full bg-[var(--color-blue)] px-3 py-1 text-right text-sm font-bold text-white shadow-[0_10px_22px_rgba(20,49,82,0.14)]">
             Rs. {product.priceInr}
             {product.compareAtPriceInr && product.compareAtPriceInr > product.priceInr ? (
-              <span className="ml-1 text-[10px] font-semibold text-ink-soft line-through sm:ml-2 sm:text-xs">
+              <span className="ml-1.5 text-[10px] font-medium text-white/65 line-through sm:ml-2 sm:text-xs">
                 Rs. {product.compareAtPriceInr}
               </span>
             ) : null}
           </p>
         </div>
-        <Link href={`/products/${product.slug}`} aria-label={`View details for ${product.name}`} className="mt-2 line-clamp-2 min-h-[2.5rem] text-sm font-bold text-primary sm:mt-3 sm:min-h-[3rem] sm:text-lg">
+        <Link href={`/products/${product.slug}`} aria-label={`View details for ${product.name}`} className="mt-3 line-clamp-2 min-h-[2.8rem] text-base font-semibold leading-snug text-primary sm:min-h-[3.2rem] sm:text-[1.15rem]">
           {product.name}
         </Link>
-        <p className="mt-1 text-[10px] font-semibold text-secondary sm:mt-2 sm:text-sm">
+        <p className="mt-2 text-[11px] font-bold uppercase tracking-[0.12em] text-secondary sm:text-xs">
           {hasReviews
             ? `${product.averageRating?.toFixed(1) ?? "0.0"}/5 (${product.reviewCount})`
             : "No ratings"}
         </p>
-        
+
+        <div className="mt-4 rounded-[1.15rem] border border-[var(--color-border)]/80 bg-[linear-gradient(135deg,rgba(255,246,229,0.92),rgba(235,252,246,0.9))] px-3 py-2 text-[11px] leading-5 text-[var(--color-ink-soft)] sm:text-xs">
+          Crafted in PLA with a collectible-first finish for gifting and display.
+        </div>
+
         <div className="mt-4 space-y-2 sm:mt-5 sm:space-y-3">
           <AddToCartButton
             product={{

@@ -5,6 +5,8 @@ import Link from "next/link";
 import { useCart } from "@/components/providers/cart-provider";
 import { StorefrontShell } from "@/components/site/storefront-shell";
 import { EmptyState } from "@/components/ui/empty-state";
+import { PageSection } from "@/components/ui/page-section";
+import { SurfaceCard } from "@/components/ui/surface-card";
 import { resolveAssetUrl } from "@/lib/asset-url";
 
 export default function CartPage() {
@@ -12,7 +14,7 @@ export default function CartPage() {
 
   return (
     <StorefrontShell>
-      <div className="page-shell py-10">
+      <PageSection>
         {items.length === 0 ? (
           <EmptyState
             title="Your cart is feeling a little lonely"
@@ -27,7 +29,7 @@ export default function CartPage() {
           <div className="grid gap-6 lg:grid-cols-[1fr_360px] lg:gap-8">
             <div className="space-y-4">
               {items.map((item) => (
-                <div key={item.productId} className="surface-card rounded-[2rem] p-4">
+                <SurfaceCard key={item.productId} className="p-4 sm:p-5">
                   <div className="flex flex-col gap-4 md:flex-row">
                     <Image
                       src={resolveAssetUrl(item.imageUrl)}
@@ -67,17 +69,17 @@ export default function CartPage() {
                     </div>
                     <div className="text-left md:text-right">
                       <p className="text-sm text-[var(--color-ink-soft)]">Line total</p>
-                      <p className="text-lg font-bold text-[var(--color-blue)]">
+                      <p className="text-lg font-semibold text-[var(--color-blue)]">
                         Rs. {item.priceInr * item.quantity}
                       </p>
                     </div>
                   </div>
-                </div>
+                </SurfaceCard>
               ))}
             </div>
 
-            <aside className="surface-card card-shadow rounded-[2rem] p-6">
-              <p className="text-sm font-bold uppercase tracking-[0.24em] text-[var(--color-orange)]">
+            <aside className="surface-card surface-card-elevated rounded-[2rem] p-6">
+              <p className="eyebrow">
                 Order Summary
               </p>
               <div className="mt-5 space-y-3 text-sm">
@@ -92,7 +94,7 @@ export default function CartPage() {
               </div>
               <div className="mt-6 flex items-center justify-between border-t border-[var(--color-border)] pt-4">
                 <span className="font-semibold text-[var(--color-blue)]">Total</span>
-                <span className="text-2xl font-bold text-[var(--color-blue)]">
+                <span className="text-2xl font-semibold text-[var(--color-blue)]">
                   Rs. {subtotal >= 499 ? subtotal : subtotal + 60}
                 </span>
               </div>
@@ -102,7 +104,7 @@ export default function CartPage() {
             </aside>
           </div>
         )}
-      </div>
+      </PageSection>
     </StorefrontShell>
   );
 }
