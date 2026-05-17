@@ -57,11 +57,11 @@ export default async function HomePage() {
     <StorefrontShell>
       <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(organizationSchema) }} />
       <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(webSiteSchema) }} />
-      <section className="overflow-hidden border-b border-[var(--color-border)]/80 bg-[linear-gradient(180deg,#fff4db_0%,#fff8ed_100%)]">
+      <section className="overflow-hidden border-b border-[var(--color-border)]/80 bg-[linear-gradient(180deg,#fff6ea_0%,#ffffff_100%)]">
         <div className="page-shell py-4 sm:py-6 lg:py-7">
           <div className="hero-panel grid gap-6 px-4 py-5 sm:px-6 sm:py-7 lg:grid-cols-[0.88fr_1.12fr] lg:items-center lg:px-8 lg:py-8">
             <div className="relative z-[1] animate-home-rise">
-              <span className="status-pill status-pill-yellow w-fit">{data.hero.eyebrow}</span>
+              <span className="status-pill status-pill-yellow w-fit shadow-[0_12px_26px_rgba(255,201,51,0.24)]">{data.hero.eyebrow}</span>
               <h1 className="display-font mt-4 max-w-2xl text-[2.35rem] font-semibold leading-[0.96] text-[var(--color-blue)] sm:text-5xl lg:text-[4.2rem]">
                 Collectible 3D toys and custom gifts made to feel special
               </h1>
@@ -106,15 +106,15 @@ export default async function HomePage() {
                   sizes="(min-width: 1024px) 44vw, 100vw"
                   className="rounded-[2rem] object-cover transition duration-500 group-hover:scale-105"
                 />
-                <div className="absolute left-5 top-5 rounded-full bg-white px-3 py-1 text-[11px] font-bold uppercase tracking-[0.14em] text-[var(--color-blue)] shadow-[0_12px_28px_rgba(20,49,82,0.16)]">
+                <div className="absolute left-5 top-5 rounded-full border border-white/80 bg-white px-3 py-1 text-[11px] font-bold uppercase tracking-[0.14em] text-[var(--color-blue)] shadow-[0_16px_34px_rgba(18,52,88,0.18)]">
                   Featured
                 </div>
-                <div className="absolute inset-x-0 bottom-0 rounded-b-[2rem] bg-gradient-to-t from-[rgba(20,49,82,0.94)] via-[rgba(20,49,82,0.54)] to-transparent p-6 text-white">
-                  <p className="text-[11px] font-bold uppercase tracking-[0.22em] text-[rgba(255,232,207,0.92)]">
+                <div className="absolute inset-x-0 bottom-0 rounded-b-[2rem] bg-gradient-to-t from-[rgba(18,52,88,0.96)] via-[rgba(18,52,88,0.62)] to-transparent p-6 text-white">
+                  <p className="text-[11px] font-bold uppercase tracking-[0.22em] text-[rgba(255,243,223,0.92)]">
                     Trending now
                   </p>
                   <h2 className="mt-2 text-2xl font-semibold leading-tight sm:text-[1.95rem]">{heroProduct?.name ?? "Featured toys"}</h2>
-                  <p className="mt-2 text-sm text-white/82">From Rs. {heroProduct?.priceInr ?? 399}</p>
+                  <p className="mt-2 text-sm font-semibold text-[#ffc933]">From Rs. {heroProduct?.priceInr ?? 399}</p>
                 </div>
               </Link>
 
@@ -135,7 +135,7 @@ export default async function HomePage() {
                     <p className="mt-3 line-clamp-2 text-sm font-semibold leading-snug text-[var(--color-blue)]">
                       {product.name}
                     </p>
-                    <p className="mt-2 text-xs font-semibold uppercase tracking-[0.12em] text-brand-secondary">Rs. {product.priceInr}</p>
+                    <p className="mt-2 text-xs font-bold uppercase tracking-[0.12em] text-brand-secondary">Rs. {product.priceInr}</p>
                   </Link>
                 ))}
               </div>
@@ -169,7 +169,7 @@ export default async function HomePage() {
         </div>
       </section>
 
-      <section className="ticker hero-accent-strip border-y border-[rgba(20,49,82,0.16)] bg-[linear-gradient(90deg,#f04416_0%,#ff7a1a_42%,#143d66_100%)] py-3 text-sm font-bold tracking-[0.02em] text-white">
+      <section className="ticker hero-accent-strip border-y border-[rgba(18,52,88,0.14)] bg-[linear-gradient(90deg,#123458_0%,#005b9a_28%,#ff6b00_72%,#ff8f1f_100%)] py-3 text-sm font-bold tracking-[0.02em] text-white">
         <div className="ticker-track">
           {[...data.trustBar, ...data.trustBar].map((item, index) => (
             <span key={`${item}-${index}`}>{item}</span>
@@ -179,15 +179,15 @@ export default async function HomePage() {
 
       <PageSection className="section-scene scene-warm">
         <div className="grid gap-4 lg:grid-cols-[0.85fr_1.15fr] lg:items-stretch">
-          <SurfaceCard className="overflow-hidden bg-[linear-gradient(135deg,#f04416_0%,#ff982a_46%,#ffce2f_100%)] p-6 text-[var(--color-blue)] sm:p-7" tone="elevated">
-            <p className="text-xs font-bold uppercase tracking-[0.22em] text-[rgba(20,49,82,0.7)]">
+          <SurfaceCard className="overflow-hidden bg-[linear-gradient(135deg,#ff6b00_0%,#ff8f1f_48%,#ffc933_100%)] p-6 text-[var(--color-blue)] sm:p-7" tone="elevated">
+            <p className="text-xs font-bold uppercase tracking-[0.22em] text-[rgba(18,52,88,0.76)]">
               Flash offer
             </p>
             <h2 className="display-font mt-3 text-3xl font-semibold leading-tight">Gift picks under Rs. 999</h2>
-            <p className="mt-4 max-w-md text-sm leading-7 text-[rgba(20,49,82,0.82)]">
+            <p className="mt-4 max-w-md text-sm leading-7 text-[rgba(18,52,88,0.84)]">
               Quick desk buddies, collectibles, and party gifts with secure checkout and fast shipping.
             </p>
-            <Link href="/shop" className="site-button mt-6 bg-white text-brand-primary-dark shadow-[0_14px_30px_rgba(20,49,82,0.16)] hover:scale-[1.01]">
+            <Link href="/shop" className="site-button mt-6 bg-white text-brand-primary-dark shadow-[0_18px_36px_rgba(18,52,88,0.18)] hover:scale-[1.01]">
               Explore offers
             </Link>
           </SurfaceCard>
@@ -211,7 +211,7 @@ export default async function HomePage() {
                 </p>
                 <div className="mt-2 flex items-center justify-between gap-2 text-sm">
                   <span className="font-semibold text-brand-secondary">Rs. {product.priceInr}</span>
-                  <span className="rounded-full bg-brand-sunshine/45 px-2 py-1 text-[11px] font-bold uppercase tracking-[0.1em] text-[var(--color-blue)]">
+                  <span className="rounded-full bg-brand-sunshine/75 px-2 py-1 text-[11px] font-bold uppercase tracking-[0.1em] text-[var(--color-blue)] shadow-[0_10px_20px_rgba(255,201,51,0.2)]">
                     Hot
                   </span>
                 </div>
@@ -280,18 +280,18 @@ export default async function HomePage() {
 
       <PageSection className="section-scene scene-cool">
         <div className="grid gap-5 lg:grid-cols-[1.1fr_0.9fr] lg:items-center">
-          <SurfaceCard className="bg-[linear-gradient(135deg,#1f3550_0%,#31728d_42%,#78cab7_100%)] p-6 text-white sm:p-8" tone="elevated">
+          <SurfaceCard className="bg-[linear-gradient(135deg,#123458_0%,#005b9a_42%,#59c3ff_100%)] p-6 text-white sm:p-8" tone="elevated">
             <p className="text-xs font-bold uppercase tracking-[0.22em] text-brand-sunshine">
               Custom toy journey
             </p>
             <h2 className="display-font mt-3 text-3xl font-semibold leading-tight sm:text-4xl">
               Upload a photo, approve on WhatsApp, receive a toy
             </h2>
-            <p className="mt-4 max-w-2xl text-sm leading-7 text-white/78">
+            <p className="mt-4 max-w-2xl text-sm leading-7 text-white/84">
               Built for gifting: photo upload, character notes, size/color selection, quote follow-up, and secure payment.
             </p>
             <div className="mt-6 flex flex-col gap-3 sm:flex-row">
-              <Link href="/custom-order" className="site-button bg-brand-sunshine text-[var(--color-blue)]">
+              <Link href="/custom-order" className="site-button bg-[linear-gradient(135deg,#ffc933,#ff8f1f)] text-[var(--color-blue)] shadow-[0_18px_36px_rgba(255,107,0,0.22)]">
                 Start custom order
               </Link>
               <a href="https://wa.me/919876543210" className="site-button border border-white/25 bg-white/10 text-white">
@@ -306,7 +306,7 @@ export default async function HomePage() {
               ["03", "Approve"],
               ["04", "Deliver"],
             ].map(([step, title]) => (
-              <SurfaceCard key={step} className="bg-[linear-gradient(180deg,rgba(255,255,255,0.96),rgba(235,249,244,0.94))] p-5" tone="muted">
+              <SurfaceCard key={step} className="bg-[linear-gradient(180deg,rgba(255,255,255,1),rgba(232,246,255,0.94))] p-5" tone="muted">
                 <p className="text-[11px] font-bold uppercase tracking-[0.18em] text-brand-secondary">Step {step}</p>
                 <h3 className="mt-3 text-lg font-semibold text-[var(--color-blue)]">{title}</h3>
               </SurfaceCard>

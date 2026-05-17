@@ -122,6 +122,9 @@ public sealed class NotificationService(
             configuration["Admin:Email"]);
         if (string.IsNullOrWhiteSpace(adminEmail))
         {
+            logger.LogWarning(
+                "Admin new order alert skipped for order {OrderId}: no admin email is configured. Set Notifications:AdminEmail or ADMIN_NOTIFICATION_EMAIL.",
+                orderId);
             return;
         }
 

@@ -117,6 +117,19 @@ Shiprocket is integrated for automatic AWB generation:
 3. Order is created in Shiprocket and AWB is fetched
 4. Tracking number is automatically saved to the order
 
+## Notifications
+
+When an order is placed, the backend queues:
+
+- Customer order confirmation email
+- Customer order confirmation SMS
+- Admin new-order alert email
+
+Configure the admin recipient with either:
+
+- `Notifications:AdminEmail` in backend config files
+- `ADMIN_NOTIFICATION_EMAIL` as an environment variable
+
 ## SQL Server Configuration
 
 The project exclusively uses SQL Server. Configure your connection in `appsettings.json`:

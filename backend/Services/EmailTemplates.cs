@@ -65,8 +65,13 @@ public static class EmailTemplates
             <p>A new order has been placed.</p>
             <p><strong>Customer:</strong> {Encode(order.CustomerName)}<br />
             <strong>Email:</strong> {Encode(order.Email)}<br />
-            <strong>Phone:</strong> {Encode(order.Phone)}</p>
+            <strong>Phone:</strong> {Encode(order.Phone)}<br />
+            <strong>Payment Method:</strong> {Encode(order.PaymentMethod)}<br />
+            <strong>Payment Status:</strong> {Encode(order.PaymentStatus)}<br />
+            <strong>Order Status:</strong> {Encode(order.Status)}</p>
             {OrderSummary(order)}
+            {ShippingSummary(order)}
+            {AdminNotes(order)}
             """));
 
     public static string SmsOrderPlaced(Order order) =>
@@ -95,10 +100,26 @@ public static class EmailTemplates
         """;
     }
 
+    private static string ShippingSummary(Order order) =>
+        $"""
+        <p><strong>Shipping Address:</strong><br />
+        {Encode(order.Line1)}{FormatOptionalLine(order.Line2)}<br />
+        {Encode(order.City)}, {Encode(order.State)} {Encode(order.Pincode)}<br />
+        {Encode(order.Country)}</p>
+        """;
+
+    private static string AdminNotes(Order order) =>
+        string.IsNullOrWhiteSpace(order.Notes)
+            ? string.Empty
+            : $"<p><strong>Customer Notes:</strong><br />{Encode(order.Notes)}</p>";
+
     private static string TrackingLine(Order order) =>
         string.IsNullOrWhiteSpace(order.TrackingNumber)
             ? string.Empty
             : $"<p><strong>Tracking:</strong> {Encode(order.TrackingNumber)}</p>";
+
+    private static string FormatOptionalLine(string? value) =>
+        string.IsNullOrWhiteSpace(value) ? string.Empty : $"<br />{Encode(value)}";
 
     private static string HtmlLayout(string title, string body) =>
         $"""
