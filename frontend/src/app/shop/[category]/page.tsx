@@ -71,7 +71,7 @@ export default async function CategoryPage({ params }: CategoryPageProps) {
           {productCountLabel(products.length)} available
         </SurfaceCard>
         {products.length > 0 ? (
-          <div className="grid grid-cols-2 gap-x-3 gap-y-6 md:grid-cols-3 md:gap-5">
+          <div className="grid grid-cols-1 gap-x-3 gap-y-6 md:grid-cols-3 md:gap-5">
             {products.map((product) => (
               <ProductCard key={product.slug} product={product} />
             ))}

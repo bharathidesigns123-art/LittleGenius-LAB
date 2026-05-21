@@ -40,7 +40,7 @@ export default async function ShopPage({ searchParams }: ShopPageProps) {
           }
         />
         {filteredProducts.length > 0 ? (
-          <div className="grid grid-cols-2 gap-x-3 gap-y-6 md:grid-cols-3 md:gap-x-4 md:gap-y-10 lg:grid-cols-4">
+          <div className="grid grid-cols-1 gap-x-3 gap-y-6 md:grid-cols-3 md:gap-x-4 md:gap-y-10 lg:grid-cols-4">
             {filteredProducts.map((product) => (
               <ProductCard key={product.slug} product={product} />
             ))}
