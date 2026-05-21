@@ -55,7 +55,7 @@ export function SearchBar() {
             value={query}
             onChange={(e) => setQuery(e.target.value)}
             placeholder="Search toys..."
-            className="h-11 w-full rounded-full border border-[rgba(20,49,82,0.14)] bg-white/95 pl-10 pr-10 text-sm font-semibold text-ink shadow-[0_10px_24px_rgba(20,49,82,0.07),inset_0_1px_0_rgba(255,255,255,0.7)] transition-all placeholder:text-ink-soft focus:border-brand-secondary/50 focus:bg-white focus:outline-none focus:ring-4 focus:ring-brand-secondary/15 md:h-12"
+            className="h-11 w-full rounded-full border border-[rgba(21,94,181,0.14)] bg-[linear-gradient(180deg,rgba(255,255,255,0.98),rgba(255,250,239,0.96))] pl-10 pr-10 text-sm font-semibold text-ink shadow-[0_10px_24px_rgba(21,94,181,0.08),inset_0_1px_0_rgba(255,255,255,0.76)] transition-all placeholder:text-ink-soft focus:border-brand-secondary/55 focus:bg-white focus:outline-none focus:ring-4 focus:ring-brand-sunshine/20 md:h-12"
           />
           {query && (
             <button

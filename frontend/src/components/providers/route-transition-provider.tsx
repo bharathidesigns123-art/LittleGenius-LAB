@@ -107,7 +107,7 @@ export function RouteTransitionProvider({ children }: { children: ReactNode }) {
         aria-hidden={!isPending}
       >
         <div
-          className="h-full rounded-r-full bg-gradient-to-r from-brand-primary via-brand-accent to-brand-secondary shadow-[0_0_18px_rgba(6,182,212,0.45)] transition-[width] duration-300 ease-out"
+          className="h-full rounded-r-full bg-gradient-to-r from-brand-primary via-brand-sunshine to-brand-secondary shadow-[0_0_18px_rgba(21,94,181,0.32)] transition-[width] duration-300 ease-out"
           style={{ width: `${progress}%` }}
         />
       </div>
