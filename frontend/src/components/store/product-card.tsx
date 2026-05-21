@@ -20,7 +20,7 @@ export function ProductCard({ product }: { product: ProductSummary }) {
       ? "bg-rose-100 text-rose-700 ring-1 ring-rose-200"
       : product.stockQuantity <= 5
         ? "bg-brand-sunshine text-[var(--color-blue)] ring-1 ring-amber-300"
-        : "bg-[rgba(66,214,164,0.18)] text-[var(--color-blue)] ring-1 ring-[rgba(66,214,164,0.28)]";
+        : "bg-[rgba(114,191,46,0.16)] text-[var(--color-blue)] ring-1 ring-[rgba(114,191,46,0.28)]";
 
   return (
     <div className="product-card !p-3 sm:!p-4">
@@ -35,7 +35,7 @@ export function ProductCard({ product }: { product: ProductSummary }) {
             className="h-44 w-full object-cover transition duration-300 group-hover:scale-[1.03] sm:h-60"
           />
           {discountPercentage > 0 ? (
-            <span className="absolute left-3 top-3 z-[1] rounded-full bg-[linear-gradient(135deg,#ff6b00,#ff8f1f)] px-2.5 py-1 text-[10px] font-bold uppercase tracking-[0.12em] text-white shadow-[0_14px_24px_rgba(255,107,0,0.3)] sm:px-3 sm:text-[11px]">
+            <span className="absolute left-3 top-3 z-[1] rounded-full bg-[linear-gradient(135deg,#ef314d,#f76a2e)] px-2.5 py-1 text-[10px] font-bold uppercase tracking-[0.12em] text-white shadow-[0_14px_24px_rgba(244,67,54,0.3)] sm:px-3 sm:text-[11px]">
               Save {discountPercentage}%
             </span>
           ) : null}
@@ -47,7 +47,7 @@ export function ProductCard({ product }: { product: ProductSummary }) {
       <div className="mt-4 flex flex-1 flex-col sm:mt-5">
         <div className="flex items-start justify-between gap-3">
           <span className="status-pill status-pill-yellow px-2 py-0.5 text-[10px] shadow-[0_10px_22px_rgba(255,201,51,0.22)] sm:text-xs">{product.badge}</span>
-          <p className="rounded-full bg-[linear-gradient(135deg,#123458,#005b9a)] px-3 py-1 text-right text-sm font-bold text-white shadow-[0_14px_28px_rgba(18,52,88,0.18)]">
+          <p className="rounded-full bg-[linear-gradient(135deg,#155eb5,#1772d0,#66d0ff)] px-3 py-1 text-right text-sm font-bold text-white shadow-[0_14px_28px_rgba(21,94,181,0.18)]">
             Rs. {product.priceInr}
             {product.compareAtPriceInr && product.compareAtPriceInr > product.priceInr ? (
               <span className="ml-1.5 text-[10px] font-medium text-white/70 line-through sm:ml-2 sm:text-xs">
@@ -65,7 +65,7 @@ export function ProductCard({ product }: { product: ProductSummary }) {
             : "No ratings"}
         </p>
 
-        <div className="mt-4 rounded-[1.15rem] border border-[var(--color-border)]/80 bg-[linear-gradient(135deg,rgba(255,255,255,1),rgba(255,241,220,0.94))] px-3 py-2 text-[11px] leading-5 text-[var(--color-ink-soft)] shadow-[inset_0_1px_0_rgba(255,255,255,0.9)] sm:text-xs">
+        <div className="mt-4 rounded-[1.15rem] border border-[var(--color-border)]/80 bg-[linear-gradient(135deg,rgba(255,255,255,1),rgba(255,247,222,0.94))] px-3 py-2 text-[11px] leading-5 text-[var(--color-ink-soft)] shadow-[inset_0_1px_0_rgba(255,255,255,0.9)] sm:text-xs">
           Crafted in PLA with a collectible-first finish for gifting and display.
         </div>
 

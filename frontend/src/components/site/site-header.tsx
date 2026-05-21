@@ -33,7 +33,7 @@ export function SiteHeader() {
 
   return (
     <>
-      <header className="sticky top-0 z-40 border-b border-[rgba(18,52,88,0.12)] bg-[linear-gradient(180deg,rgba(255,255,255,0.98),rgba(255,246,234,0.92))] shadow-[0_12px_34px_rgba(18,52,88,0.08)] backdrop-blur">
+      <header className="sticky top-0 z-40 border-b border-[rgba(21,94,181,0.12)] bg-[linear-gradient(180deg,rgba(255,255,255,0.98),rgba(255,250,239,0.92))] shadow-[0_12px_34px_rgba(21,94,181,0.08)] backdrop-blur">
         <div className="page-shell flex flex-col gap-4 py-4 md:flex-row md:items-center md:justify-between md:py-5">
           <div className="flex items-center justify-between gap-3">
             <Link href="/" className="flex flex-col">
@@ -46,7 +46,7 @@ export function SiteHeader() {
             </Link>
             <Link
               href="/cart"
-              className="nav-chip border border-border bg-white text-primary shadow-[0_10px_24px_rgba(18,52,88,0.1)] md:hidden"
+              className="nav-chip border border-border bg-white text-primary shadow-[0_10px_24px_rgba(21,94,181,0.1)] md:hidden"
             >
               Cart ({isClient ? itemCount : 0})
             </Link>
@@ -83,7 +83,7 @@ export function SiteHeader() {
           <div className="hidden flex-wrap items-center gap-3 md:flex">
             <Link
               href="/cart"
-              className="nav-chip border border-border bg-white text-primary shadow-[0_10px_24px_rgba(18,52,88,0.1)]"
+              className="nav-chip border border-border bg-white text-primary shadow-[0_10px_24px_rgba(21,94,181,0.1)]"
             >
               Cart ({isClient ? itemCount : 0})
             </Link>
@@ -99,7 +99,7 @@ export function SiteHeader() {
                 </Link>
                 <button
                   onClick={logout}
-                  className="nav-chip border border-border bg-white text-[var(--color-blue)] shadow-[0_10px_24px_rgba(18,52,88,0.08)]"
+                  className="nav-chip border border-border bg-white text-[var(--color-blue)] shadow-[0_10px_24px_rgba(21,94,181,0.08)]"
                 >
                   Logout
                 </button>
@@ -108,13 +108,13 @@ export function SiteHeader() {
               <>
                 <Link
                   href="/login"
-                  className="nav-chip border border-border bg-white text-[var(--color-blue)] shadow-[0_10px_24px_rgba(18,52,88,0.08)]"
+                  className="nav-chip border border-border bg-white text-[var(--color-blue)] shadow-[0_10px_24px_rgba(21,94,181,0.08)]"
                 >
                   Login
                 </Link>
                 <Link
                   href="/signup"
-                  className="nav-chip bg-[linear-gradient(135deg,#ff6b00,#ff8f1f_52%,#ffc933)] text-white shadow-[0_18px_38px_rgba(255,107,0,0.28)]"
+                  className="nav-chip bg-[linear-gradient(135deg,#ef314d,#f76a2e_42%,#ffbe1a_78%,#72bf2e)] text-white shadow-[0_18px_38px_rgba(244,67,54,0.28)]"
                 >
                   Sign up
                 </Link>
@@ -125,7 +125,7 @@ export function SiteHeader() {
       </header>
 
       {!hideMobileNav ? (
-        <nav className="fixed inset-x-3 bottom-3 z-40 rounded-[1.4rem] border border-[var(--color-border)] bg-[rgba(255,255,255,0.96)] p-1.5 shadow-[0_24px_56px_rgba(18,52,88,0.18)] backdrop-blur md:hidden">
+        <nav className="fixed inset-x-3 bottom-3 z-40 rounded-[1.4rem] border border-[var(--color-border)] bg-[rgba(255,255,255,0.96)] p-1.5 shadow-[0_24px_56px_rgba(21,94,181,0.18)] backdrop-blur md:hidden">
           <div className="grid grid-cols-6 gap-1 text-center text-[0.68rem] font-semibold leading-tight text-[var(--color-ink-soft)]">
             {mobileNavItems.map((item) => {
               const isActive = item.href === "/" ? pathname === "/" : pathname.startsWith(item.href);
@@ -135,7 +135,7 @@ export function SiteHeader() {
                   href={item.href}
                   className={`inline-flex min-h-12 items-center justify-center rounded-[1rem] px-1.5 py-2.5 transition-colors ${
                     isActive
-                      ? "bg-[linear-gradient(135deg,#123458,#005b9a)] text-white shadow-[0_14px_28px_rgba(18,52,88,0.18)]"
+                      ? "bg-[linear-gradient(135deg,#155eb5,#1772d0,#66d0ff)] text-white shadow-[0_14px_28px_rgba(21,94,181,0.18)]"
                       : "text-[var(--color-ink-soft)] hover:bg-white"
                   }`}
                 >
@@ -147,7 +147,7 @@ export function SiteHeader() {
               href={user ? "/account" : "/login"}
               className={`inline-flex min-h-12 items-center justify-center rounded-[1rem] px-1.5 py-2.5 transition-colors ${
                 pathname === "/account" || pathname === "/login"
-                  ? "bg-[linear-gradient(135deg,#123458,#005b9a)] text-white shadow-[0_14px_28px_rgba(18,52,88,0.18)]"
+                  ? "bg-[linear-gradient(135deg,#155eb5,#1772d0,#66d0ff)] text-white shadow-[0_14px_28px_rgba(21,94,181,0.18)]"
                   : "text-[var(--color-ink-soft)] hover:bg-white"
               }`}
             >

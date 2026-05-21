@@ -76,5 +76,5 @@ export function PageLoader({
 }
 
 export function SkeletonBlock({ className = "" }: { className?: string }) {
-  return <div className={`skeleton-shimmer rounded-2xl bg-slate-200/80 ${className}`} />;
+  return <div className={`skeleton-shimmer rounded-2xl bg-[linear-gradient(180deg,rgba(255,247,222,0.9),rgba(229,247,255,0.8))] ${className}`} />;
 }

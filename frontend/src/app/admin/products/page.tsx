@@ -1,9 +1,8 @@
 "use client";
 
 import Image from "next/image";
-import { ChangeEvent, FormEvent, useEffect, useRef, useState } from "react";
+import { ChangeEvent, FormEvent, useCallback, useEffect, useRef, useState } from "react";
 import { 
-  Package, 
   Plus, 
   Trash2, 
   Edit3, 
@@ -12,7 +11,6 @@ import {
   Save, 
   X, 
   CheckCircle2,
-  TrendingDown,
   Globe,
   EyeOff,
   AlertTriangle
@@ -21,7 +19,7 @@ import { AdminShell } from "@/components/admin/admin-shell";
 import { useAuth } from "@/components/providers/auth-provider";
 import { browserApi } from "@/lib/browser-api";
 import { resolveAssetUrl } from "@/lib/asset-url";
-import type { AdminCategory, AdminProduct, ProductImage } from "@/lib/types";
+import type { AdminCategory, AdminProduct } from "@/lib/types";
 
 type ProductFormState = {
   id?: number;
@@ -34,6 +32,7 @@ type ProductFormState = {
   priceInr: number;
   compareAtPriceInr: string | number;
   badge: string;
+  heroImageUrl: string;
   colourway: string;
   material: string;
   finish: string;
@@ -67,6 +66,7 @@ function createEmptyProduct(categoryId = 1): ProductFormState {
     priceInr: 0,
     compareAtPriceInr: "",
     badge: "",
+    heroImageUrl: "",
     colourway: "",
     material: "Child-safe PLA",
     finish: "Smooth matte surface",
@@ -90,13 +90,6 @@ function revokePendingImages(images: PendingImage[]) {
   for (const image of images) {
     URL.revokeObjectURL(image.previewUrl);
   }
-}
-
-function moveItem<T>(items: T[], fromIndex: number, toIndex: number): T[] {
-  const nextItems = [...items];
-  const [movedItem] = nextItems.splice(fromIndex, 1);
-  nextItems.splice(toIndex, 0, movedItem);
-  return nextItems;
 }
 
 function isSupportedImage(file: File): boolean {
@@ -147,7 +140,7 @@ export default function AdminProductsPage() {
     setForm(createEmptyProduct(categories[0]?.id ?? 1));
   };
 
-  const loadData = async () => {
+  const loadData = useCallback(async () => {
     if (!token) return;
     try {
       const [productResults, categoryResults] = await Promise.all([
@@ -159,14 +152,22 @@ export default function AdminProductsPage() {
     } catch (err) {
       setError(getErrorMessage(err));
     }
-  };
+  }, [token]);
 
   useEffect(() => {
-    if (token) loadData();
-  }, [token]);
+    if (!token) return;
+    queueMicrotask(() => {
+      void loadData();
+    });
+  }, [token, loadData]);
 
   const editingProduct = form.id ? products.find((p) => p.id === form.id) ?? null : null;
   const uploadedImages = editingProduct?.images ?? [];
+  const updateFormField =
+    <K extends keyof ProductFormState>(key: K) =>
+    (value: ProductFormState[K]) => {
+      setForm((current) => ({ ...current, [key]: value }));
+    };
 
   const handlePendingImageSelection = (event: ChangeEvent<HTMLInputElement>) => {
     const selectedFiles = Array.from(event.target.files ?? []);
@@ -204,6 +205,7 @@ export default function AdminProductsPage() {
       priceInr: product.priceInr,
       compareAtPriceInr: product.compareAtPriceInr ?? "",
       badge: product.badge,
+      heroImageUrl: product.heroImageUrl,
       colourway: product.colourway,
       material: product.material,
       finish: product.finish,
@@ -229,7 +231,7 @@ export default function AdminProductsPage() {
     try {
       const savedProduct = await browserApi.saveProduct(token, {
         ...form,
-        heroImageUrl: editingProduct?.heroImageUrl ?? "",
+        heroImageUrl: form.heroImageUrl || editingProduct?.heroImageUrl || "",
         priceInr: Number(form.priceInr),
         compareAtPriceInr: form.compareAtPriceInr ? Number(form.compareAtPriceInr) : null,
         sizeMm: Number(form.sizeMm),
@@ -315,14 +317,12 @@ export default function AdminProductsPage() {
               </div>
             ) : null}
 
-            <div className="space-y-4 text-left">
+            <div className="space-y-6 text-left">
                <div className="space-y-1.5 text-left">
                   <label className="text-[10px] font-black uppercase tracking-wider text-slate-400 ml-1">Category</label>
                   <select
                     value={form.categoryId}
-                    onChange={(event) =>
-                      setForm((current) => ({ ...current, categoryId: Number(event.target.value) }))
-                    }
+                    onChange={(event) => updateFormField("categoryId")(Number(event.target.value))}
                     className="w-full rounded-xl border border-slate-200 bg-slate-50 px-4 py-3 text-sm font-bold text-[var(--color-blue)] outline-none focus:ring-2 focus:ring-[var(--color-blue)]/10"
                   >
                     {categories.map((category) => (
@@ -337,6 +337,10 @@ export default function AdminProductsPage() {
                   {[
                     ["name", "Product Name", "The Sparky Toy"],
                     ["slug", "URL Slug", "sparky-toy"],
+                    ["sku", "SKU", "LG-SPARKY-001"],
+                    ["badge", "Badge", "Best Seller"],
+                    ["tagline", "Tagline", "Made to spark tiny imaginations"],
+                    ["heroImageUrl", "Hero Image URL", "https://..."],
                   ].map(([key, label, placeholder]) => (
                     <div key={key} className="space-y-1.5 text-left">
                        <label className="text-[10px] font-black uppercase tracking-wider text-slate-400 ml-1">{label}</label>
@@ -353,7 +357,11 @@ export default function AdminProductsPage() {
                <div className="grid gap-4 sm:grid-cols-2">
                   {[
                     ["priceInr", "Price (Rs.)"],
+                    ["compareAtPriceInr", "Compare At Price (Rs.)"],
+                    ["sizeMm", "Size (mm)"],
                     ["stockQuantity", "Current Stock"],
+                    ["lowStockThreshold", "Low Stock Threshold"],
+                    ["displayOrder", "Display Order"],
                   ].map(([key, label]) => (
                     <div key={key} className="space-y-1.5 text-left">
                        <label className="text-[10px] font-black uppercase tracking-wider text-slate-400 ml-1">{label}</label>
@@ -367,7 +375,49 @@ export default function AdminProductsPage() {
                   ))}
                </div>
 
-               <div className="space-y-1.5 pt-2">
+               <div className="grid gap-4 sm:grid-cols-2">
+                  {[
+                    ["colourway", "Colourway", "Sunrise coral and cream"],
+                    ["material", "Material", "Child-safe PLA"],
+                    ["finish", "Finish", "Smooth matte surface"],
+                    ["shipsIn", "Ships In", "2 business days"],
+                    ["madeIn", "Made In", "Tamil Nadu, India"],
+                  ].map(([key, label, placeholder]) => (
+                    <div key={key} className="space-y-1.5 text-left">
+                       <label className="text-[10px] font-black uppercase tracking-wider text-slate-400 ml-1">{label}</label>
+                       <input
+                         value={String(form[key as keyof typeof form] ?? "")}
+                         onChange={(event) => setForm((current) => ({ ...current, [key]: event.target.value }))}
+                         placeholder={placeholder}
+                         className="w-full rounded-xl border border-slate-200 bg-white px-4 py-3 text-sm font-bold text-[var(--color-blue)] outline-none focus:ring-2 focus:ring-[var(--color-blue)]/10"
+                       />
+                    </div>
+                  ))}
+               </div>
+
+               <div className="space-y-1.5">
+                  <label className="text-[10px] font-black uppercase tracking-wider text-slate-400 ml-1">Short Description</label>
+                  <textarea
+                    value={form.shortDescription}
+                    onChange={(event) => updateFormField("shortDescription")(event.target.value)}
+                    placeholder="A short storefront summary for cards and quick previews"
+                    rows={3}
+                    className="w-full rounded-xl border border-slate-200 bg-white px-4 py-3 text-sm font-medium text-[var(--color-blue)] outline-none focus:ring-2 focus:ring-[var(--color-blue)]/10"
+                  />
+               </div>
+
+               <div className="space-y-1.5">
+                  <label className="text-[10px] font-black uppercase tracking-wider text-slate-400 ml-1">Full Description</label>
+                  <textarea
+                    value={form.fullDescription}
+                    onChange={(event) => updateFormField("fullDescription")(event.target.value)}
+                    placeholder="Detailed product description for the product page"
+                    rows={6}
+                    className="w-full rounded-xl border border-slate-200 bg-white px-4 py-3 text-sm font-medium text-[var(--color-blue)] outline-none focus:ring-2 focus:ring-[var(--color-blue)]/10"
+                  />
+               </div>
+
+               <div className="grid gap-3 pt-2 sm:grid-cols-2">
                   <label className="flex items-center gap-3 cursor-pointer group">
                     <div className={`h-5 w-5 rounded-md border-2 transition-all flex items-center justify-center ${form.isPublished ? 'bg-[var(--color-blue)] border-[var(--color-blue)]' : 'border-slate-300 group-hover:border-slate-400'}`}>
                        {form.isPublished && <CheckCircle2 size={12} className="text-white" />}
@@ -376,11 +426,22 @@ export default function AdminProductsPage() {
                       type="checkbox"
                       className="hidden"
                       checked={form.isPublished}
-                      onChange={(event) =>
-                        setForm((current) => ({ ...current, isPublished: event.target.checked }))
-                      }
+                      onChange={(event) => updateFormField("isPublished")(event.target.checked)}
                     />
                     <span className="text-sm font-bold text-[var(--color-blue)]">Publish to storefront</span>
+                  </label>
+
+                  <label className="flex items-center gap-3 cursor-pointer group">
+                    <div className={`h-5 w-5 rounded-md border-2 transition-all flex items-center justify-center ${form.isFeatured ? 'bg-[var(--color-orange)] border-[var(--color-orange)]' : 'border-slate-300 group-hover:border-slate-400'}`}>
+                       {form.isFeatured && <CheckCircle2 size={12} className="text-white" />}
+                    </div>
+                    <input
+                      type="checkbox"
+                      className="hidden"
+                      checked={form.isFeatured}
+                      onChange={(event) => updateFormField("isFeatured")(event.target.checked)}
+                    />
+                    <span className="text-sm font-bold text-[var(--color-blue)]">Mark as featured</span>
                   </label>
                </div>
             </div>
@@ -412,7 +473,7 @@ export default function AdminProductsPage() {
                         </button>
                      </div>
                   ))}
-                  {pendingImages.map((img, i) => (
+                  {pendingImages.map((img) => (
                      <div key={img.id} className="relative aspect-square rounded-lg overflow-hidden border-2 border-dashed border-[var(--color-orange)] p-0.5">
                         <Image src={img.previewUrl} alt="" fill unoptimized className="object-cover rounded-md" />
                         <div className="absolute inset-0 bg-[var(--color-orange)]/20 flex items-center justify-center pointer-events-none">
