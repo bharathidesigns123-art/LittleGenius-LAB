@@ -5,6 +5,7 @@ import { PageSection } from "@/components/ui/page-section";
 import { SectionHeading } from "@/components/ui/section-heading";
 import { SurfaceCard } from "@/components/ui/surface-card";
 import { getProducts } from "@/lib/api";
+import { siteBaseUrl } from "@/lib/commerce-content";
 import { filterProductsByQuery, normalizeProductQuery } from "@/lib/product-search";
 import Link from "next/link";
 
@@ -26,9 +27,21 @@ export default async function ShopPage({ searchParams }: ShopPageProps) {
   const query = normalizeProductQuery((await searchParams)?.q);
   const products = await getProducts();
   const filteredProducts = filterProductsByQuery(products, query);
+  const itemListSchema = {
+    "@context": "https://schema.org",
+    "@type": "ItemList",
+    name: query ? `Search results for ${query}` : "LittleGenius LAB shop products",
+    itemListElement: filteredProducts.map((product, index) => ({
+      "@type": "ListItem",
+      position: index + 1,
+      url: `${siteBaseUrl}/products/${product.slug}`,
+      name: product.name,
+    })),
+  };
 
   return (
     <StorefrontShell>
+      <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(itemListSchema) }} />
       <PageSection>
         <SectionHeading
           eyebrow={query ? "Search Results" : "Shop All"}
@@ -48,7 +61,7 @@ export default async function ShopPage({ searchParams }: ShopPageProps) {
         ) : (
           <SurfaceCard className="flex flex-col items-center justify-center py-24 text-center" tone="elevated">
             <h2 className="display-font text-2xl font-semibold text-primary">
-              No products found for "{query}"
+              No products found for &quot;{query}&quot;
             </h2>
             <p className="mt-3 text-ink-soft">
               Try a different search term or browse our full collection.

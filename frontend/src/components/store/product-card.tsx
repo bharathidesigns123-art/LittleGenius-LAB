@@ -5,6 +5,7 @@ import Link from "next/link";
 import { AddToCartButton } from "@/components/store/add-to-cart-button";
 import { BuyNowButton } from "@/components/store/buy-now-button";
 import { resolveAssetUrl } from "@/lib/asset-url";
+import { buildWhatsAppUrl } from "@/lib/commerce-content";
 import type { ProductSummary } from "@/lib/types";
 
 export function ProductCard({ product }: { product: ProductSummary }) {
@@ -61,12 +62,16 @@ export function ProductCard({ product }: { product: ProductSummary }) {
         </Link>
         <p className="mt-2 text-[11px] font-bold uppercase tracking-[0.12em] text-secondary sm:text-xs">
           {hasReviews
-            ? `${product.averageRating?.toFixed(1) ?? "0.0"}/5 (${product.reviewCount})`
+            ? `\u2605 ${product.averageRating?.toFixed(1) ?? "0.0"}/5 (${product.reviewCount})`
             : "No ratings"}
         </p>
 
         <div className="mt-4 rounded-[1.15rem] border border-[var(--color-border)]/80 bg-[linear-gradient(135deg,rgba(255,255,255,1),rgba(255,247,222,0.94))] px-3 py-2 text-[11px] leading-5 text-[var(--color-ink-soft)] shadow-[inset_0_1px_0_rgba(255,255,255,0.9)] sm:text-xs">
           Crafted in PLA with a collectible-first finish for gifting and display.
+        </div>
+        <div className="mt-3 grid grid-cols-2 gap-2 text-[11px] font-semibold text-[var(--color-blue)] sm:text-xs">
+          <span className="rounded-full bg-[var(--color-surface-2)] px-3 py-2 text-center">{product.shipsIn}</span>
+          <span className="rounded-full bg-[var(--color-surface-2)] px-3 py-2 text-center">Gift packed</span>
         </div>
 
         <div className="mt-4 space-y-2 sm:mt-5 sm:space-y-3">
@@ -92,6 +97,22 @@ export function ProductCard({ product }: { product: ProductSummary }) {
             className="site-button site-button-secondary w-full !px-2 !py-2.5 !text-[11px] sm:!px-6 sm:!py-3 sm:!text-sm"
             disabled={product.stockQuantity <= 0}
           />
+          <a
+            href={buildWhatsAppUrl(`Hi LittleGenius LAB, I want to ask about ${product.name}. Product link: https://littlegeniuslab.in/products/${product.slug}`)}
+            target="_blank"
+            rel="noopener noreferrer"
+            className="site-button site-button-secondary w-full !px-2 !py-2.5 !text-[11px] sm:!px-6 sm:!py-3 sm:!text-sm"
+          >
+            Ask on WhatsApp
+          </a>
+          <noscript>
+            <Link
+              href={`/products/${product.slug}`}
+              className="site-button site-button-secondary mt-2 w-full !px-2 !py-2.5 !text-[11px] sm:!px-6 sm:!py-3 sm:!text-sm"
+            >
+              View product details
+            </Link>
+          </noscript>
         </div>
       </div>
     </div>

@@ -1,5 +1,6 @@
 import type { MetadataRoute } from "next";
 import { getCategories, getProducts } from "@/lib/api";
+import { contentGuides } from "@/lib/commerce-content";
 
 const baseUrl = "https://littlegeniuslab.in";
 
@@ -14,6 +15,7 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
     "/how-it-works",
     "/custom-order",
     "/gallery",
+    "/blog",
     "/privacy-policy",
     "/terms-of-service",
     "/shipping-policy",
@@ -39,5 +41,12 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
     priority: 0.8,
   }));
 
-  return [...staticRoutes, ...categoryRoutes, ...productRoutes];
+  const guideRoutes: MetadataRoute.Sitemap = contentGuides.map((guide) => ({
+    url: `${baseUrl}/blog/${guide.slug}`,
+    lastModified,
+    changeFrequency: "monthly",
+    priority: 0.75,
+  }));
+
+  return [...staticRoutes, ...categoryRoutes, ...productRoutes, ...guideRoutes];
 }

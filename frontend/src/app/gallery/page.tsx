@@ -1,6 +1,7 @@
 import { StorefrontShell } from "@/components/site/storefront-shell";
 import Link from "next/link";
 import type { Metadata } from "next";
+import { instagramUrl } from "@/lib/commerce-content";
 
 export const metadata: Metadata = {
   title: "3D Printed Toys and Custom Keychain Gallery",
@@ -82,12 +83,12 @@ export default function GalleryPage() {
             Want to order now? Browse the <Link href="/shop" className="font-semibold text-[var(--color-blue)]">shop collection</Link> or create a <Link href="/custom-order" className="font-semibold text-[var(--color-blue)]">custom 3D printed gift</Link>.
           </p>
            <a 
-             href="https://instagram.com/littlegeniuslab" 
+             href={instagramUrl} 
              target="_blank" 
              rel="noopener noreferrer"
              className="site-button site-button-primary"
            >
-             Follow @LittleGeniusLAB
+             Follow @littlegenius_lab
            </a>
         </div>
       </section>

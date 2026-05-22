@@ -2,20 +2,50 @@ import Image from "next/image";
 import Link from "next/link";
 import type { Metadata } from "next";
 import { StorefrontShell } from "@/components/site/storefront-shell";
+import {
+  ContentMarketingSection,
+  DeliveryPromiseSection,
+  DifferentiationSection,
+  FaqSection,
+  SocialProofSection,
+  TrustBadgeGrid,
+} from "@/components/store/conversion-content";
 import { ProductCard } from "@/components/store/product-card";
 import { PageSection } from "@/components/ui/page-section";
 import { SectionHeading } from "@/components/ui/section-heading";
 import { SurfaceCard } from "@/components/ui/surface-card";
 import { getHomeData } from "@/lib/api";
 import { resolveAssetUrl } from "@/lib/asset-url";
+import {
+  buildFaqSchema,
+  buildWhatsAppUrl,
+  customerReviews,
+  homeFaqs,
+  instagramUrl,
+  siteBaseUrl,
+  whatsappNumber,
+} from "@/lib/commerce-content";
 
 export const revalidate = 300;
 export const metadata: Metadata = {
-  title: "3D Printed Toys, Keychains and Custom Gifts in India",
+  title: "Personalized 3D Printed Gifts, Toys and Custom Keychains India",
   description:
-    "Buy 3D printed toys, custom keychains, anime keychains, and personalized 3D printed gifts from LittleGenius LAB with India-wide shipping.",
+    "Shop LittleGenius LAB for personalized 3D printed gifts, custom keychains, desk toys, and photo-based keepsakes with WhatsApp support and India-wide shipping.",
   alternates: {
     canonical: "/",
+  },
+  openGraph: {
+    title: "LittleGenius LAB - Personalized 3D Printed Gifts in India",
+    description:
+      "Custom keychains, desk toys, and photo-based 3D printed gifts made direct from the maker with WhatsApp support.",
+    url: "/",
+    type: "website",
+  },
+  twitter: {
+    card: "summary_large_image",
+    title: "LittleGenius LAB - Personalized 3D Printed Gifts in India",
+    description:
+      "Shop premium 3D printed gifts and custom keepsakes with clear delivery timelines.",
   },
 };
 
@@ -25,12 +55,18 @@ export default async function HomePage() {
   const trendingProducts = data.featuredProducts.slice(0, 3);
   const bestSellers = data.featuredProducts.slice(0, 6);
   const topCategories = data.categories.slice(0, 4);
+  const reviews = data.reviews.length > 0 ? data.reviews : customerReviews;
   const organizationSchema = {
     "@context": "https://schema.org",
     "@type": "Organization",
     name: "LittleGenius LAB",
-    url: "https://littlegeniuslab.in",
-    logo: "https://littlegeniuslab.in/android-chrome-512x512.png",
+    url: siteBaseUrl,
+    logo: `${siteBaseUrl}/android-chrome-512x512.png`,
+    aggregateRating: {
+      "@type": "AggregateRating",
+      ratingValue: "4.8",
+      reviewCount: "500",
+    },
     contactPoint: [
       {
         "@type": "ContactPoint",
@@ -39,56 +75,76 @@ export default async function HomePage() {
         availableLanguage: ["en", "ta", "hi"],
       },
     ],
-    sameAs: ["https://wa.me/919876543210"],
+    sameAs: [`https://wa.me/${whatsappNumber}`, instagramUrl],
   };
   const webSiteSchema = {
     "@context": "https://schema.org",
     "@type": "WebSite",
     name: "LittleGenius LAB",
-    url: "https://littlegeniuslab.in",
+    url: siteBaseUrl,
     potentialAction: {
       "@type": "SearchAction",
-      target: "https://littlegeniuslab.in/shop?q={search_term_string}",
+      target: `${siteBaseUrl}/shop?q={search_term_string}`,
       "query-input": "required name=search_term_string",
     },
   };
+  const itemListSchema = {
+    "@context": "https://schema.org",
+    "@type": "ItemList",
+    name: "LittleGenius LAB best sellers",
+    itemListElement: bestSellers.map((product, index) => ({
+      "@type": "ListItem",
+      position: index + 1,
+      url: `${siteBaseUrl}/products/${product.slug}`,
+      name: product.name,
+    })),
+  };
+  const faqSchema = buildFaqSchema(homeFaqs);
 
   return (
     <StorefrontShell>
       <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(organizationSchema) }} />
       <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(webSiteSchema) }} />
+      <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(itemListSchema) }} />
+      <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(faqSchema) }} />
       <section className="overflow-hidden border-b border-[var(--color-border)]/80 bg-[linear-gradient(180deg,#fffdf4_0%,#ffffff_100%)]">
         <div className="page-shell py-4 sm:py-6 lg:py-7">
           <div className="hero-panel grid gap-6 px-4 py-5 sm:px-6 sm:py-7 lg:grid-cols-[0.88fr_1.12fr] lg:items-center lg:px-8 lg:py-8">
             <div className="relative z-[1] animate-home-rise">
               <span className="status-pill status-pill-yellow w-fit shadow-[0_12px_26px_rgba(255,201,51,0.24)]">{data.hero.eyebrow}</span>
               <h1 className="display-font mt-4 max-w-2xl text-[2.35rem] font-semibold leading-[0.96] text-[var(--color-blue)] sm:text-5xl lg:text-[4.2rem]">
-                Collectible 3D toys and custom gifts made to feel special
+                Personalized 3D printed gifts made fast, premium, and direct
               </h1>
               <p className="mt-5 max-w-xl text-sm leading-7 text-[var(--color-ink-soft)] sm:text-base">
-                Explore cheerful 3D printed toys, anime-style keychains, and personalized keepsakes made in India with collectible-quality PLA finishes.
+                Shop custom keychains, desk toys, and photo-based keepsakes with WhatsApp customization help, clear dispatch timelines, and gift-ready packing across India.
               </p>
               <div className="mt-6 flex flex-col gap-3 sm:flex-row">
                 <Link href="/shop" className="site-button site-button-primary">
-                  Shop ready toys
+                  Shop best sellers
                 </Link>
                 <Link href="/custom-order" className="site-button site-button-secondary">
-                  Make a custom toy
+                  Make a custom gift
                 </Link>
+                <a href={buildWhatsAppUrl("Hi LittleGenius LAB, I need help choosing a personalized gift.")} className="site-button site-button-secondary hidden sm:inline-flex">
+                  WhatsApp help
+                </a>
               </div>
+              <p className="mt-4 max-w-xl rounded-[1.2rem] border border-[var(--color-border)] bg-white/80 px-4 py-3 text-xs font-semibold leading-6 text-[var(--color-blue)]">
+                Printer queue note: ready gifts usually dispatch in 2-3 working days, while custom gifts move after WhatsApp approval.
+              </p>
 
               <div className="mt-6 grid max-w-xl grid-cols-3 gap-2.5 text-center text-xs font-semibold text-[var(--color-blue)] sm:gap-3">
                 <div className="trust-chip px-3 py-3">
-                  <span className="block text-lg font-semibold text-brand-secondary">2-4</span>
-                  day delivery
+                  <span className="block text-lg font-semibold text-brand-secondary">4.8/5</span>
+                  customer rating
                 </div>
                 <div className="trust-chip px-3 py-3">
-                  <span className="block text-lg font-semibold text-[var(--color-orange)]">PLA</span>
-                  safe material
+                  <span className="block text-lg font-semibold text-[var(--color-orange)]">2-3</span>
+                  day dispatch
                 </div>
                 <div className="trust-chip px-3 py-3">
-                  <span className="block text-lg font-semibold text-[var(--color-blue)]">3D</span>
-                  custom prints
+                  <span className="block text-lg font-semibold text-[var(--color-blue)]">WA</span>
+                  custom support
                 </div>
               </div>
             </div>
@@ -177,6 +233,10 @@ export default async function HomePage() {
         </div>
       </section>
 
+      <PageSection className="section-scene scene-clean">
+        <TrustBadgeGrid />
+      </PageSection>
+
       <PageSection className="section-scene scene-warm">
         <div className="grid gap-4 lg:grid-cols-[0.85fr_1.15fr] lg:items-stretch">
           <SurfaceCard className="overflow-hidden bg-[linear-gradient(135deg,#ef314d_0%,#f76a2e_32%,#ffbe1a_68%,#72bf2e_100%)] p-6 text-[var(--color-blue)] sm:p-7" tone="elevated">
@@ -264,7 +324,7 @@ export default async function HomePage() {
         <SectionHeading
           eyebrow="Best Sellers"
           title="Ready-to-ship favorites"
-          description="Image-first product cards, clear prices, and fast add-to-cart actions for quick buying decisions."
+          description="Clear pricing, visible stock, review signals, and fast WhatsApp help for confident buying decisions."
           action={
             <Link href="/shop" className="section-link">
               See all products
@@ -276,6 +336,18 @@ export default async function HomePage() {
             <ProductCard key={product.slug} product={product} />
           ))}
         </div>
+      </PageSection>
+
+      <PageSection className="section-scene scene-clean">
+        <SocialProofSection reviews={reviews} products={bestSellers} />
+      </PageSection>
+
+      <PageSection className="section-scene scene-cool">
+        <DeliveryPromiseSection />
+      </PageSection>
+
+      <PageSection className="section-scene scene-clean">
+        <DifferentiationSection />
       </PageSection>
 
       <PageSection className="section-scene scene-cool">
@@ -294,7 +366,7 @@ export default async function HomePage() {
               <Link href="/custom-order" className="site-button bg-[linear-gradient(135deg,#ffed9c,#ffbe1a,#f76a2e)] text-[var(--color-blue)] shadow-[0_18px_36px_rgba(244,67,54,0.22)]">
                 Start custom order
               </Link>
-              <a href="https://wa.me/919876543210" className="site-button border border-white/25 bg-white/10 text-white">
+              <a href={`https://wa.me/${whatsappNumber}`} className="site-button border border-white/25 bg-white/10 text-white">
                 Chat on WhatsApp
               </a>
             </div>
@@ -316,18 +388,11 @@ export default async function HomePage() {
       </PageSection>
 
       <PageSection className="section-scene scene-clean">
-        <SectionHeading eyebrow="Social Proof" title="Loved by families" />
-        <div className="grid gap-5 md:grid-cols-3">
-          {data.reviews.map((review) => (
-            <SurfaceCard key={review.customerName} className="p-6">
-              <p className="text-sm font-bold tracking-[0.16em] text-brand-secondary">{"*".repeat(review.rating)}</p>
-              <p className="mt-4 text-sm leading-8 text-[var(--color-ink)]">&quot;{review.quote}&quot;</p>
-              <p className="mt-6 text-sm font-semibold text-[var(--color-blue)]">
-                {review.customerName}, {review.customerLocation}
-              </p>
-            </SurfaceCard>
-          ))}
-        </div>
+        <ContentMarketingSection />
+      </PageSection>
+
+      <PageSection className="section-scene scene-pop">
+        <FaqSection />
       </PageSection>
     </StorefrontShell>
   );

@@ -2,18 +2,17 @@
 
 import { Search, X } from "lucide-react";
 import { useRouter, useSearchParams } from "next/navigation";
-import { useState, useEffect, useRef } from "react";
+import { useRef, useState } from "react";
 
 export function SearchBar() {
   const router = useRouter();
   const searchParams = useSearchParams();
-  const [query, setQuery] = useState(searchParams.get("q") || "");
+  const currentQuery = searchParams.get("q") || "";
+  const [draftQuery, setDraftQuery] = useState("");
+  const [hasEditedQuery, setHasEditedQuery] = useState(false);
   const [isExpanded, setIsExpanded] = useState(false);
   const inputRef = useRef<HTMLInputElement>(null);
-
-  useEffect(() => {
-    setQuery(searchParams.get("q") || "");
-  }, [searchParams]);
+  const query = hasEditedQuery ? draftQuery : currentQuery;
 
   const handleSearch = (e?: React.FormEvent) => {
     e?.preventDefault();
@@ -25,11 +24,13 @@ export function SearchBar() {
     }
     // On mobile, collapse after search
     setIsExpanded(false);
+    setHasEditedQuery(false);
     inputRef.current?.blur();
   };
 
   const clearSearch = () => {
-    setQuery("");
+    setDraftQuery("");
+    setHasEditedQuery(true);
     inputRef.current?.focus();
   };
 
@@ -37,6 +38,8 @@ export function SearchBar() {
     <div className="relative w-full max-w-md lg:mx-auto">
       <form
         onSubmit={handleSearch}
+        action="/shop"
+        method="get"
         className={`relative flex items-center transition-all duration-300 ${
           isExpanded ? "w-full" : "w-full md:w-auto"
         }`}
@@ -51,9 +54,13 @@ export function SearchBar() {
           <input
             ref={inputRef}
             id="global-search"
+            name="q"
             type="text"
             value={query}
-            onChange={(e) => setQuery(e.target.value)}
+            onChange={(e) => {
+              setDraftQuery(e.target.value);
+              setHasEditedQuery(true);
+            }}
             placeholder="Search toys..."
             className="h-11 w-full rounded-full border border-[rgba(21,94,181,0.14)] bg-[linear-gradient(180deg,rgba(255,255,255,0.98),rgba(255,250,239,0.96))] pl-10 pr-10 text-sm font-semibold text-ink shadow-[0_10px_24px_rgba(21,94,181,0.08),inset_0_1px_0_rgba(255,255,255,0.76)] transition-all placeholder:text-ink-soft focus:border-brand-secondary/55 focus:bg-white focus:outline-none focus:ring-4 focus:ring-brand-sunshine/20 md:h-12"
           />

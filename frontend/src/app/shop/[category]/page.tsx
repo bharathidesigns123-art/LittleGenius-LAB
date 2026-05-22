@@ -4,6 +4,7 @@ import { ProductCard } from "@/components/store/product-card";
 import { PageSection } from "@/components/ui/page-section";
 import { SurfaceCard } from "@/components/ui/surface-card";
 import { getCategories, getProducts } from "@/lib/api";
+import { siteBaseUrl } from "@/lib/commerce-content";
 import { productCountLabel } from "@/lib/product-count-label";
 
 export const revalidate = 300;
@@ -34,6 +35,17 @@ export default async function CategoryPage({ params }: CategoryPageProps) {
   const { category } = await params;
   const [categories, products] = await Promise.all([getCategories(), getProducts(category)]);
   const currentCategory = categories.find((item) => item.slug === category);
+  const itemListSchema = {
+    "@context": "https://schema.org",
+    "@type": "ItemList",
+    name: `${currentCategory?.name ?? "Category"} products`,
+    itemListElement: products.map((product, index) => ({
+      "@type": "ListItem",
+      position: index + 1,
+      url: `${siteBaseUrl}/products/${product.slug}`,
+      name: product.name,
+    })),
+  };
   const breadcrumbSchema = {
     "@context": "https://schema.org",
     "@type": "BreadcrumbList",
@@ -62,6 +74,7 @@ export default async function CategoryPage({ params }: CategoryPageProps) {
   return (
     <StorefrontShell>
       <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(breadcrumbSchema) }} />
+      <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(itemListSchema) }} />
       <PageSection>
         <h1 className="display-font mb-4 text-4xl font-semibold leading-tight text-[var(--color-blue)] sm:text-5xl">
           {currentCategory?.name ?? "Category"} 3D printed toys and keychains

@@ -284,7 +284,7 @@ function HomeScreen() {
 
       {/* INSTAGRAM STRIP */}
       <Section title="08 — Instagram Feed Strip" note="6 latest posts · square grid · tappable" accent={PALETTE.teal}>
-        <Box label="HEADLINE" note='"Follow Our Latest Drops @LittleGeniusLAB"  ·  centred · with Instagram icon' width="100%" height="28px" center color={PALETTE.teal} />
+        <Box label="HEADLINE" note='"Follow Our Latest Drops @littlegenius_lab"  ·  centred · with Instagram icon' width="100%" height="28px" center color={PALETTE.teal} />
         <div style={{ height: 8 }} />
         <Row gap={4}>
           {[1,2,3,4,5,6].map(n => (

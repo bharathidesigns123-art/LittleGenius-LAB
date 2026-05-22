@@ -9,8 +9,8 @@ import { SearchBar } from "@/components/site/search-bar";
 
 const navItems = [
   { href: "/shop", label: "Shop" },
-  { href: "/orders", label: "Orders" },
-  { href: "/custom-order", label: "Custom Orders" },
+  { href: "/custom-order", label: "Custom" },
+  { href: "/blog", label: "Guides" },
   { href: "/how-it-works", label: "How It Works" },
 ];
 
@@ -52,7 +52,7 @@ export function SiteHeader() {
             </Link>
           </div>
 
-          <div className="flex-1 md:mx-8">
+          <div className="flex-1 md:mx-5 md:min-w-48">
             <SearchBar />
           </div>
 
