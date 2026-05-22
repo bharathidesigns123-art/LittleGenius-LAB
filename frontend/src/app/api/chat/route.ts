@@ -42,7 +42,7 @@ export async function POST(req: Request) {
       tools: {
         getUserOrders: {
           description: "Fetches the logged-in user's recent orders.",
-          parameters: z.object({}),
+          inputSchema: z.object({}),
           execute: async () => {
             const apiUrl = process.env.NEXT_PUBLIC_API_BASE_URL || 'http://localhost:5252';
             const response = await fetch(`${apiUrl}/api/store/orders/track/me`, {
