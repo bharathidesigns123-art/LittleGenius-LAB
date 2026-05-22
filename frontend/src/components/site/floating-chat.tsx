@@ -6,32 +6,31 @@ import { Bot, Send, X, Sparkles, MessageCircle } from 'lucide-react';
 
 export function FloatingChat() {
   const [isOpen, setIsOpen] = useState(false);
+  const [input, setInput] = useState('');
   const scrollRef = useRef<HTMLDivElement>(null);
   
   const { 
     messages, 
-    input = '', 
-    handleInputChange, 
-    handleSubmit, 
-    isLoading, 
+    append,
+    status,
     error 
   } = useChat({
     api: '/api/chat',
+    initialMessages: [],
     maxSteps: 5,
   });
 
-  // Ensure input is always a string for the controlled component
+  const isLoading = status === 'streaming' || status === 'submitted';
   const safeInput = input || '';
 
-  // Debugging logs to help identify why the button is disabled or input is read-only
+  // Debugging logs to help identify state
   useEffect(() => {
     console.log('GeniusBot State:', { 
       input, 
-      hasHandleChange: typeof handleInputChange === 'function',
       isLoading, 
       hasError: !!error 
     });
-  }, [input, handleInputChange, isLoading, error]);
+  }, [input, isLoading, error]);
 
   // Auto-scroll to bottom when new messages arrive
   useEffect(() => {
@@ -39,6 +38,18 @@ export function FloatingChat() {
       scrollRef.current.scrollTop = scrollRef.current.scrollHeight;
     }
   }, [messages]);
+
+  // Extract text content from message parts
+  const getMessageContent = (message: any) => {
+    if (message.content) return message.content;
+    if (message.parts) {
+      return message.parts
+        .filter((part: any) => part.type === 'text')
+        .map((part: any) => part.text)
+        .join('');
+    }
+    return '';
+  };
 
   return (
     <div className="fixed bottom-10 right-6 z-[60] md:bottom-24">
@@ -102,7 +113,7 @@ export function FloatingChat() {
                       : 'bg-white border border-[var(--color-border)] text-[var(--color-ink)] rounded-tl-none'
                   }`}
                 >
-                  {m.content}
+                  {getMessageContent(m)}
                 </div>
               </div>
             ))}
@@ -128,13 +139,22 @@ export function FloatingChat() {
 
           {/* Input Area */}
           <form 
-            onSubmit={handleSubmit}
+            onSubmit={async (e) => {
+              e.preventDefault();
+              if (safeInput.trim() && !isLoading) {
+                await append({
+                  role: 'user',
+                  content: safeInput,
+                });
+                setInput('');
+              }
+            }}
             className="border-t border-[var(--color-border)] bg-white p-4"
           >
             <div className="relative flex items-center">
               <input
                 value={safeInput}
-                onChange={handleInputChange}
+                onChange={(e) => setInput(e.target.value)}
                 placeholder={isLoading ? "Bot is thinking..." : "Ask about your orders or toys..."}
                 disabled={isLoading}
                 className="w-full rounded-full border border-[var(--color-border)] bg-[var(--color-surface-1)] py-2.5 pl-4 pr-12 text-sm focus:border-[var(--color-blue)] focus:outline-none disabled:opacity-50"
