@@ -1,5 +1,5 @@
 import { createGoogleGenerativeAI } from '@ai-sdk/google';
-import { streamText, convertToCoreMessages } from 'ai';
+import { streamText, convertToModelMessages } from 'ai';
 import { cookies } from 'next/headers';
 import { z } from 'zod';
 
@@ -29,12 +29,13 @@ export async function POST(req: Request) {
       token = cookieStore.get('auth_token')?.value;
     }
 
-    const coreMessages = convertToCoreMessages(messages);
+    // Convert UI messages to model messages (required for SDK v6+)
+    const modelMessages = await convertToModelMessages(messages);
 
     const result = await streamText({
       model: google('gemini-1.5-flash'),
       system: "You are GeniusBot, the friendly AI assistant for LittleGenius LAB. Answer concisely.",
-      messages: coreMessages,
+      messages: modelMessages,
       onError: (error) => {
         console.error('GeniusBot SDK Error Object:', JSON.stringify(error, null, 2));
       },
