@@ -54,7 +54,7 @@ export async function POST(req: Request) {
       },
     });
 
-    return result.toDataStreamResponse();
+    return result.toTextStreamResponse();
   } catch (err: any) {
     console.error('GeniusBot Critical Error:', err);
     return new Response(JSON.stringify({ error: err.message }), { status: 500 });
