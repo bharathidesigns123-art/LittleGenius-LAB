@@ -214,7 +214,7 @@ Submit a custom order request with their photo and receive a quote + timeline.
 
 - **Form page → Shop** → "Not sure? Browse our ready-made toys" banner at bottom
 - **After quote → no response** → 24-hour WhatsApp nudge, then close after 7 days
-- **After order → social share** → Post-delivery message: *"Love your toy? Tag us @LittleGeniusLAB for a 10% discount on your next order 🧸"*
+- **After order → social share** → Post-delivery message: *"Love your toy? Tag us @littlegenius_lab for a 10% discount on your next order 🧸"*
 
 ---
 

@@ -1,4 +1,5 @@
 import Link from "next/link";
+import { instagramUrl, whatsappNumber } from "@/lib/commerce-content";
 
 export function SiteFooter() {
   return (
@@ -18,6 +19,7 @@ export function SiteFooter() {
             <Link href="/shop/robots">Robots</Link>
             <Link href="/shop/chibi">Chibi</Link>
             <Link href="/gallery">Gallery</Link>
+            <Link href="/blog">Gift Guides</Link>
           </div>
         </div>
         <div>
@@ -41,7 +43,8 @@ export function SiteFooter() {
         <div>
           <p className="text-xs font-bold uppercase tracking-[0.24em] text-white/55">Connect</p>
           <div className="mt-4 flex flex-col gap-3 text-sm text-white/82">
-            <a href="https://wa.me/919876543210">WhatsApp</a>
+            <a href={`https://wa.me/${whatsappNumber}`} target="_blank" rel="noopener noreferrer">WhatsApp</a>
+            <a href={instagramUrl} target="_blank" rel="noopener noreferrer">Instagram</a>
             <a href="mailto:hello@littlegeniuslab.in">hello@littlegeniuslab.in</a>
             <span>India-wide shipping</span>
           </div>

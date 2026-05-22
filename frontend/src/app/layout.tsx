@@ -25,7 +25,7 @@ export const metadata: Metadata = {
     canonical: "/",
   },
   description:
-    "Full-stack toy commerce platform for LittleGenius LAB, an India-based 3D printed toy brand.",
+    "LittleGenius LAB makes personalized 3D printed gifts, custom keychains, toys, and keepsakes in India with WhatsApp customization support.",
   keywords: [
     "3d printed toys",
     "custom keychains",
@@ -39,10 +39,18 @@ export const metadata: Metadata = {
     type: "website",
     title: "LittleGenius LAB",
     description:
-      "Shop ready-to-ship 3D printed toys and create custom figurines in India with safe PLA materials.",
+      "Shop ready-to-ship 3D printed toys, custom keychains, and personalized keepsakes in India.",
     url: "https://littlegeniuslab.in",
     siteName: "LittleGenius LAB",
     locale: "en_IN",
+    images: [
+      {
+        url: "/android-chrome-512x512.png",
+        width: 512,
+        height: 512,
+        alt: "LittleGenius LAB",
+      },
+    ],
   },
   twitter: {
     card: "summary_large_image",

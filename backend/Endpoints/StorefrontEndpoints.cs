@@ -368,7 +368,7 @@ public static class StorefrontEndpoints
             db.CustomOrderRequests.Add(customOrder);
             await db.SaveChangesAsync();
 
-            var businessNumber = configuration["Business:WhatsAppNumber"] ?? "919876543210";
+            var businessNumber = configuration["Business:WhatsAppNumber"] ?? "916383711863";
             var whatsappUrl = $"https://wa.me/{businessNumber}?text={Uri.EscapeDataString($"Hi Team LittleGenius LAB! I just submitted custom order {referenceCode}.")}";
 
             return Results.Created($"/api/store/custom-orders/{customOrder.Id}", new

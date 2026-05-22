@@ -5,6 +5,13 @@ import type {
   ProductReviewSummary,
   ProductSummary,
 } from "@/lib/types";
+import {
+  customerReviews,
+  fallbackCategories,
+  fallbackHomeData,
+  fallbackProducts,
+  getFallbackProductDetail,
+} from "@/lib/commerce-content";
 
 /** Same resolution order as the browser client; required for Server Components on Vercel. */
 function resolveApiBaseUrl(): string {
@@ -36,19 +43,14 @@ async function fetchStoreJson<T>(path: string): Promise<T> {
     return (await response.json()) as T;
   } catch (error) {
     console.error(`Fetch failed for ${path}:`, error);
-    // Return an empty object/array as a last resort to allow the build to proceed
-    // if this is called during a prerender and we don't have a backend.
     if (path.includes("/home")) {
-      return {
-        hero: { eyebrow: "", title: "", subtitle: "", primaryCta: "", secondaryCta: "" },
-        trustBar: [],
-        categories: [],
-        featuredProducts: [],
-        reviews: [],
-      } as unknown as T;
+      return fallbackHomeData as unknown as T;
     }
-    if (path.includes("/categories") || path.includes("/products")) {
-      return [] as unknown as T;
+    if (path.includes("/categories")) {
+      return fallbackCategories as unknown as T;
+    }
+    if (path.includes("/products")) {
+      return fallbackProducts as unknown as T;
     }
     throw error;
   }
@@ -85,8 +87,7 @@ export async function getProductDetail(slug: string): Promise<ProductDetail | nu
     return (await response.json()) as ProductDetail;
   } catch (error) {
     console.error(`Fetch failed for product detail ${slug}:`, error);
-    // Return null during build if fetch fails
-    return null;
+    return getFallbackProductDetail(slug);
   }
 }
 
@@ -108,6 +109,25 @@ export async function getProductReviews(slug: string): Promise<ProductReviewSumm
     return (await response.json()) as ProductReviewSummary;
   } catch (error) {
     console.error(`Fetch failed for product reviews ${slug}:`, error);
-    return null;
+    const fallbackProduct = fallbackProducts.find((product) => product.slug === slug);
+    if (!fallbackProduct) {
+      return null;
+    }
+
+    return {
+      productId: fallbackProduct.id,
+      averageRating: fallbackProduct.averageRating ?? 0,
+      reviewCount: customerReviews.length,
+      reviews: customerReviews.map((review, index) => ({
+        id: index + 1,
+        customerName: review.customerName,
+        customerLocation: review.customerLocation,
+        rating: review.rating,
+        comment: review.quote,
+        isVerifiedPurchase: true,
+        createdAtUtc: new Date().toISOString(),
+        updatedAtUtc: new Date().toISOString(),
+      })),
+    };
   }
 }

@@ -8,6 +8,7 @@ import { useAuth } from "@/components/providers/auth-provider";
 import { LoadingButtonContent } from "@/components/ui/loading-indicator";
 import { browserApi } from "@/lib/browser-api";
 import { resolveAssetUrl } from "@/lib/asset-url";
+import { buildWhatsAppUrl } from "@/lib/commerce-content";
 
 export default function CustomOrderPage() {
   const { token, user } = useAuth();
@@ -132,6 +133,24 @@ export default function CustomOrderPage() {
           </div>
         </div>
       </section>
+
+      <noscript>
+        <section className="page-shell pb-8">
+          <div className="surface-card rounded-[2rem] p-6">
+            <h2 className="text-2xl font-semibold text-[var(--color-blue)]">Custom orders work best on WhatsApp</h2>
+            <p className="mt-3 text-sm leading-7 text-[var(--color-ink-soft)]">
+              JavaScript is turned off, so the upload form cannot submit here. Send your photo, pincode,
+              occasion, size, and color notes on WhatsApp for a quote.
+            </p>
+            <a
+              href={buildWhatsAppUrl("Hi LittleGenius LAB, I want a custom 3D printed gift. I will share my photo, pincode, occasion, and size.")}
+              className="site-button site-button-primary mt-5"
+            >
+              Continue on WhatsApp
+            </a>
+          </div>
+        </section>
+      </noscript>
 
       <section className="page-shell pb-20">
         <div className="surface-card card-shadow rounded-4xl p-4 sm:p-6 md:rounded-[3rem] md:p-12">
