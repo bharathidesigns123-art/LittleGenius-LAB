@@ -42,7 +42,7 @@ public static class StorefrontEndpoints
             var featuredProducts = await db.Products
                 .AsNoTracking()
                 .Include(product => product.Category)
-                .Where(product => product.IsPublished && product.IsFeatured)
+                .Where(product => product.IsPublished && product.IsFeatured && product.Category != null && product.Category.IsActive)
                 .OrderBy(product => product.DisplayOrder)
                 .Select(product => new
                 {
@@ -130,7 +130,7 @@ public static class StorefrontEndpoints
             IQueryable<Product> query = db.Products
                 .AsNoTracking()
                 .Include(product => product.Category)
-                .Where(product => product.IsPublished);
+                .Where(product => product.IsPublished && product.Category != null && product.Category.IsActive);
 
             if (!string.IsNullOrWhiteSpace(category))
             {
@@ -193,7 +193,7 @@ public static class StorefrontEndpoints
                 .Include(item => item.Category)
                 .Include(item => item.Images)
                 .Include(item => item.Reviews)
-                .FirstOrDefaultAsync(item => item.Slug == slug && item.IsPublished);
+                .FirstOrDefaultAsync(item => item.Slug == slug && item.IsPublished && item.Category != null && item.Category.IsActive);
 
             if (product is null)
             {
@@ -214,10 +214,13 @@ public static class StorefrontEndpoints
 
             var relatedProducts = await db.Products
                 .AsNoTracking()
+                .Include(item => item.Category)
                 .Where(item =>
                     item.CategoryId == product.CategoryId &&
                     item.Id != product.Id &&
-                    item.IsPublished)
+                    item.IsPublished &&
+                    item.Category != null &&
+                    item.Category.IsActive)
                 .OrderBy(item => item.DisplayOrder)
                 .Take(4)
                 .Select(item => new
@@ -283,7 +286,8 @@ public static class StorefrontEndpoints
             var product = await db.Products
                 .AsNoTracking()
                 .Include(item => item.Images)
-                .FirstOrDefaultAsync(item => item.Slug == slug && item.IsPublished);
+                .Include(item => item.Category)
+                .FirstOrDefaultAsync(item => item.Slug == slug && item.IsPublished && item.Category != null && item.Category.IsActive);
 
             if (product is null)
             {

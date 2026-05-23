@@ -260,6 +260,20 @@ export default function AdminCategoriesPage() {
                        />
                     </div>
                  </div>
+                 <div className="mt-4 flex items-center gap-3">
+                    <label className="flex items-center gap-3 cursor-pointer">
+                      <div className={`h-5 w-5 rounded-md border-2 transition-all flex items-center justify-center ${form.isActive ? 'bg-emerald-500 border-emerald-500' : 'border-slate-300'}`}>
+                        {form.isActive ? <CheckCircle2 size={12} className="text-white" /> : null}
+                      </div>
+                      <input
+                        type="checkbox"
+                        className="hidden"
+                        checked={form.isActive}
+                        onChange={(e) => setForm(c => ({ ...c, isActive: e.target.checked }))}
+                      />
+                      <span className="text-sm font-bold text-[var(--color-blue)]">Active category</span>
+                    </label>
+                 </div>
               </div>
 
               <div className="mt-8 flex gap-3">
@@ -298,10 +312,15 @@ export default function AdminCategoriesPage() {
                           />
                        </div>
                        <div className="min-w-0 text-left">
-                          <h3 className="text-xl font-black text-[var(--color-blue)] truncate group-hover:text-[var(--color-orange)] transition-colors">
-                             {cat.name}
-                          </h3>
-                          <p className="mt-1 text-[10px] font-black uppercase tracking-widest text-slate-400">
+                          <div className="flex items-center gap-2 mb-2">
+                            <h3 className="text-xl font-black text-[var(--color-blue)] truncate group-hover:text-[var(--color-orange)] transition-colors">
+                               {cat.name}
+                            </h3>
+                            <span className={`rounded-full px-2 py-1 text-[10px] font-black uppercase tracking-widest ${cat.isActive ? 'bg-emerald-100 text-emerald-700' : 'bg-slate-100 text-slate-500'}`}>
+                              {cat.isActive ? 'Active' : 'Paused'}
+                            </span>
+                          </div>
+                          <p className="text-[10px] font-black uppercase tracking-widest text-slate-400">
                              /{cat.slug} · {cat.priceRange}
                           </p>
                           <p className="mt-2 text-xs font-medium text-slate-500 line-clamp-1 max-w-md">{cat.description}</p>

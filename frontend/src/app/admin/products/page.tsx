@@ -428,7 +428,7 @@ export default function AdminProductsPage() {
                       checked={form.isPublished}
                       onChange={(event) => updateFormField("isPublished")(event.target.checked)}
                     />
-                    <span className="text-sm font-bold text-[var(--color-blue)]">Publish to storefront</span>
+                    <span className="text-sm font-bold text-[var(--color-blue)]">Visible on storefront</span>
                   </label>
 
                   <label className="flex items-center gap-3 cursor-pointer group">
@@ -528,7 +528,7 @@ export default function AdminProductsPage() {
                   <div className="absolute left-4 top-4 flex flex-col gap-2">
                      <span className={`flex items-center gap-1 rounded-full px-3 py-1 text-[10px] font-black uppercase tracking-wider shadow-sm ${product.isPublished ? "bg-white text-emerald-600" : "bg-white text-slate-400"}`}>
                         {product.isPublished ? <Globe size={10} /> : <EyeOff size={10} />}
-                        {product.isPublished ? "Public" : "Draft"}
+                        {product.isPublished ? "Public" : "Paused"}
                      </span>
                      {product.stockQuantity <= product.lowStockThreshold && (
                         <span className="flex items-center gap-1 rounded-full bg-red-600 px-3 py-1 text-[10px] font-black uppercase tracking-wider text-white shadow-lg shadow-red-600/20">
