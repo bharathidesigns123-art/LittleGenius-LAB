@@ -37,7 +37,7 @@ export function SiteHeader() {
         <div className="page-shell flex flex-col gap-4 py-4 md:flex-row md:items-center md:justify-between md:py-5">
           <div className="flex items-center justify-between gap-3">
             <Link href="/" className="flex flex-col">
-              <span className="display-font text-xl font-semibold text-primary sm:text-[1.7rem]">
+              <span className="display-font text-xl font-semibold text-primary sm:text-[1.7rem] whitespace-nowrap">
                 LittleGenius LAB
               </span>
               <span className="text-[0.68rem] font-bold uppercase tracking-[0.24em] text-brand-secondary sm:text-[0.72rem]">
@@ -56,7 +56,7 @@ export function SiteHeader() {
             <SearchBar />
           </div>
 
-          <nav className="hidden flex-wrap items-center gap-1 text-sm font-semibold md:flex">
+          <nav className="hidden items-center gap-1 text-sm font-semibold md:flex md:flex-nowrap">
             {navItems.map((item) => {
               const isActive =
                 item.href === "/" ? pathname === "/" : pathname.startsWith(item.href);
@@ -80,7 +80,7 @@ export function SiteHeader() {
             ) : null}
           </nav>
 
-          <div className="hidden flex-wrap items-center gap-3 md:flex">
+          <div className="hidden items-center gap-3 md:flex md:flex-nowrap">
             <Link
               href="/cart"
               className="nav-chip border border-border bg-white text-primary shadow-[0_10px_24px_rgba(21,94,181,0.1)]"

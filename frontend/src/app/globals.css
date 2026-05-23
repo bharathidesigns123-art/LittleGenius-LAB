@@ -325,8 +325,13 @@
   .nav-chip {
     @apply inline-flex items-center justify-center text-sm font-semibold transition;
     min-height: 42px;
+    min-width: 0;
+    max-width: 13rem;
     padding-inline: 1rem;
     border-radius: 999px;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
   }
 
   .nav-chip-active {
