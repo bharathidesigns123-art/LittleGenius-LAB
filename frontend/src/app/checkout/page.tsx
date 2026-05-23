@@ -163,7 +163,9 @@ export default function CheckoutPage() {
   const router = useRouter();
   const { token, user, profile } = useAuth();
   const { items, subtotal, clearCart } = useCart();
-  const shippingFee = subtotal >= 499 ? 0 : 60;
+  const [isFirstOrder, setIsFirstOrder] = useState(false);
+  
+  const shippingFee = isFirstOrder || subtotal >= 499 ? 0 : 60;
   const total = subtotal + shippingFee;
 
   const [form, setForm] = useState<CheckoutForm>(() => emptyForm(user));
@@ -182,6 +184,21 @@ export default function CheckoutPage() {
   useEffect(() => {
     setRecentAddress(readRecentAddress());
   }, []);
+
+  useEffect(() => {
+    const checkFirstOrder = async () => {
+      try {
+        const identifier = getCurrentUserIdentifier(user);
+        const guestId = identifier.mode === "guest" ? identifier.guestId : null;
+        const result = await browserApi.isFirstOrder(token, guestId);
+        setIsFirstOrder(result);
+      } catch (error) {
+        console.error("Failed to check first order status:", error);
+      }
+    };
+
+    checkFirstOrder();
+  }, [token, user]);
 
   useEffect(() => {
     if (!user) {
