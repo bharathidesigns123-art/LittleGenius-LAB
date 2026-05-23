@@ -3,7 +3,6 @@ import { DM_Sans, Fraunces } from "next/font/google";
 import { SpeedInsights } from "@vercel/speed-insights/next";
 import { Analytics } from "@vercel/analytics/next";
 import { AppProviders } from "@/components/providers/app-providers";
-import { FloatingChat } from "@/components/site/floating-chat";
 import "./globals.css";
 
 const bodyFont = DM_Sans({
@@ -81,7 +80,6 @@ export default function RootLayout({
       <body suppressHydrationWarning>
         <AppProviders>
           {children}
-          <FloatingChat />
         </AppProviders>
         <SpeedInsights />
         <Analytics />
