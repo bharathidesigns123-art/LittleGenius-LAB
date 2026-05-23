@@ -542,4 +542,19 @@ export const browserApi = {
       method: "DELETE",
       token,
     }),
+
+  isFirstOrder: async (token: string | null, guestId: string | null): Promise<boolean> => {
+    try {
+      if (token) {
+        const orders = await browserApi.getAccountOrders(token);
+        return orders.length === 0;
+      } else if (guestId) {
+        const orders = await browserApi.getGuestOrders(guestId);
+        return orders.length === 0;
+      }
+      return false;
+    } catch {
+      return false;
+    }
+  },
 };

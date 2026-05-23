@@ -2,15 +2,48 @@
 
 import Image from "next/image";
 import Link from "next/link";
+import { useEffect, useState } from "react";
 import { useCart } from "@/components/providers/cart-provider";
+import { useAuth } from "@/components/providers/auth-provider";
 import { StorefrontShell } from "@/components/site/storefront-shell";
 import { EmptyState } from "@/components/ui/empty-state";
 import { PageSection } from "@/components/ui/page-section";
 import { SurfaceCard } from "@/components/ui/surface-card";
 import { resolveAssetUrl } from "@/lib/asset-url";
+import { browserApi } from "@/lib/browser-api";
+import { getCurrentUserIdentifier } from "@/lib/user-identifier";
 
 export default function CartPage() {
   const { items, subtotal, updateQuantity, removeItem } = useCart();
+  const { token, user } = useAuth();
+  const [isFirstOrder, setIsFirstOrder] = useState(false);
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    const checkFirstOrder = async () => {
+      try {
+        const identifier = getCurrentUserIdentifier(user);
+        const guestId = identifier.mode === "guest" ? identifier.guestId : null;
+        const result = await browserApi.isFirstOrder(token, guestId);
+        setIsFirstOrder(result);
+      } catch (error) {
+        console.error("Failed to check first order status:", error);
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    checkFirstOrder();
+  }, [token, user]);
+
+  const calculateShippingFee = (sub: number): number => {
+    if (isFirstOrder || sub >= 499) {
+      return 0;
+    }
+    return 60;
+  };
+
+  const shippingFee = calculateShippingFee(subtotal);
 
   return (
     <StorefrontShell>
@@ -89,13 +122,13 @@ export default function CartPage() {
                 </div>
                 <div className="flex items-center justify-between">
                   <span>Shipping</span>
-                  <span>{subtotal >= 499 ? "Free" : "Rs. 60"}</span>
+                  <span>{shippingFee === 0 ? "Free" : `Rs. ${shippingFee}`}</span>
                 </div>
               </div>
               <div className="mt-6 flex items-center justify-between border-t border-[var(--color-border)] pt-4">
                 <span className="font-semibold text-[var(--color-blue)]">Total</span>
                 <span className="text-2xl font-semibold text-[var(--color-blue)]">
-                  Rs. {subtotal >= 499 ? subtotal : subtotal + 60}
+                  Rs. {subtotal + shippingFee}
                 </span>
               </div>
               <Link href="/checkout" className="site-button site-button-primary mt-6 w-full">
