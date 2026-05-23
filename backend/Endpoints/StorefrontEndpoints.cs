@@ -480,7 +480,8 @@ public static class StorefrontEndpoints
             }
 
             var subtotal = cart!.Lines.Sum(line => line.Product.PriceInr * line.Quantity);
-            var shippingFee = subtotal >= 499 ? 0 : 60;
+            var isFirstOrder = await IsFirstOrderAsync(cart.UserId, cart.GuestId, db);
+            var shippingFee = CalculateShippingFee(subtotal, isFirstOrder);
             var total = subtotal + shippingFee;
 
             var receipt = $"LGL-PAY-{Guid.NewGuid():N}";
@@ -992,7 +993,8 @@ public static class StorefrontEndpoints
         }
 
         order.SubtotalInr = order.Items.Sum(item => item.TotalPriceInr);
-        order.ShippingFeeInr = order.SubtotalInr >= 499 ? 0 : 60;
+        var isFirstOrder = await IsFirstOrderAsync(order.UserId, order.GuestId, db);
+        order.ShippingFeeInr = CalculateShippingFee(order.SubtotalInr, isFirstOrder);
         order.TotalPriceInr = order.SubtotalInr + order.ShippingFeeInr;
 
         db.Orders.Add(order);
@@ -1008,7 +1010,8 @@ public static class StorefrontEndpoints
         CancellationToken cancellationToken)
     {
         var subtotal = snapshot.Lines.Sum(line => line.UnitPriceInr * line.Quantity);
-        var shippingFee = subtotal >= 499 ? 0 : 60;
+        var isFirstOrder = await IsFirstOrderAsync(snapshot.UserId, snapshot.GuestId, db);
+        var shippingFee = CalculateShippingFee(subtotal, isFirstOrder);
         var expectedTotal = subtotal + shippingFee;
         if (expectedTotal != transaction.AmountInr)
         {
@@ -1098,7 +1101,7 @@ public static class StorefrontEndpoints
         }
 
         order.SubtotalInr = order.Items.Sum(item => item.TotalPriceInr);
-        order.ShippingFeeInr = order.SubtotalInr >= 499 ? 0 : 60;
+        order.ShippingFeeInr = shippingFee;
         order.TotalPriceInr = order.SubtotalInr + order.ShippingFeeInr;
 
         if (order.TotalPriceInr != transaction.AmountInr)
@@ -1163,6 +1166,37 @@ public static class StorefrontEndpoints
 
         var allowAfterShipment = configuration.GetValue("Orders:AllowCancellationAfterShipment", false);
         return allowAfterShipment || status is not OrderStatuses.Shipped;
+    }
+
+    private static async Task<bool> IsFirstOrderAsync(int? userId, string? guestId, AppDbContext db)
+    {
+        if (userId.HasValue)
+        {
+            var hasExistingOrder = await db.Orders
+                .AsNoTracking()
+                .AnyAsync(order => order.UserId == userId);
+            return !hasExistingOrder;
+        }
+
+        if (!string.IsNullOrWhiteSpace(guestId))
+        {
+            var hasExistingOrder = await db.Orders
+                .AsNoTracking()
+                .AnyAsync(order => order.GuestId == guestId);
+            return !hasExistingOrder;
+        }
+
+        return false;
+    }
+
+    private static decimal CalculateShippingFee(decimal subtotal, bool isFirstOrder)
+    {
+        if (isFirstOrder || subtotal >= 499)
+        {
+            return 0;
+        }
+
+        return 60;
     }
 
     public sealed record MergeGuestOrdersRequest(string GuestId);
