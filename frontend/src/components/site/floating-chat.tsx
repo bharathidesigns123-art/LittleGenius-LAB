@@ -1,7 +1,7 @@
 'use client';
 
 import { useState, useRef, useEffect } from 'react';
-import { useChat } from '@ai-sdk/react';
+import { useChat, type UseChatHelpers } from '@ai-sdk/react';
 import { Bot, Send, X, Sparkles, MessageCircle } from 'lucide-react';
 
 export function FloatingChat() {
@@ -18,7 +18,7 @@ export function FloatingChat() {
     api: '/api/chat',
     initialMessages: [],
     maxSteps: 5,
-  });
+  }) as UseChatHelpers & { append: (message: { role: string; content: string }) => Promise<void>; status: string };
 
   const isLoading = status === 'streaming' || status === 'submitted';
   const safeInput = input || '';
