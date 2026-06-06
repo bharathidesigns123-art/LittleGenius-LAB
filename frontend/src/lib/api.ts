@@ -12,29 +12,22 @@ import {
   fallbackProducts,
   getFallbackProductDetail,
 } from "@/lib/commerce-content";
-
-/** Same resolution order as the browser client; required for Server Components on Vercel. */
-function resolveApiBaseUrl(): string {
-  const raw =
-    process.env.NEXT_PUBLIC_API_BASE_URL?.trim() ||
-    process.env.API_BASE_URL?.trim() ||
-    "";
-  if (raw) {
-    return raw.replace(/\/$/, "");
-  }
-
-  // Fallback to localhost even in production to prevent build-time crashes.
-  // The build will still fail during fetch if the backend is unreachable,
-  // unless handled by a try-catch.
-  return "http://localhost:5252";
-}
+import { resolveRuntimeApiBaseUrl } from "@/lib/api-base-url";
 
 async function fetchStoreJson<T>(path: string): Promise<T> {
-  const base = resolveApiBaseUrl();
+  const base = resolveRuntimeApiBaseUrl();
   try {
+    if (!base) {
+      throw new Error("NEXT_PUBLIC_API_BASE_URL is missing or invalid.");
+    }
+
+    const controller = new AbortController();
+    const timeout = setTimeout(() => controller.abort(), 8000);
     const response = await fetch(`${base}${path}`, {
       next: { revalidate: 300 },
+      signal: controller.signal,
     });
+    clearTimeout(timeout);
 
     if (!response.ok) {
       throw new Error(`Store API error ${response.status}: ${path}`);
@@ -70,11 +63,19 @@ export async function getProducts(category?: string): Promise<ProductSummary[]> 
 }
 
 export async function getProductDetail(slug: string): Promise<ProductDetail | null> {
-  const base = resolveApiBaseUrl();
+  const base = resolveRuntimeApiBaseUrl();
   try {
+    if (!base) {
+      throw new Error("NEXT_PUBLIC_API_BASE_URL is missing or invalid.");
+    }
+
+    const controller = new AbortController();
+    const timeout = setTimeout(() => controller.abort(), 8000);
     const response = await fetch(`${base}/api/store/products/${slug}`, {
       next: { revalidate: 300 },
+      signal: controller.signal,
     });
+    clearTimeout(timeout);
 
     if (response.status === 404) {
       return null;
@@ -92,11 +93,19 @@ export async function getProductDetail(slug: string): Promise<ProductDetail | nu
 }
 
 export async function getProductReviews(slug: string): Promise<ProductReviewSummary | null> {
-  const base = resolveApiBaseUrl();
+  const base = resolveRuntimeApiBaseUrl();
   try {
+    if (!base) {
+      throw new Error("NEXT_PUBLIC_API_BASE_URL is missing or invalid.");
+    }
+
+    const controller = new AbortController();
+    const timeout = setTimeout(() => controller.abort(), 8000);
     const response = await fetch(`${base}/api/store/products/${slug}/reviews`, {
       next: { revalidate: 300 },
+      signal: controller.signal,
     });
+    clearTimeout(timeout);
 
     if (response.status === 404) {
       return null;

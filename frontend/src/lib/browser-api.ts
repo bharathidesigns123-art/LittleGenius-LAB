@@ -13,9 +13,9 @@ import type {
   ReviewEligibility,
   TrackOrderResponse,
 } from "@/lib/types";
+import { resolveRuntimeApiBaseUrl } from "@/lib/api-base-url";
 
-const API_BASE_URL =
-  process.env.NEXT_PUBLIC_API_BASE_URL ?? process.env.API_BASE_URL ?? "http://localhost:5252";
+const API_BASE_URL = resolveRuntimeApiBaseUrl();
 
 type RequestOptions = {
   method?: "GET" | "POST" | "PUT" | "PATCH" | "DELETE";
@@ -31,6 +31,10 @@ type BlobUploadResponse = {
 };
 
 async function apiRequest<T>(path: string, options: RequestOptions = {}): Promise<T> {
+  if (!API_BASE_URL) {
+    throw new Error("NEXT_PUBLIC_API_BASE_URL is missing or invalid.");
+  }
+
   const headers = new Headers();
   if (!options.isFormData) {
     headers.set("Content-Type", "application/json");
@@ -80,7 +84,6 @@ async function uploadBlobFile(file: File, token?: string | null): Promise<string
   const uploadRes = await fetch(uploadUrl, {
     method: "PUT",
     headers: {
-      "x-ms-blob-type": "BlockBlob",
       "Content-Type": file.type || "application/octet-stream",
     },
     body: file,
@@ -91,8 +94,7 @@ async function uploadBlobFile(file: File, token?: string | null): Promise<string
     throw new Error(`Upload failed: ${uploadRes.status} ${text || uploadRes.statusText}`);
   }
 
-  // Return the clean blobUrl (without SAS token) so it can be stored permanently in the DB.
-  // The frontend asset-url helper will append a fresh SAS token for viewing.
+  // Return the stable public object URL so it can be stored permanently in the DB.
   return sasResp.blobUrl || sasResp.readUrl?.split("?")[0] || uploadUrl.split("?")[0];
 }
 
