@@ -133,14 +133,22 @@ if (builder.Environment.IsDevelopment())
 }
 else
 {
+    var postgresConnection = builder.Configuration.GetConnectionString("DefaultConnection");
     var sqlServerConnection = builder.Configuration.GetConnectionString("SqlServer");
-    if (string.IsNullOrWhiteSpace(sqlServerConnection))
+
+    if (!string.IsNullOrWhiteSpace(postgresConnection))
+    {
+        builder.Services.AddDbContext<AppDbContext>(options => options.UseNpgsql(postgresConnection));
+    }
+    else if (!string.IsNullOrWhiteSpace(sqlServerConnection))
+    {
+        builder.Services.AddDbContext<AppDbContext>(options => options.UseSqlServer(sqlServerConnection));
+    }
+    else
     {
         throw new InvalidOperationException(
-            "Connection string 'SqlServer' not found. Configure Azure SQL in appsettings.Production.json or environment variables.");
+            "Connection string 'DefaultConnection' or 'SqlServer' not found. Configure Supabase Postgres or SQL Server in environment variables.");
     }
-
-    builder.Services.AddDbContext<AppDbContext>(options => options.UseSqlServer(sqlServerConnection));
 }
 
 var jwtOptions = builder.Configuration
@@ -194,9 +202,13 @@ using (var scope = app.Services.CreateScope())
         {
             await db.Database.EnsureCreatedAsync();
         }
-        else
+        else if (db.Database.IsSqlServer())
         {
             await db.Database.MigrateAsync();
+        }
+        else
+        {
+            await db.Database.EnsureCreatedAsync();
         }
     }
     else
