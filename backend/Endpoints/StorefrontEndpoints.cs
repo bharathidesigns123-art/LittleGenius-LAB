@@ -5,10 +5,6 @@ using LittleGeniusLab.Api.Models;
 using LittleGeniusLab.Api.Services;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.EntityFrameworkCore;
-using Azure.Storage.Sas;
-using Azure.Storage;
-using Azure.Storage.Blobs;
-using Azure.Storage.Blobs.Models;
 using Microsoft.AspNetCore.Http;
 
 namespace LittleGeniusLab.Api.Endpoints;
@@ -314,7 +310,7 @@ public static class StorefrontEndpoints
                 var fileName = fileNameEl.GetString() ?? $"{Guid.NewGuid():N}";
                 var contentType = body.Value.TryGetProperty("contentType", out var ct) ? ct.GetString() : null;
 
-                var result = await storage.GetUploadSasAsync(fileName, contentType);
+                var result = await storage.GetUploadUrlAsync(fileName, contentType);
                 return Results.Ok(result);
             }
             catch (InvalidOperationException ex)
@@ -323,7 +319,7 @@ public static class StorefrontEndpoints
             }
             catch (Exception ex)
             {
-                return Results.Problem(detail: ex.Message, title: "Failed to generate SAS token");
+                return Results.Problem(detail: ex.Message, title: "Failed to generate upload URL");
             }
         });
 
