@@ -10,7 +10,7 @@ export function middleware(request: NextRequest) {
   }
 
   const { pathname } = request.nextUrl;
-  const isMaintenancePage = pathname === "/maintenance";
+  const isHomepage = pathname === "/";
   const isAllowedAsset =
     pathname.startsWith("/_next") ||
     pathname.startsWith("/static") ||
@@ -25,14 +25,14 @@ export function middleware(request: NextRequest) {
     pathname.endsWith(".webmanifest") ||
     pathname.endsWith(".json");
 
-  if (isMaintenancePage || isAllowedAsset) {
+  if (isHomepage || isAllowedAsset) {
     return NextResponse.next();
   }
 
-  const maintenanceUrl = request.nextUrl.clone();
-  maintenanceUrl.pathname = "/maintenance";
-  maintenanceUrl.search = "";
-  return NextResponse.redirect(maintenanceUrl);
+  const homepageUrl = request.nextUrl.clone();
+  homepageUrl.pathname = "/";
+  homepageUrl.search = "";
+  return NextResponse.redirect(homepageUrl);
 }
 
 export const config = {
