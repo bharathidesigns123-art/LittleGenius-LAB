@@ -122,7 +122,7 @@ builder.Services.AddCors(options =>
 
 if (builder.Environment.IsDevelopment())
 {
-    var sqliteConnection = builder.Configuration.GetConnectionString("Sqlite");
+    var sqliteConnection = GetConfiguredConnectionString(builder.Configuration, "Sqlite");
     if (string.IsNullOrWhiteSpace(sqliteConnection))
     {
         throw new InvalidOperationException(
@@ -133,8 +133,8 @@ if (builder.Environment.IsDevelopment())
 }
 else
 {
-    var postgresConnection = builder.Configuration.GetConnectionString("DefaultConnection");
-    var sqlServerConnection = builder.Configuration.GetConnectionString("SqlServer");
+    var postgresConnection = GetConfiguredConnectionString(builder.Configuration, "DefaultConnection");
+    var sqlServerConnection = GetConfiguredConnectionString(builder.Configuration, "SqlServer");
 
     if (!string.IsNullOrWhiteSpace(postgresConnection))
     {
@@ -252,3 +252,16 @@ app.MapReviewEndpoints();
 app.MapAdminEndpoints();
 
 app.Run();
+
+static string? GetConfiguredConnectionString(IConfiguration configuration, string name)
+{
+    var value = configuration.GetConnectionString(name)?.Trim();
+    if (string.IsNullOrWhiteSpace(value) ||
+        value.StartsWith("OVERRIDE_", StringComparison.OrdinalIgnoreCase) ||
+        value.StartsWith("YOUR_", StringComparison.OrdinalIgnoreCase))
+    {
+        return null;
+    }
+
+    return value;
+}
