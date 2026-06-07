@@ -49,7 +49,60 @@ export const metadata: Metadata = {
   },
 };
 
+const maintenanceMode =
+  process.env.MAINTENANCE_MODE === "1" ||
+  process.env.NEXT_PUBLIC_MAINTENANCE_MODE === "1";
+
 export default async function HomePage() {
+  if (maintenanceMode) {
+    return (
+      <StorefrontShell>
+        <div className="page-shell py-16 sm:py-24">
+          <div className="mx-auto max-w-3xl rounded-[2rem] border border-[var(--color-border)] bg-white/95 p-8 shadow-[0_32px_80px_rgba(43,56,88,0.12)] backdrop-blur-sm sm:p-12">
+            <div className="text-center">
+              <p className="text-sm font-semibold uppercase tracking-[0.3em] text-[var(--color-orange)]">
+                Under maintenance
+              </p>
+              <h1 className="mt-5 text-4xl font-semibold tracking-[-0.04em] text-[var(--color-blue)] sm:text-5xl">
+                LittleGenius LAB is temporarily closed for improvements.
+              </h1>
+              <p className="mx-auto mt-6 max-w-2xl text-base leading-8 text-[var(--color-ink-soft)] sm:text-lg">
+                We&apos;re currently updating the store to make your shopping experience better. Please check back soon or contact us directly for urgent orders.
+              </p>
+            </div>
+
+            <div className="mt-10 grid gap-6 sm:grid-cols-[1fr_1fr]">
+              <div className="rounded-[1.5rem] border border-[var(--color-border)] bg-[var(--color-surface)] p-6 text-left">
+                <h2 className="text-xl font-semibold text-[var(--color-blue)]">What you can do</h2>
+                <p className="mt-3 text-sm leading-7 text-[var(--color-ink-soft)]">
+                  Reach out by email or WhatsApp for order questions, custom requests, or updates. We&apos;ll reply as soon as the site is live again.
+                </p>
+              </div>
+              <div className="rounded-[1.5rem] border border-[var(--color-border)] bg-[var(--color-surface)] p-6 text-left">
+                <h2 className="text-xl font-semibold text-[var(--color-blue)]">Need support?</h2>
+                <p className="mt-3 text-sm leading-7 text-[var(--color-ink-soft)]">
+                  Email hello@littlegeniuslab.in or send a WhatsApp message to get help while the storefront is updating.
+                </p>
+              </div>
+            </div>
+
+            <div className="mt-10 flex flex-col items-center gap-4 sm:flex-row sm:justify-center">
+              <Link href="/" className="site-button site-button-secondary">
+                Refresh the homepage
+              </Link>
+              <a
+                href="https://wa.me/917297121898"
+                className="site-button site-button-primary"
+              >
+                Contact via WhatsApp
+              </a>
+            </div>
+          </div>
+        </div>
+      </StorefrontShell>
+    );
+  }
+
   const data = await getHomeData();
   const heroProduct = data.featuredProducts[0];
   const trendingProducts = data.featuredProducts.slice(0, 3);
